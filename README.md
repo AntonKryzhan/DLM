@@ -534,3 +534,16 @@ New internal API:
 - `CertificateAuditStatus`
 
 The layer gives certificates a stable textual representation and a structured audit report, while preserving the existing rule that certificates are audit artifacts rather than proofs.
+
+
+### v0.43.0 — Equality Proof / Rewrite Foundation
+
+`v0.43.0` adds a typed equality/rewrite foundation. It introduces `EqProof`, `RewriteRule`, `RewriteTrace`, and `RewriteCertificate` as core artifacts while leaving `.dlm` syntax and runtime behavior unchanged.
+
+The key boundary is explicit:
+
+```text
+Bool equality result != EqProof<A,B> != RewriteCertificate<A,B>
+```
+
+Rewrite certificates preserve rule order and trust taint. Axiom-derived equality remains visibly `trust=Axiom` after rewriting.

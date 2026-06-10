@@ -475,3 +475,18 @@ Typical causes:
 - certificate fingerprint no longer matches certificate contents;
 - certificate identity fields are empty;
 - certificate does not verify against the requested theorem.
+
+
+## E0914 EqualityRewriteError
+
+`EqualityRewriteError` reports invalid equality-proof or rewrite-certificate state.
+
+Typical triggers:
+
+- using a `Bool` equality result as rewrite evidence;
+- constructing `EqProof<A,B>` from a non-matching `StaticProof`;
+- using `RuntimeWitness` or raw `ProofTerm` as static equality evidence;
+- applying a rewrite rule to a non-matching source term;
+- applying an `EqProof` directly without first deriving a `RewriteRule`.
+
+The invariant is: `Bool == true` is not the same artifact as `EqProof<A,B>`, and a rewrite certificate must preserve the trust/taint of every equality proof used in its trace.

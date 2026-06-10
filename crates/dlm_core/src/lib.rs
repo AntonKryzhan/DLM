@@ -4,6 +4,7 @@ pub mod checker;
 pub mod certificate;
 pub mod certificate_audit;
 pub mod diagnostics;
+pub mod equality;
 pub mod ids;
 pub mod meta_level;
 pub mod parser;
@@ -24,6 +25,7 @@ pub use certificate::{certificate_from_closure, certificate_from_tactic_report, 
 pub use certificate_audit::{audit_certificate_against_theorem, export_certificate_text, export_certificate_text_unchecked, render_certificate_audit_report, CertificateAuditReport, CertificateAuditStatus};
 pub use checker::{CheckReport, Checker};
 pub use diagnostics::{Diagnostic, DiagnosticKind, Severity, SourceSpan};
+pub use equality::{apply_rewrite_rule, axiom_eq_proof, eq_proof_decl, eq_proof_from_static_proof, equality_proposition, reflexive_eq_proof, require_eq_proof, require_rewrite_rule, rewrite_certificate_passport, rewrite_rule_decl, rewrite_rule_from_eq_proof, rewrite_trace, EqProofDecl, RewriteDirection, RewriteRuleDecl, RewriteStep, RewriteTrace};
 pub use ids::{BridgeId, FileId, IdAllocator, ModuleId, ProofId, TheoryId, TypeId, ValueId};
 pub use meta_level::{meta_level_passport, meta_quote_passport, object_level_passport, required_observer_level, validate_meta_observer, MetaAccess, MetaLevelContext, MetaLevelIndex, MetaStage};
 pub use parser::{parse_expr, parse_module};

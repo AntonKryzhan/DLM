@@ -282,3 +282,34 @@ Added deterministic export and audit reports for proof certificates.
 - New diagnostic kind: `ProofCertificateAuditError[E0913]`.
 
 No `.dlm` syntax or runtime behavior changes.
+
+
+## v0.43.0 — Equality Proof / Rewrite Foundation
+
+Added a typed equality/rewrite foundation.
+
+Changed/added files:
+
+- `crates/dlm_core/src/equality.rs`
+- `crates/dlm_core/tests/equality_rewrite.rs`
+- `docs/EQUALITY_REWRITE.md`
+
+New core artifacts:
+
+- `EqProof { lhs, rhs }`
+- `RewriteRule { name, lhs, rhs }`
+- `RewriteStep`
+- `RewriteTrace`
+- `RewriteCertificate { from, to }`
+
+New diagnostic kind:
+
+- `EqualityRewriteError[E0914]`
+
+Primary invariants:
+
+- `Bool` is not rewrite evidence.
+- `RuntimeWitness` is not static equality evidence.
+- raw `ProofTerm` must be kernel-checked first.
+- `EqProof` must be converted into a `RewriteRule` before application.
+- rewrite certificates preserve ordered rewrite traces and trust taint.

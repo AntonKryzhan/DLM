@@ -152,6 +152,19 @@ pub enum TypeKind {
     Hypothesis {
         proposition: String,
     },
+    EqProof {
+        lhs: String,
+        rhs: String,
+    },
+    RewriteRule {
+        name: String,
+        lhs: String,
+        rhs: String,
+    },
+    RewriteCertificate {
+        from: String,
+        to: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -245,6 +258,9 @@ impl fmt::Display for TypeKind {
             TypeKind::Theorem { name, proposition } => write!(f, "Theorem<{name}:{proposition}>"),
             TypeKind::Goal { proposition } => write!(f, "Goal<{proposition}>"),
             TypeKind::Hypothesis { proposition } => write!(f, "Hypothesis<{proposition}>"),
+            TypeKind::EqProof { lhs, rhs } => write!(f, "EqProof<{lhs}={rhs}>"),
+            TypeKind::RewriteRule { name, lhs, rhs } => write!(f, "RewriteRule<{name}:{lhs}->{rhs}>"),
+            TypeKind::RewriteCertificate { from, to } => write!(f, "RewriteCertificate<{from}->{to}>"),
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),
             TypeKind::Term { of_theory, of_type } => write!(f, "Term<{of_theory}.{of_type}>"),

@@ -491,3 +491,14 @@ Design constraints:
 - fingerprint validation before checked export;
 - separate unchecked export for forensic display only;
 - audit does not create or strengthen proofs.
+
+
+## v0.43.0 Equality Proof / Rewrite Foundation
+
+Implemented a separate equality/rewrite layer in `equality.rs`.
+
+The implementation keeps equality proof evidence distinct from boolean equality checks. `EqProof` is a proof artifact, `RewriteRule` is an applicative rule derived from proof evidence, and `RewriteCertificate` records the final from/to pair after an ordered trace.
+
+The patch intentionally avoids parser and checker integration. It is a core semantic layer for later HIR rewriting and tactic automation.
+
+Important invariant: rewrite construction never lowers trust. If a rewrite rule comes from `axiom_eq_proof`, the resulting trace and certificate remain `trust=Axiom`.

@@ -6,8 +6,8 @@
   },
   {
     "file": "AST_IR.md",
-    "bytes": 8504,
-    "sha256": "aa17bf8ba54ff64e3b0db9555d7cb548540162f41eb0bc32a882c248415406fd"
+    "bytes": 8894,
+    "sha256": "5043a33c906d30aa2236c52d49807e883e0f2e2916699f0b772a0dd0938fbc55"
   },
   {
     "file": "BIG_NUMBER_HIERARCHY.md",
@@ -31,8 +31,8 @@
   },
   {
     "file": "COMPILER_PASSES.md",
-    "bytes": 11970,
-    "sha256": "6cedc85e81083d5202ec46f45dfeae73cd1a256c2ac6ed1ec3c8b351b1ed4220"
+    "bytes": 12327,
+    "sha256": "bc13034a8b6484dab6c811848c40e449d971bf2f6749518f6cc60a397916f531"
   },
   {
     "file": "CONSISTENCY_INCOMPLETENESS.md",
@@ -46,8 +46,8 @@
   },
   {
     "file": "DIAGNOSTICS.md",
-    "bytes": 9947,
-    "sha256": "a063fb7e65d55279ef4d0f593bd071f964a4026c6c068429ca4fa63a9319c10b"
+    "bytes": 10583,
+    "sha256": "ecb96c47a9f82c2598b6436e51adee329dbc20ba543a8c6d3ebd345b8b2dd479"
   },
   {
     "file": "DISTRIBUTED_MEMORY_REGION.md",
@@ -58,6 +58,11 @@
     "file": "DISTRIBUTED_VIRTUAL_CLUSTER.md",
     "bytes": 3592,
     "sha256": "2ce2171ec7223db25bde212f23b5f2381b0237b5e80dcb3d9da7f597e1e89a8d"
+  },
+  {
+    "file": "EQUALITY_REWRITE.md",
+    "bytes": 2398,
+    "sha256": "1eac9eea2a272a5ed18070b607e7a5f5efa7991b7dd8a62464c88feeb5b4981d"
   },
   {
     "file": "FORMAL_METATHEORY.md",
@@ -201,8 +206,8 @@
   },
   {
     "file": "TEST_MATRIX.md",
-    "bytes": 12750,
-    "sha256": "3df9b2f19a401e71671a0eb4d80b3bc04f200927b1e98fd187d30591926e6a24"
+    "bytes": 13230,
+    "sha256": "2d76f8095f25f31818a611324fae1fd96f2ca9d441a1666f1e50b1c5f9c0ee2d"
   },
   {
     "file": "UNIVERSE_HIERARCHY.md",

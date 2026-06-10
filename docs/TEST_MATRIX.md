@@ -650,3 +650,21 @@ Coverage:
 - rejection of tampered fingerprints;
 - rejection of wrong theorem identity;
 - unchecked forensic rendering remains non-validating.
+
+
+## v0.43.0 — Equality/rewrite tests
+
+New test target:
+
+```powershell
+cargo test -p dlm_core --test equality_rewrite
+```
+
+Coverage:
+
+- reflexive equality is `EqProof`, not `Bool`;
+- `EqProof` requires exact `StaticProof<Eq(lhs,rhs)>`;
+- `RuntimeWitness` and raw proof terms are rejected as rewrite evidence;
+- rewrite rules apply forward and reverse only on exact source terms;
+- rewrite traces preserve step order;
+- axiom equality taint is preserved in rewrite certificates.

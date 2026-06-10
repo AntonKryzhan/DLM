@@ -2757,3 +2757,20 @@ This is a foundation layer for later certificate serialization, proof audit repo
 `v0.42.0` adds deterministic proof-certificate export and audit reporting.
 
 This prepares the future CLI/API surface for emitting proof artifacts without yet adding new language syntax.
+
+
+## v0.43.0 completed — Equality Proof / Rewrite foundation
+
+`v0.43.0` adds the first core layer for equality proofs and rewrite certificates.
+
+Completed:
+
+- `EqProof` passport kind;
+- `RewriteRule` passport kind;
+- `RewriteCertificate` passport kind;
+- forward/reverse rewrite application;
+- ordered rewrite traces;
+- axiom-taint preservation through rewrite certificates;
+- regression tests for boolean equality separation, runtime/static separation, trace order, and trust preservation.
+
+This prepares future theorem/tactic automation while keeping current `.dlm` programs stable.

@@ -461,3 +461,22 @@ RawAST
 ```
 
 The name `legacy_checker` is used only to mark the current monolithic semantic stage before it is split.
+
+
+## v0.43.0 — Equality/rewrite artifacts
+
+New passport-level artifact kinds:
+
+```text
+EqProof<lhs=rhs>
+RewriteRule<name:lhs->rhs>
+RewriteCertificate<from->to>
+```
+
+These are not parser-level AST nodes yet. They are core semantic artifacts exported by `equality.rs` for later HIR and tactic integration.
+
+The distinction is intentional:
+
+```text
+Bool != EqProof != RewriteCertificate
+```

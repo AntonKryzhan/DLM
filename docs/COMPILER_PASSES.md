@@ -559,3 +559,16 @@ open obligations cannot produce certificates
 The certificate audit/export layer is an internal post-checking artifact pass.
 
 It validates certificate stability, renders a canonical text form, and produces an audit report against a theorem passport.
+
+
+## v0.43.0 — Equality/rewrite foundation
+
+The equality/rewrite layer is currently a core model, not an active compiler pass.
+
+Future pass placement:
+
+```text
+parse -> resolve -> type/check -> proof/equality checking -> rewrite planning -> certificate/audit
+```
+
+`v0.43.0` only introduces the artifacts and laws needed for a later rewrite-planning pass.
