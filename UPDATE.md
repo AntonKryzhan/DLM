@@ -1,5 +1,141 @@
 # UPDATE.md
 
+## v0.33.0 — Span / Diagnostic Foundation
+
+Дата: 2026-06-11
+
+### Цель патча
+
+После `v0.32.0 Semantic Core Hardening` следующий шаг сделан в сторону диагностического фундамента. DLM уже различает trust, bridge, proof/truth boundary и passport-capabilities, но до этого диагностическая модель несла только номер строки. Для дальнейшего Nanopass-разделения этого недостаточно: resolver, AST validation, HIR и checker должны уметь ссылаться на конкретный фрагмент исходника.
+
+`v0.33.0` добавляет SourceSpan-слой без ломки старого API: существующее поле `Diagnostic::line` сохранено, а новые точные координаты живут в `Diagnostic::span`.
+
+### Добавлено
+
+```text
+SourceSpan
+Diagnostic::error_at(...)
+Diagnostic::with_span(...)
+crates/dlm_core/tests/diagnostic_spans.rs
+```
+
+### SourceSpan
+
+Новая структура описывает первичный диапазон диагностики:
+
+```text
+start_line
+start_col
+end_line
+end_col
+```
+
+Поддержаны два режима:
+
+```text
+line-only span     -> старое поведение: at line N
+precise span       -> новое поведение: at line N, column M
+```
+
+Это важно для будущих проходов:
+
+```text
+RawAST validation
+name/theory resolver
+checker orchestration
+secondary diagnostic labels
+JSON diagnostic output
+```
+
+### Совместимость
+
+Старый конструктор сохранён:
+
+```rust
+Diagnostic::error(kind, Some(line), message)
+```
+
+Он теперь автоматически создаёт line-only span, но человекочитаемый вывод остаётся прежним:
+
+```text
+error[E0002 NameError] at line 3: unknown name
+```
+
+Для новых точных ошибок добавлен конструктор:
+
+```rust
+Diagnostic::error_at(kind, SourceSpan::line_col(line, col, len), message)
+```
+
+Вывод:
+
+```text
+error[E0001 ParseError] at line 7, column 12: bad token
+```
+
+### Parser span foundation
+
+Parser начал передавать точные column spans для базовых parse errors:
+
+```text
+empty expression
+invalid expression token
+missing let binding name
+expected let name = expression
+missing theory name
+```
+
+Парсер по-прежнему строит тот же AST и не меняет синтаксис `.dlm`. Это только диагностический слой.
+
+### Новые regression tests
+
+Добавлен файл:
+
+```text
+crates/dlm_core/tests/diagnostic_spans.rs
+```
+
+Он фиксирует:
+
+```text
+точный SourceSpan сохраняется в Diagnostic;
+старое line-only форматирование не ломается;
+parse_expr сообщает column span;
+parse_module сохраняет span на ошибке let-expression.
+```
+
+### Изменённые файлы
+
+```text
+Cargo.toml
+Cargo.lock
+UPDATE.md
+ROADMAP.md
+docs/DIAGNOSTICS.md
+crates/dlm_cli/src/main.rs
+crates/dlm_core/src/diagnostics.rs
+crates/dlm_core/src/lib.rs
+crates/dlm_core/src/parser.rs
+crates/dlm_core/tests/diagnostic_spans.rs
+```
+
+### Что принципиально НЕ менялось
+
+```text
+синтаксис .dlm
+AST node model
+checker semantics
+passport semantics
+trust policy
+bridge preservation laws
+runtime behavior
+reflection/self-reference guard
+```
+
+Это foundation-патч: он не расширяет язык, а делает будущие ошибки проверяемее, точнее и безопаснее для следующих проходов.
+
+---
+
 ## v0.32.0 — Semantic Core Hardening
 
 Дата: 2026-06-10

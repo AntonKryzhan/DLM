@@ -62,15 +62,9 @@ pub enum LocationContext {
 }
 
 impl LocationContext {
-    pub fn local() -> Self {
-        Self::Local
-    }
-    pub fn node(arch: NodeArch) -> Self {
-        Self::Node { arch }
-    }
-    pub fn remote(arch: NodeArch) -> Self {
-        Self::Remote { arch }
-    }
+    pub fn local() -> Self { Self::Local }
+    pub fn node(arch: NodeArch) -> Self { Self::Node { arch } }
+    pub fn remote(arch: NodeArch) -> Self { Self::Remote { arch } }
 }
 
 impl fmt::Display for LocationContext {
@@ -89,93 +83,35 @@ pub enum TypeKind {
     Bool,
     Bytes,
     Text,
-    Infinity {
-        mode: InfinityMode,
-    },
-    Universe {
-        level: u8,
-    },
-    Set {
-        of_level: u8,
-        lives_in: u8,
-    },
-    Class {
-        of_level: u8,
-    },
-    Language {
-        name: String,
-    },
-    Encoding {
-        name: String,
-    },
-    MetaLevel {
-        level: u8,
-    },
-    DefinableNat {
-        language: String,
-        encoding: String,
-        object_theory: String,
-        bound: u128,
-        meta_level: u8,
-    },
-    BigNat {
-        family: String,
-        parameter: Option<u128>,
-    },
-    Prop {
-        name: String,
-    },
-    Provable {
-        object_theory: String,
-        proposition: String,
-    },
-    TruthClaim {
-        proposition: String,
-    },
-    ConsistencyClaim {
-        theory: String,
-    },
-    ProofTerm {
-        rule: String,
-    },
-    Term {
-        of_theory: String,
-        of_type: String,
-    },
-    Node {
-        arch: NodeArch,
-    },
-    GpuDevice {
-        backend: GpuBackend,
-    },
+    Infinity { mode: InfinityMode },
+    Universe { level: u8 },
+    Set { of_level: u8, lives_in: u8 },
+    Class { of_level: u8 },
+    Language { name: String },
+    Encoding { name: String },
+    MetaLevel { level: u8 },
+    DefinableNat { language: String, encoding: String, object_theory: String, bound: u128, meta_level: u8 },
+    BigNat { family: String, parameter: Option<u128> },
+    Prop { name: String },
+    Provable { object_theory: String, proposition: String },
+    TruthClaim { proposition: String },
+    ConsistencyClaim { theory: String },
+    ReflectionClaim { object_theory: String, proposition: String },
+    SelfReferenceClaim { proposition: String },
+    ProofTerm { rule: String },
+    Term { of_theory: String, of_type: String },
+    Node { arch: NodeArch },
+    GpuDevice { backend: GpuBackend },
     GpuPool,
     VirtualCluster,
-    DistributedMemory {
-        memory_mib: Option<u128>,
-    },
-    DistributedGpuMemory {
-        memory_mib: Option<u128>,
-    },
-    GpuValue {
-        inner: Box<TypeKind>,
-    },
-    GpuKernel {
-        inner: Box<TypeKind>,
-    },
-    MemoryCheckpoint {
-        memory_mib: Option<u128>,
-    },
-    RemoteCheckpoint {
-        inner: Box<TypeKind>,
-        source_arch: NodeArch,
-    },
-    PortableCode {
-        inner: Box<TypeKind>,
-    },
-    Remote {
-        inner: Box<TypeKind>,
-        target_arch: NodeArch,
-    },
+    DistributedMemory { memory_mib: Option<u128> },
+    DistributedGpuMemory { memory_mib: Option<u128> },
+    GpuValue { inner: Box<TypeKind> },
+    GpuKernel { inner: Box<TypeKind> },
+    MemoryCheckpoint { memory_mib: Option<u128> },
+    RemoteCheckpoint { inner: Box<TypeKind>, source_arch: NodeArch },
+    PortableCode { inner: Box<TypeKind> },
+    Remote { inner: Box<TypeKind>, target_arch: NodeArch },
     Result(Box<TypeKind>),
     StaticProof(String),
     RuntimeWitness(String),
@@ -196,27 +132,17 @@ impl fmt::Display for TypeKind {
             TypeKind::Language { name } => write!(f, "Language<{name}>"),
             TypeKind::Encoding { name } => write!(f, "Encoding<{name}>"),
             TypeKind::MetaLevel { level } => write!(f, "MetaLevel<M{level}>"),
-            TypeKind::DefinableNat {
-                language,
-                encoding,
-                object_theory,
-                bound,
-                meta_level,
-            } => write!(
-                f,
-                "DefinableNat<{language},{encoding},{object_theory},bound={bound},M{meta_level}>"
-            ),
+            TypeKind::DefinableNat { language, encoding, object_theory, bound, meta_level } => write!(f, "DefinableNat<{language},{encoding},{object_theory},bound={bound},M{meta_level}>"),
             TypeKind::BigNat { family, parameter } => match parameter {
                 Some(parameter) => write!(f, "BigNat<{family}({parameter})>"),
-                None => write!(f, "BigNat<{family}>"),
+                None => write!(f, "BigNat<{family}>")
             },
             TypeKind::Prop { name } => write!(f, "Prop<{name}>"),
-            TypeKind::Provable {
-                object_theory,
-                proposition,
-            } => write!(f, "Provable<{object_theory}.{proposition}>"),
+            TypeKind::Provable { object_theory, proposition } => write!(f, "Provable<{object_theory}.{proposition}>"),
             TypeKind::TruthClaim { proposition } => write!(f, "TruthClaim<{proposition}>"),
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
+            TypeKind::ReflectionClaim { object_theory, proposition } => write!(f, "Reflection<{object_theory}.{proposition}>"),
+            TypeKind::SelfReferenceClaim { proposition } => write!(f, "SelfReference<{proposition}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),
             TypeKind::Term { of_theory, of_type } => write!(f, "Term<{of_theory}.{of_type}>"),
             TypeKind::Node { arch } => write!(f, "Node<{arch}>"),
@@ -237,9 +163,7 @@ impl fmt::Display for TypeKind {
                 Some(value) => write!(f, "MemoryCheckpoint<{value}MiB>"),
                 None => write!(f, "MemoryCheckpoint"),
             },
-            TypeKind::RemoteCheckpoint { inner, source_arch } => {
-                write!(f, "RemoteCheckpoint<{inner}@{source_arch}>")
-            }
+            TypeKind::RemoteCheckpoint { inner, source_arch } => write!(f, "RemoteCheckpoint<{inner}@{source_arch}>"),
             TypeKind::PortableCode { inner } => write!(f, "PortableCode<{inner}>"),
             TypeKind::Remote { inner, target_arch } => write!(f, "Remote<{inner}@{target_arch}>"),
             TypeKind::Result(inner) => write!(f, "Result<{inner}>"),
@@ -322,9 +246,7 @@ impl HistoryChain {
     }
 
     pub fn from_event(event: impl Into<String>) -> Self {
-        Self {
-            events: vec![event.into()],
-        }
+        Self { events: vec![event.into()] }
     }
 
     pub fn from_source(source: &HistoryChain, event: impl Into<String>) -> Self {
@@ -343,10 +265,7 @@ impl HistoryChain {
         Self { events }
     }
 
-    pub fn merge_many<'a>(
-        sources: impl IntoIterator<Item = &'a HistoryChain>,
-        event: impl Into<String>,
-    ) -> Self {
+    pub fn merge_many<'a>(sources: impl IntoIterator<Item = &'a HistoryChain>, event: impl Into<String>) -> Self {
         let mut events = Vec::new();
         // Preserve multiplicity and order. Deduplicating here corrupts pooled
         // resources when two nodes/devices have identical resource events.
@@ -422,11 +341,7 @@ impl TheoryContext {
         let home = home.into();
         let mut valid_in = BTreeSet::new();
         valid_in.insert(home.clone());
-        Self {
-            home,
-            valid_in,
-            bridge_trace: Vec::new(),
-        }
+        Self { home, valid_in, bridge_trace: Vec::new() }
     }
 }
 
@@ -466,6 +381,8 @@ pub enum Capability {
     CanExtractProvabilityTheory,
     CanConsistencyReason,
     CanIncompletenessReason,
+    CanReflectionReason,
+    CanSelfReferenceReason,
     CanHostRuntime,
     CanAcceptMigration,
     CanMigrateOut,
@@ -505,15 +422,11 @@ pub struct CapabilitySet {
 
 impl CapabilitySet {
     pub fn empty() -> Self {
-        Self {
-            inner: BTreeSet::new(),
-        }
+        Self { inner: BTreeSet::new() }
     }
 
     pub fn from<const N: usize>(caps: [Capability; N]) -> Self {
-        Self {
-            inner: caps.into_iter().collect(),
-        }
+        Self { inner: caps.into_iter().collect() }
     }
 
     pub fn contains(&self, cap: Capability) -> bool {
@@ -525,87 +438,82 @@ impl CapabilitySet {
     }
 
     pub fn intersection(&self, other: &Self) -> Self {
-        Self {
-            inner: self.inner.intersection(&other.inner).copied().collect(),
-        }
+        Self { inner: self.inner.intersection(&other.inner).copied().collect() }
     }
 
     pub fn union_for_builtin_only(&self, other: &Self) -> Self {
-        Self {
-            inner: self.inner.union(&other.inner).copied().collect(),
-        }
+        Self { inner: self.inner.union(&other.inner).copied().collect() }
     }
 
     pub fn names(&self) -> Vec<&'static str> {
-        self.inner
-            .iter()
-            .map(|cap| match cap {
-                Capability::CanAddAsNat => "can_add_as_nat",
-                Capability::CanPrintDecimal => "can_print_decimal",
-                Capability::CanSymbolicPrint => "can_symbolic_print",
-                Capability::CanCompareDirect => "can_compare_direct",
-                Capability::CanCompareByProof => "can_compare_by_proof",
-                Capability::CanComputeModular => "can_compute_modular",
-                Capability::CanInspectAst => "can_inspect_ast",
-                Capability::CanCompareSyntax => "can_compare_syntax",
-                Capability::CanParse => "can_parse",
-                Capability::CanRuntimeCompare => "can_runtime_compare",
-                Capability::CanCardinalArithmetic => "can_cardinal_arithmetic",
-                Capability::CanOrdinalArithmetic => "can_ordinal_arithmetic",
-                Capability::CanLimitReason => "can_limit_reason",
-                Capability::CanUniverseLevel => "can_universe_level",
-                Capability::CanFormSet => "can_form_set",
-                Capability::CanFormClass => "can_form_class",
-                Capability::CanLiftUniverse => "can_lift_universe",
-                Capability::CanClassReason => "can_class_reason",
-                Capability::CanSetReason => "can_set_reason",
-                Capability::CanDefineInLanguage => "can_define_in_language",
-                Capability::CanUseEncoding => "can_use_encoding",
-                Capability::CanMetaLevelReason => "can_meta_level_reason",
-                Capability::CanDefinabilityReason => "can_definability_reason",
-                Capability::CanExtractDefinabilityBound => "can_extract_definability_bound",
-                Capability::CanExtractDefinabilityMeta => "can_extract_definability_meta",
-                Capability::CanBigNumberReason => "can_big_number_reason",
-                Capability::CanExtractGrowthClass => "can_extract_growth_class",
-                Capability::CanProofKernelCheck => "can_proof_kernel_check",
-                Capability::CanPropositionReason => "can_proposition_reason",
-                Capability::CanProvabilityReason => "can_provability_reason",
-                Capability::CanTruthBoundaryReason => "can_truth_boundary_reason",
-                Capability::CanExtractProvabilityTheory => "can_extract_provability_theory",
-                Capability::CanConsistencyReason => "can_consistency_reason",
-                Capability::CanIncompletenessReason => "can_incompleteness_reason",
-                Capability::CanHostRuntime => "can_host_runtime",
-                Capability::CanAcceptMigration => "can_accept_migration",
-                Capability::CanMigrateOut => "can_migrate_out",
-                Capability::CanSerializeForMigration => "can_serialize_for_migration",
-                Capability::CanRemoteSymbolicPrint => "can_remote_symbolic_print",
-                Capability::CanCheckpointRemote => "can_checkpoint_remote",
-                Capability::CanRestoreRemoteCheckpoint => "can_restore_remote_checkpoint",
-                Capability::CanLiveMigrateRemote => "can_live_migrate_remote",
-                Capability::CanMaterializeRemote => "can_materialize_remote",
-                Capability::CanCompilePortableCode => "can_compile_portable_code",
-                Capability::CanDeployPortableCode => "can_deploy_portable_code",
-                Capability::CanCrossArchPortable => "can_cross_arch_portable",
-                Capability::CanVirtualizeCores => "can_virtualize_cores",
-                Capability::CanVirtualizeMemory => "can_virtualize_memory",
-                Capability::CanScheduleRuntime => "can_schedule_runtime",
-                Capability::CanAllocateDistributedMemory => "can_allocate_distributed_memory",
-                Capability::CanUseDistributedMemory => "can_use_distributed_memory",
-                Capability::CanCheckpointMemory => "can_checkpoint_memory",
-                Capability::CanRestoreCheckpoint => "can_restore_checkpoint",
-                Capability::CanHostGpuRuntime => "can_host_gpu_runtime",
-                Capability::CanAllocateGpuMemory => "can_allocate_gpu_memory",
-                Capability::CanUseGpuMemory => "can_use_gpu_memory",
-                Capability::CanCheckpointGpuMemory => "can_checkpoint_gpu_memory",
-                Capability::CanLaunchGpuKernel => "can_launch_gpu_kernel",
-                Capability::CanCompileGpuKernel => "can_compile_gpu_kernel",
-                Capability::CanCopyCpuToGpu => "can_copy_cpu_to_gpu",
-                Capability::CanCopyGpuToCpu => "can_copy_gpu_to_cpu",
-                Capability::CanGpuPeerTransfer => "can_gpu_peer_transfer",
-                Capability::CanGpuUnifiedAddressing => "can_gpu_unified_addressing",
-                Capability::RequiresOracle => "requires_oracle",
-            })
-            .collect()
+        self.inner.iter().map(|cap| match cap {
+            Capability::CanAddAsNat => "can_add_as_nat",
+            Capability::CanPrintDecimal => "can_print_decimal",
+            Capability::CanSymbolicPrint => "can_symbolic_print",
+            Capability::CanCompareDirect => "can_compare_direct",
+            Capability::CanCompareByProof => "can_compare_by_proof",
+            Capability::CanComputeModular => "can_compute_modular",
+            Capability::CanInspectAst => "can_inspect_ast",
+            Capability::CanCompareSyntax => "can_compare_syntax",
+            Capability::CanParse => "can_parse",
+            Capability::CanRuntimeCompare => "can_runtime_compare",
+            Capability::CanCardinalArithmetic => "can_cardinal_arithmetic",
+            Capability::CanOrdinalArithmetic => "can_ordinal_arithmetic",
+            Capability::CanLimitReason => "can_limit_reason",
+            Capability::CanUniverseLevel => "can_universe_level",
+            Capability::CanFormSet => "can_form_set",
+            Capability::CanFormClass => "can_form_class",
+            Capability::CanLiftUniverse => "can_lift_universe",
+            Capability::CanClassReason => "can_class_reason",
+            Capability::CanSetReason => "can_set_reason",
+            Capability::CanDefineInLanguage => "can_define_in_language",
+            Capability::CanUseEncoding => "can_use_encoding",
+            Capability::CanMetaLevelReason => "can_meta_level_reason",
+            Capability::CanDefinabilityReason => "can_definability_reason",
+            Capability::CanExtractDefinabilityBound => "can_extract_definability_bound",
+            Capability::CanExtractDefinabilityMeta => "can_extract_definability_meta",
+            Capability::CanBigNumberReason => "can_big_number_reason",
+            Capability::CanExtractGrowthClass => "can_extract_growth_class",
+            Capability::CanProofKernelCheck => "can_proof_kernel_check",
+            Capability::CanPropositionReason => "can_proposition_reason",
+            Capability::CanProvabilityReason => "can_provability_reason",
+            Capability::CanTruthBoundaryReason => "can_truth_boundary_reason",
+            Capability::CanExtractProvabilityTheory => "can_extract_provability_theory",
+            Capability::CanConsistencyReason => "can_consistency_reason",
+            Capability::CanIncompletenessReason => "can_incompleteness_reason",
+            Capability::CanReflectionReason => "can_reflection_reason",
+            Capability::CanSelfReferenceReason => "can_self_reference_reason",
+            Capability::CanHostRuntime => "can_host_runtime",
+            Capability::CanAcceptMigration => "can_accept_migration",
+            Capability::CanMigrateOut => "can_migrate_out",
+            Capability::CanSerializeForMigration => "can_serialize_for_migration",
+            Capability::CanRemoteSymbolicPrint => "can_remote_symbolic_print",
+            Capability::CanCheckpointRemote => "can_checkpoint_remote",
+            Capability::CanRestoreRemoteCheckpoint => "can_restore_remote_checkpoint",
+            Capability::CanLiveMigrateRemote => "can_live_migrate_remote",
+            Capability::CanMaterializeRemote => "can_materialize_remote",
+            Capability::CanCompilePortableCode => "can_compile_portable_code",
+            Capability::CanDeployPortableCode => "can_deploy_portable_code",
+            Capability::CanCrossArchPortable => "can_cross_arch_portable",
+            Capability::CanVirtualizeCores => "can_virtualize_cores",
+            Capability::CanVirtualizeMemory => "can_virtualize_memory",
+            Capability::CanScheduleRuntime => "can_schedule_runtime",
+            Capability::CanAllocateDistributedMemory => "can_allocate_distributed_memory",
+            Capability::CanUseDistributedMemory => "can_use_distributed_memory",
+            Capability::CanCheckpointMemory => "can_checkpoint_memory",
+            Capability::CanRestoreCheckpoint => "can_restore_checkpoint",
+            Capability::CanHostGpuRuntime => "can_host_gpu_runtime",
+            Capability::CanAllocateGpuMemory => "can_allocate_gpu_memory",
+            Capability::CanUseGpuMemory => "can_use_gpu_memory",
+            Capability::CanCheckpointGpuMemory => "can_checkpoint_gpu_memory",
+            Capability::CanLaunchGpuKernel => "can_launch_gpu_kernel",
+            Capability::CanCompileGpuKernel => "can_compile_gpu_kernel",
+            Capability::CanCopyCpuToGpu => "can_copy_cpu_to_gpu",
+            Capability::CanCopyGpuToCpu => "can_copy_gpu_to_cpu",
+            Capability::CanGpuPeerTransfer => "can_gpu_peer_transfer",
+            Capability::CanGpuUnifiedAddressing => "can_gpu_unified_addressing",
+            Capability::RequiresOracle => "requires_oracle",
+        }).collect()
     }
 }
 
@@ -679,14 +587,7 @@ impl Passport {
     }
 
     pub fn recursive_nat(theory: &str) -> Self {
-        Self::big_nat(
-            theory,
-            "Graham",
-            None,
-            ConstructionMode::Recursive,
-            CostClass::NonExpandable,
-            "big_number:Graham",
-        )
+        Self::big_nat(theory, "Graham", None, ConstructionMode::Recursive, CostClass::NonExpandable, "big_number:Graham")
     }
 
     pub fn definable_noncomputable_nat(theory: &str) -> Self {
@@ -702,10 +603,7 @@ impl Passport {
         event: impl Into<String>,
     ) -> Self {
         Self {
-            ty: TypeKind::BigNat {
-                family: family.into(),
-                parameter,
-            },
+            ty: TypeKind::BigNat { family: family.into(), parameter },
             construction,
             capabilities: CapabilitySet::from([
                 Capability::CanAddAsNat,
@@ -727,14 +625,7 @@ impl Passport {
     }
 
     pub fn graham_nat(theory: &str) -> Self {
-        Self::big_nat(
-            theory,
-            "Graham",
-            None,
-            ConstructionMode::Recursive,
-            CostClass::NonExpandable,
-            "big_number:Graham",
-        )
+        Self::big_nat(theory, "Graham", None, ConstructionMode::Recursive, CostClass::NonExpandable, "big_number:Graham")
     }
 
     pub fn tree_nat(theory: &str, parameter: u128) -> Self {
@@ -753,14 +644,7 @@ impl Passport {
             Some(parameter) => format!("big_number:BB:{parameter}:definable_noncomputable"),
             None => "big_number:BB:definable_noncomputable".to_string(),
         };
-        Self::big_nat(
-            theory,
-            "BB",
-            parameter,
-            ConstructionMode::Definable,
-            CostClass::Uncomputable,
-            event,
-        )
+        Self::big_nat(theory, "BB", parameter, ConstructionMode::Definable, CostClass::Uncomputable, event)
     }
 
     pub fn fast_growing_nat(theory: &str, level: u128) -> Self {
@@ -800,9 +684,7 @@ impl Passport {
 
     pub fn cardinal_infinity(theory: &str) -> Self {
         Self {
-            ty: TypeKind::Infinity {
-                mode: InfinityMode::Cardinal,
-            },
+            ty: TypeKind::Infinity { mode: InfinityMode::Cardinal },
             construction: ConstructionMode::Definable,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -822,9 +704,7 @@ impl Passport {
 
     pub fn ordinal_infinity(theory: &str) -> Self {
         Self {
-            ty: TypeKind::Infinity {
-                mode: InfinityMode::Ordinal,
-            },
+            ty: TypeKind::Infinity { mode: InfinityMode::Ordinal },
             construction: ConstructionMode::Definable,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -844,9 +724,7 @@ impl Passport {
 
     pub fn limit_infinity(theory: &str) -> Self {
         Self {
-            ty: TypeKind::Infinity {
-                mode: InfinityMode::Limit,
-            },
+            ty: TypeKind::Infinity { mode: InfinityMode::Limit },
             construction: ConstructionMode::Definable,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -866,9 +744,7 @@ impl Passport {
 
     pub fn potential_infinity(theory: &str) -> Self {
         Self {
-            ty: TypeKind::Infinity {
-                mode: InfinityMode::Potential,
-            },
+            ty: TypeKind::Infinity { mode: InfinityMode::Potential },
             construction: ConstructionMode::Definable,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -888,9 +764,7 @@ impl Passport {
 
     pub fn class_infinity(theory: &str, source: &Passport) -> Self {
         Self {
-            ty: TypeKind::Infinity {
-                mode: InfinityMode::Class,
-            },
+            ty: TypeKind::Infinity { mode: InfinityMode::Class },
             construction: ConstructionMode::Definable,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -910,9 +784,7 @@ impl Passport {
 
     pub fn universe_infinity(theory: &str, source: &Passport) -> Self {
         Self {
-            ty: TypeKind::Infinity {
-                mode: InfinityMode::Universe,
-            },
+            ty: TypeKind::Infinity { mode: InfinityMode::Universe },
             construction: ConstructionMode::Definable,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -945,12 +817,7 @@ impl Passport {
         }
     }
 
-    pub fn infinity_binary_result(
-        lhs: &Passport,
-        rhs: &Passport,
-        theory: &str,
-        event: &str,
-    ) -> Self {
+    pub fn infinity_binary_result(lhs: &Passport, rhs: &Passport, theory: &str, event: &str) -> Self {
         Self {
             ty: lhs.ty.clone(),
             construction: lhs.construction.max(rhs.construction),
@@ -993,8 +860,7 @@ impl Passport {
             _ => 0,
         };
         let mut value = Self::universe(theory, next);
-        value.history =
-            HistoryChain::from_source(&source.history, format!("universe:succ:U{next}"));
+        value.history = HistoryChain::from_source(&source.history, format!("universe:succ:U{next}"));
         value
     }
 
@@ -1016,10 +882,7 @@ impl Passport {
             provenance: source.provenance.max(Provenance::BuiltinKnown),
             validation: source.validation,
             theory: TheoryContext::new(theory),
-            history: HistoryChain::from_source(
-                &source.history,
-                format!("set:of:U{of_level}:lives_in:U{lives_in}"),
-            ),
+            history: HistoryChain::from_source(&source.history, format!("set:of:U{of_level}:lives_in:U{lives_in}")),
             location: LocationContext::local(),
         }
     }
@@ -1111,9 +974,7 @@ impl Passport {
 
     pub fn meta_level(theory: &str, level: u8, source_history: Option<&HistoryChain>) -> Self {
         let history = match source_history {
-            Some(history) => {
-                HistoryChain::from_source(history, format!("definability:meta_level:M{level}"))
-            }
+            Some(history) => HistoryChain::from_source(history, format!("definability:meta_level:M{level}")),
             None => HistoryChain::from_event(format!("definability:meta_level:M{level}")),
         };
         Self {
@@ -1133,13 +994,7 @@ impl Passport {
         }
     }
 
-    pub fn definable_nat(
-        theory: &str,
-        language: &Passport,
-        encoding: &Passport,
-        bound: u128,
-        meta: &Passport,
-    ) -> Self {
+    pub fn definable_nat(theory: &str, language: &Passport, encoding: &Passport, bound: u128, meta: &Passport) -> Self {
         let language_name = match &language.ty {
             TypeKind::Language { name } => name.clone(),
             _ => "unknown_language".to_string(),
@@ -1315,12 +1170,8 @@ impl Passport {
         }
     }
 
-    pub fn proposition(
-        theory: &str,
-        name: impl Into<String>,
-        source: Option<&Passport>,
-        event: impl Into<String>,
-    ) -> Self {
+
+    pub fn proposition(theory: &str, name: impl Into<String>, source: Option<&Passport>, event: impl Into<String>) -> Self {
         let name = name.into();
         let (trust, provenance, validation, history) = match source {
             Some(source) => (
@@ -1354,19 +1205,11 @@ impl Passport {
         }
     }
 
-    pub fn provable_claim(
-        theory: &str,
-        object_theory: impl Into<String>,
-        proposition: impl Into<String>,
-        source: &Passport,
-    ) -> Self {
+    pub fn provable_claim(theory: &str, object_theory: impl Into<String>, proposition: impl Into<String>, source: &Passport) -> Self {
         let object_theory = object_theory.into();
         let proposition = proposition.into();
         Self {
-            ty: TypeKind::Provable {
-                object_theory: object_theory.clone(),
-                proposition: proposition.clone(),
-            },
+            ty: TypeKind::Provable { object_theory: object_theory.clone(), proposition: proposition.clone() },
             construction: ConstructionMode::ProofFinite,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -1378,10 +1221,7 @@ impl Passport {
             provenance: source.provenance.max(Provenance::BuiltinKnown),
             validation: ValidationState::StaticChecked,
             theory: TheoryContext::new(theory),
-            history: HistoryChain::from_source(
-                &source.history,
-                format!("provability:of:{object_theory}:{proposition}"),
-            ),
+            history: HistoryChain::from_source(&source.history, format!("provability:of:{object_theory}:{proposition}")),
             location: LocationContext::local(),
         }
     }
@@ -1409,6 +1249,7 @@ impl Passport {
             location: LocationContext::local(),
         }
     }
+
 
     pub fn proof_term(theory: &str, rule: impl Into<String>, source: Option<&Passport>) -> Self {
         let rule = rule.into();
@@ -1443,11 +1284,7 @@ impl Passport {
         }
     }
 
-    pub fn kernel_checked_proof(
-        theory: &str,
-        predicate: impl Into<String>,
-        source: &Passport,
-    ) -> Self {
+    pub fn kernel_checked_proof(theory: &str, predicate: impl Into<String>, source: &Passport) -> Self {
         Self {
             ty: TypeKind::StaticProof(predicate.into()),
             construction: ConstructionMode::ProofFinite,
@@ -1462,11 +1299,7 @@ impl Passport {
         }
     }
 
-    pub fn axiom_truth_from_provable(
-        theory: &str,
-        predicate: impl Into<String>,
-        source: &Passport,
-    ) -> Self {
+    pub fn axiom_truth_from_provable(theory: &str, predicate: impl Into<String>, source: &Passport) -> Self {
         let predicate = predicate.into();
         Self {
             ty: TypeKind::StaticProof(format!("truth_from_provable:{predicate}")),
@@ -1482,35 +1315,18 @@ impl Passport {
         }
     }
 
-    pub fn consistency_claim(
-        theory: &str,
-        target_theory: impl Into<String>,
-        source: Option<&Passport>,
-    ) -> Self {
+    pub fn consistency_claim(theory: &str, target_theory: impl Into<String>, source: Option<&Passport>) -> Self {
         let target_theory = target_theory.into();
         let history = match source {
-            Some(source) => HistoryChain::from_source(
-                &source.history,
-                format!("consistency:claim:{target_theory}"),
-            ),
+            Some(source) => HistoryChain::from_source(&source.history, format!("consistency:claim:{target_theory}")),
             None => HistoryChain::from_event(format!("consistency:claim:{target_theory}")),
         };
         let (trust, provenance, validation) = match source {
-            Some(source) => (
-                source.trust.max(TrustLevel::Builtin),
-                source.provenance.max(Provenance::BuiltinKnown),
-                source.validation,
-            ),
-            None => (
-                TrustLevel::Builtin,
-                Provenance::BuiltinKnown,
-                ValidationState::StaticChecked,
-            ),
+            Some(source) => (source.trust.max(TrustLevel::Builtin), source.provenance.max(Provenance::BuiltinKnown), source.validation),
+            None => (TrustLevel::Builtin, Provenance::BuiltinKnown, ValidationState::StaticChecked),
         };
         Self {
-            ty: TypeKind::ConsistencyClaim {
-                theory: target_theory,
-            },
+            ty: TypeKind::ConsistencyClaim { theory: target_theory },
             construction: ConstructionMode::ProofFinite,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -1527,11 +1343,7 @@ impl Passport {
         }
     }
 
-    pub fn axiom_consistency_proof(
-        theory: &str,
-        target_theory: impl Into<String>,
-        source: &Passport,
-    ) -> Self {
+    pub fn axiom_consistency_proof(theory: &str, target_theory: impl Into<String>, source: &Passport) -> Self {
         let target_theory = target_theory.into();
         Self {
             ty: TypeKind::StaticProof(format!("consistency_axiom:{target_theory}")),
@@ -1542,10 +1354,96 @@ impl Passport {
             provenance: source.provenance.max(Provenance::BuiltinKnown),
             validation: ValidationState::StaticChecked,
             theory: TheoryContext::new(theory),
-            history: HistoryChain::from_source(
-                &source.history,
-                format!("consistency:axiom:{target_theory}"),
+            history: HistoryChain::from_source(&source.history, format!("consistency:axiom:{target_theory}")),
+            location: LocationContext::local(),
+        }
+    }
+
+
+
+    pub fn reflection_claim(theory: &str, object_theory: impl Into<String>, proposition: impl Into<String>, source: &Passport) -> Self {
+        let object_theory = object_theory.into();
+        let proposition = proposition.into();
+        Self {
+            ty: TypeKind::ReflectionClaim { object_theory: object_theory.clone(), proposition: proposition.clone() },
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([
+                Capability::CanSymbolicPrint,
+                Capability::CanReflectionReason,
+            ]),
+            cost: CostClass::ProofRequired,
+            trust: source.trust.max(TrustLevel::Builtin),
+            provenance: source.provenance.max(Provenance::BuiltinKnown),
+            validation: ValidationState::StaticChecked,
+            theory: TheoryContext::new(theory),
+            history: HistoryChain::from_source(&source.history, format!("reflection:claim:{object_theory}:{proposition}")),
+            location: LocationContext::local(),
+        }
+    }
+
+    pub fn axiom_reflection_proof(theory: &str, object_theory: impl Into<String>, proposition: impl Into<String>, source: &Passport) -> Self {
+        let object_theory = object_theory.into();
+        let proposition = proposition.into();
+        Self {
+            ty: TypeKind::StaticProof(format!("reflection_axiom:{object_theory}:{proposition}")),
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([Capability::CanSymbolicPrint]),
+            cost: CostClass::ProofRequired,
+            trust: TrustLevel::Axiom,
+            provenance: source.provenance.max(Provenance::BuiltinKnown),
+            validation: ValidationState::StaticChecked,
+            theory: TheoryContext::new(theory),
+            history: HistoryChain::from_source(&source.history, format!("reflection:axiom:{object_theory}:{proposition}")),
+            location: LocationContext::local(),
+        }
+    }
+
+    pub fn self_reference_claim(theory: &str, proposition: impl Into<String>, source: Option<&Passport>, event: impl Into<String>) -> Self {
+        let proposition = proposition.into();
+        let event = event.into();
+        let (trust, provenance, validation, history) = match source {
+            Some(source) => (
+                source.trust.max(TrustLevel::Builtin),
+                source.provenance.max(Provenance::BuiltinKnown),
+                source.validation,
+                HistoryChain::from_source(&source.history, event),
             ),
+            None => (
+                TrustLevel::Builtin,
+                Provenance::BuiltinKnown,
+                ValidationState::StaticChecked,
+                HistoryChain::from_event(event),
+            ),
+        };
+        Self {
+            ty: TypeKind::SelfReferenceClaim { proposition },
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([
+                Capability::CanSymbolicPrint,
+                Capability::CanSelfReferenceReason,
+            ]),
+            cost: CostClass::ProofRequired,
+            trust,
+            provenance,
+            validation,
+            theory: TheoryContext::new(theory),
+            history,
+            location: LocationContext::local(),
+        }
+    }
+
+    pub fn axiom_self_reference_proof(theory: &str, proposition: impl Into<String>, source: &Passport) -> Self {
+        let proposition = proposition.into();
+        Self {
+            ty: TypeKind::StaticProof(format!("self_reference_axiom:{proposition}")),
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([Capability::CanSymbolicPrint]),
+            cost: CostClass::ProofRequired,
+            trust: TrustLevel::Axiom,
+            provenance: source.provenance.max(Provenance::BuiltinKnown),
+            validation: ValidationState::StaticChecked,
+            theory: TheoryContext::new(theory),
+            history: HistoryChain::from_source(&source.history, format!("self_reference:axiom:{proposition}")),
             location: LocationContext::local(),
         }
     }
@@ -1565,21 +1463,12 @@ impl Passport {
         }
     }
 
-    pub fn term_of(
-        theory: &str,
-        source_theory: &str,
-        source_type: &str,
-        bridge_name: &str,
-        source: &Passport,
-    ) -> Self {
+    pub fn term_of(theory: &str, source_theory: &str, source_type: &str, bridge_name: &str, source: &Passport) -> Self {
         let mut ctx = TheoryContext::new(source_theory);
         ctx.valid_in.insert(theory.to_string());
         ctx.bridge_trace.push(bridge_name.to_string());
         Self {
-            ty: TypeKind::Term {
-                of_theory: source_theory.to_string(),
-                of_type: source_type.to_string(),
-            },
+            ty: TypeKind::Term { of_theory: source_theory.to_string(), of_type: source_type.to_string() },
             construction: ConstructionMode::Literal,
             capabilities: CapabilitySet::from([
                 Capability::CanInspectAst,
@@ -1591,10 +1480,7 @@ impl Passport {
             provenance: Provenance::InternalDerived,
             validation: ValidationState::StaticChecked,
             theory: ctx,
-            history: HistoryChain::from_source(
-                &source.history,
-                format!("bridge:quote:{bridge_name}"),
-            ),
+            history: HistoryChain::from_source(&source.history, format!("bridge:quote:{bridge_name}")),
             location: LocationContext::local(),
         }
     }
@@ -1604,31 +1490,17 @@ impl Passport {
         let source_home = self.theory.home.clone();
         transported.theory.home = target_theory.to_string();
         transported.theory.valid_in.insert(source_home);
-        transported
-            .theory
-            .valid_in
-            .insert(target_theory.to_string());
-        transported
-            .theory
-            .bridge_trace
-            .push(bridge_name.to_string());
-        transported
-            .history
-            .push(format!("bridge:transport:{bridge_name}"));
+        transported.theory.valid_in.insert(target_theory.to_string());
+        transported.theory.bridge_trace.push(bridge_name.to_string());
+        transported.history.push(format!("bridge:transport:{bridge_name}"));
         transported
     }
 
-    pub fn soundness_proof(
-        theory: &str,
-        predicate: impl Into<String>,
-        source: &Passport,
-        bridge_name: &str,
-    ) -> Self {
+    pub fn soundness_proof(theory: &str, predicate: impl Into<String>, source: &Passport, bridge_name: &str) -> Self {
         let mut ctx = TheoryContext::new(theory);
         ctx.valid_in.insert(source.theory.home.clone());
         ctx.bridge_trace.push(bridge_name.to_string());
-        let mut history =
-            HistoryChain::from_source(&source.history, format!("bridge:soundness:{bridge_name}"));
+        let mut history = HistoryChain::from_source(&source.history, format!("bridge:soundness:{bridge_name}"));
         history.push("axiom:soundness_assumption");
         Self {
             ty: TypeKind::StaticProof(predicate.into()),
@@ -1648,12 +1520,7 @@ impl Passport {
         Self::node_with_resources(theory, arch, None, None)
     }
 
-    pub fn node_with_resources(
-        theory: &str,
-        arch: NodeArch,
-        cores: Option<u128>,
-        memory_mib: Option<u128>,
-    ) -> Self {
+    pub fn node_with_resources(theory: &str, arch: NodeArch, cores: Option<u128>, memory_mib: Option<u128>) -> Self {
         let mut history = HistoryChain::from_event(format!("node:{arch}"));
         if let Some(cores) = cores {
             history.push(format!("node_resource:cores:{cores}"));
@@ -1693,19 +1560,11 @@ impl Passport {
                 Capability::CanAllocateDistributedMemory,
             ]),
             cost: CostClass::SmallFinite,
-            trust: nodes
-                .iter()
-                .map(|n| n.trust)
-                .max()
-                .unwrap_or(TrustLevel::Builtin)
-                .max(TrustLevel::Builtin),
+            trust: nodes.iter().map(|n| n.trust).max().unwrap_or(TrustLevel::Builtin).max(TrustLevel::Builtin),
             provenance: Provenance::InternalDerived,
             validation: ValidationState::StaticChecked,
             theory: TheoryContext::new(theory),
-            history: HistoryChain::merge_many(
-                nodes.iter().map(|n| &n.history),
-                "cluster:virtual_pool",
-            ),
+            history: HistoryChain::merge_many(nodes.iter().map(|n| &n.history), "cluster:virtual_pool"),
             location: LocationContext::local(),
         }
     }
@@ -1733,9 +1592,7 @@ impl Passport {
 
     pub fn distributed_memory_region(theory: &str, pool: &Passport, memory_mib: u128) -> Self {
         Self {
-            ty: TypeKind::DistributedMemory {
-                memory_mib: Some(memory_mib),
-            },
+            ty: TypeKind::DistributedMemory { memory_mib: Some(memory_mib) },
             construction: ConstructionMode::Definable,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -1747,10 +1604,7 @@ impl Passport {
             provenance: pool.provenance,
             validation: pool.validation,
             theory: TheoryContext::new(theory),
-            history: HistoryChain::from_source(
-                &pool.history,
-                format!("memory:distributed_region:{memory_mib}MiB"),
-            ),
+            history: HistoryChain::from_source(&pool.history, format!("memory:distributed_region:{memory_mib}MiB")),
             location: LocationContext::local(),
         }
     }
@@ -1821,12 +1675,7 @@ impl Passport {
         }
     }
 
-    pub fn migrated_to(
-        &self,
-        target_theory: &str,
-        target_arch: NodeArch,
-        bridge_name: &str,
-    ) -> Self {
+    pub fn migrated_to(&self, target_theory: &str, target_arch: NodeArch, bridge_name: &str) -> Self {
         let mut ctx = TheoryContext::new(target_theory);
         ctx.valid_in.insert(self.theory.home.clone());
         ctx.bridge_trace.push(bridge_name.to_string());
@@ -1848,10 +1697,7 @@ impl Passport {
             provenance: self.provenance,
             validation: self.validation,
             theory: ctx,
-            history: HistoryChain::from_source(
-                &self.history,
-                format!("migration:{bridge_name}:to:{target_arch}"),
-            ),
+            history: HistoryChain::from_source(&self.history, format!("migration:{bridge_name}:to:{target_arch}")),
             location: LocationContext::remote(target_arch),
         }
     }
@@ -1882,11 +1728,7 @@ impl Passport {
                 Capability::CanLiveMigrateRemote,
                 Capability::CanMaterializeRemote,
             ]),
-            cost: self
-                .cost
-                .max(pool.cost)
-                .max(target.cost)
-                .max(CostClass::SmallFinite),
+            cost: self.cost.max(pool.cost).max(target.cost).max(CostClass::SmallFinite),
             trust: self.trust.max(pool.trust).max(target.trust),
             provenance: self.provenance.max(pool.provenance).max(target.provenance),
             validation: self.validation.max(pool.validation).max(target.validation),
@@ -1899,11 +1741,10 @@ impl Passport {
         }
     }
 
+
     pub fn portable_code(theory: &str, source: &Passport) -> Self {
         Self {
-            ty: TypeKind::PortableCode {
-                inner: Box::new(source.ty.clone()),
-            },
+            ty: TypeKind::PortableCode { inner: Box::new(source.ty.clone()) },
             construction: source.construction.max(ConstructionMode::Definable),
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -1920,22 +1761,13 @@ impl Passport {
         }
     }
 
-    pub fn deployed_portable_code(
-        theory: &str,
-        code: &Passport,
-        target: &Passport,
-        target_arch: NodeArch,
-        event: impl Into<String>,
-    ) -> Self {
+    pub fn deployed_portable_code(theory: &str, code: &Passport, target: &Passport, target_arch: NodeArch, event: impl Into<String>) -> Self {
         let inner = match &code.ty {
             TypeKind::PortableCode { inner } => (**inner).clone(),
             _ => TypeKind::Unknown("PortableCodeInner".to_string()),
         };
         Self {
-            ty: TypeKind::Remote {
-                inner: Box::new(inner),
-                target_arch,
-            },
+            ty: TypeKind::Remote { inner: Box::new(inner), target_arch },
             construction: code.construction,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -1954,19 +1786,14 @@ impl Passport {
         }
     }
 
+
     pub fn remote_checkpoint(theory: &str, source: &Passport) -> Self {
         let (inner, source_arch) = match &source.ty {
             TypeKind::Remote { inner, target_arch } => ((**inner).clone(), *target_arch),
-            _ => (
-                TypeKind::Unknown("RemoteCheckpointSource".to_string()),
-                NodeArch::X86_64,
-            ),
+            _ => (TypeKind::Unknown("RemoteCheckpointSource".to_string()), NodeArch::X86_64),
         };
         Self {
-            ty: TypeKind::RemoteCheckpoint {
-                inner: Box::new(inner),
-                source_arch,
-            },
+            ty: TypeKind::RemoteCheckpoint { inner: Box::new(inner), source_arch },
             construction: source.construction,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -1983,21 +1810,13 @@ impl Passport {
         }
     }
 
-    pub fn restored_remote(
-        theory: &str,
-        checkpoint: &Passport,
-        target: &Passport,
-        target_arch: NodeArch,
-    ) -> Self {
+    pub fn restored_remote(theory: &str, checkpoint: &Passport, target: &Passport, target_arch: NodeArch) -> Self {
         let inner = match &checkpoint.ty {
             TypeKind::RemoteCheckpoint { inner, .. } => (**inner).clone(),
             _ => TypeKind::Unknown("RemoteCheckpointInner".to_string()),
         };
         Self {
-            ty: TypeKind::Remote {
-                inner: Box::new(inner),
-                target_arch,
-            },
+            ty: TypeKind::Remote { inner: Box::new(inner), target_arch },
             construction: checkpoint.construction,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -2011,30 +1830,18 @@ impl Passport {
             provenance: checkpoint.provenance.max(target.provenance),
             validation: checkpoint.validation.max(target.validation),
             theory: TheoryContext::new(theory),
-            history: HistoryChain::merge2(
-                &checkpoint.history,
-                &target.history,
-                format!("checkpoint:restore_remote:to:{target_arch}"),
-            ),
+            history: HistoryChain::merge2(&checkpoint.history, &target.history, format!("checkpoint:restore_remote:to:{target_arch}")),
             location: LocationContext::remote(target_arch),
         }
     }
 
-    pub fn live_migrated_remote(
-        theory: &str,
-        source: &Passport,
-        target: &Passport,
-        target_arch: NodeArch,
-    ) -> Self {
+    pub fn live_migrated_remote(theory: &str, source: &Passport, target: &Passport, target_arch: NodeArch) -> Self {
         let inner = match &source.ty {
             TypeKind::Remote { inner, .. } => (**inner).clone(),
             _ => TypeKind::Unknown("RemoteInner".to_string()),
         };
         Self {
-            ty: TypeKind::Remote {
-                inner: Box::new(inner),
-                target_arch,
-            },
+            ty: TypeKind::Remote { inner: Box::new(inner), target_arch },
             construction: source.construction,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -2048,22 +1855,18 @@ impl Passport {
             provenance: source.provenance.max(target.provenance),
             validation: source.validation.max(target.validation),
             theory: TheoryContext::new(theory),
-            history: HistoryChain::merge2(
-                &source.history,
-                &target.history,
-                format!("migration:live_remote:to:{target_arch}"),
-            ),
+            history: HistoryChain::merge2(&source.history, &target.history, format!("migration:live_remote:to:{target_arch}")),
             location: LocationContext::remote(target_arch),
         }
     }
+
 
     pub fn materialized_remote(theory: &str, source: &Passport, bridge_name: &str) -> Self {
         let inner = match &source.ty {
             TypeKind::Remote { inner, .. } => (**inner).clone(),
             _ => TypeKind::Unknown("RemoteInner".to_string()),
         };
-        let capabilities =
-            Self::capabilities_for_materialized_inner(&inner, source.construction, source.cost);
+        let capabilities = Self::capabilities_for_materialized_inner(&inner, source.construction, source.cost);
         let event = if bridge_name == "local_materialize" {
             "remote:materialize:local".to_string()
         } else {
@@ -2083,11 +1886,7 @@ impl Passport {
         }
     }
 
-    fn capabilities_for_materialized_inner(
-        inner: &TypeKind,
-        construction: ConstructionMode,
-        cost: CostClass,
-    ) -> CapabilitySet {
+    fn capabilities_for_materialized_inner(inner: &TypeKind, construction: ConstructionMode, cost: CostClass) -> CapabilitySet {
         match inner {
             TypeKind::Nat => {
                 let mut caps = CapabilitySet::from([
@@ -2109,41 +1908,13 @@ impl Passport {
                 }
                 caps
             }
-            TypeKind::Universe { .. } => CapabilitySet::from([
-                Capability::CanSymbolicPrint,
-                Capability::CanCompareByProof,
-                Capability::CanUniverseLevel,
-                Capability::CanFormSet,
-                Capability::CanFormClass,
-                Capability::CanLiftUniverse,
-            ]),
-            TypeKind::Set { .. } => CapabilitySet::from([
-                Capability::CanSymbolicPrint,
-                Capability::CanCompareByProof,
-                Capability::CanSetReason,
-            ]),
-            TypeKind::Class { .. } => CapabilitySet::from([
-                Capability::CanSymbolicPrint,
-                Capability::CanCompareByProof,
-                Capability::CanClassReason,
-            ]),
-            TypeKind::Language { .. } => CapabilitySet::from([
-                Capability::CanSymbolicPrint,
-                Capability::CanDefineInLanguage,
-            ]),
-            TypeKind::Encoding { .. } => {
-                CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanUseEncoding])
-            }
-            TypeKind::MetaLevel { .. } => {
-                CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanMetaLevelReason])
-            }
-            TypeKind::DefinableNat { .. } => CapabilitySet::from([
-                Capability::CanSymbolicPrint,
-                Capability::CanCompareByProof,
-                Capability::CanDefinabilityReason,
-                Capability::CanExtractDefinabilityBound,
-                Capability::CanExtractDefinabilityMeta,
-            ]),
+            TypeKind::Universe { .. } => CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanCompareByProof, Capability::CanUniverseLevel, Capability::CanFormSet, Capability::CanFormClass, Capability::CanLiftUniverse]),
+            TypeKind::Set { .. } => CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanCompareByProof, Capability::CanSetReason]),
+            TypeKind::Class { .. } => CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanCompareByProof, Capability::CanClassReason]),
+            TypeKind::Language { .. } => CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanDefineInLanguage]),
+            TypeKind::Encoding { .. } => CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanUseEncoding]),
+            TypeKind::MetaLevel { .. } => CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanMetaLevelReason]),
+            TypeKind::DefinableNat { .. } => CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanCompareByProof, Capability::CanDefinabilityReason, Capability::CanExtractDefinabilityBound, Capability::CanExtractDefinabilityMeta]),
             TypeKind::Bool | TypeKind::Text => CapabilitySet::from([Capability::CanSymbolicPrint]),
             TypeKind::Infinity { mode } => match mode {
                 InfinityMode::Cardinal => CapabilitySet::from([
@@ -2164,10 +1935,7 @@ impl Passport {
                     Capability::CanCompareByProof,
                 ]),
             },
-            _ => CapabilitySet::from([
-                Capability::CanSymbolicPrint,
-                Capability::CanSerializeForMigration,
-            ]),
+            _ => CapabilitySet::from([Capability::CanSymbolicPrint, Capability::CanSerializeForMigration]),
         }
     }
 
@@ -2210,35 +1978,18 @@ impl Passport {
                 Capability::CanLaunchGpuKernel,
             ]),
             cost: CostClass::SmallFinite,
-            trust: devices
-                .iter()
-                .map(|item| item.trust)
-                .max()
-                .unwrap_or(TrustLevel::Builtin),
-            provenance: devices
-                .iter()
-                .map(|item| item.provenance)
-                .max()
-                .unwrap_or(Provenance::BuiltinKnown),
-            validation: devices
-                .iter()
-                .map(|item| item.validation)
-                .max()
-                .unwrap_or(ValidationState::StaticChecked),
+            trust: devices.iter().map(|item| item.trust).max().unwrap_or(TrustLevel::Builtin),
+            provenance: devices.iter().map(|item| item.provenance).max().unwrap_or(Provenance::BuiltinKnown),
+            validation: devices.iter().map(|item| item.validation).max().unwrap_or(ValidationState::StaticChecked),
             theory: TheoryContext::new(theory),
-            history: HistoryChain::merge_many(
-                devices.iter().map(|item| &item.history),
-                "gpu_pool:create",
-            ),
+            history: HistoryChain::merge_many(devices.iter().map(|item| &item.history), "gpu_pool:create"),
             location: LocationContext::local(),
         }
     }
 
     pub fn distributed_gpu_memory_region(theory: &str, pool: &Passport, memory_mib: u128) -> Self {
         Self {
-            ty: TypeKind::DistributedGpuMemory {
-                memory_mib: Some(memory_mib),
-            },
+            ty: TypeKind::DistributedGpuMemory { memory_mib: Some(memory_mib) },
             construction: ConstructionMode::Definable,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -2254,10 +2005,7 @@ impl Passport {
             provenance: pool.provenance,
             validation: pool.validation,
             theory: TheoryContext::new(theory),
-            history: HistoryChain::from_source(
-                &pool.history,
-                format!("gpu_memory:distributed_region:{memory_mib}MiB"),
-            ),
+            history: HistoryChain::from_source(&pool.history, format!("gpu_memory:distributed_region:{memory_mib}MiB")),
             location: LocationContext::local(),
         }
     }
@@ -2289,9 +2037,7 @@ impl Passport {
         // degrading a literal/small Nat into Definable. Otherwise copy_from_gpu()
         // would lose can_print_decimal for exact small values.
         Self {
-            ty: TypeKind::GpuValue {
-                inner: Box::new(source.ty.clone()),
-            },
+            ty: TypeKind::GpuValue { inner: Box::new(source.ty.clone()) },
             construction: source.construction,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -2314,9 +2060,7 @@ impl Passport {
         // degrading a literal/small Nat into Definable. Otherwise launching the
         // kernel and copying the result back would lose exact-value capabilities.
         Self {
-            ty: TypeKind::GpuKernel {
-                inner: Box::new(source.ty.clone()),
-            },
+            ty: TypeKind::GpuKernel { inner: Box::new(source.ty.clone()) },
             construction: source.construction,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -2339,9 +2083,7 @@ impl Passport {
             _ => TypeKind::Unknown("GpuKernelInner".to_string()),
         };
         Self {
-            ty: TypeKind::GpuValue {
-                inner: Box::new(inner),
-            },
+            ty: TypeKind::GpuValue { inner: Box::new(inner) },
             construction: kernel.construction,
             capabilities: CapabilitySet::from([
                 Capability::CanSymbolicPrint,
@@ -2366,11 +2108,7 @@ impl Passport {
         Self {
             ty: inner.clone(),
             construction: source.construction,
-            capabilities: Self::capabilities_for_materialized_inner(
-                &inner,
-                source.construction,
-                source.cost,
-            ),
+            capabilities: Self::capabilities_for_materialized_inner(&inner, source.construction, source.cost),
             cost: source.cost.max(CostClass::SmallFinite),
             trust: source.trust,
             provenance: source.provenance,

@@ -24,7 +24,7 @@ fn main() {
             run_explain(&path, policy);
         }
         "--version" | "-V" => {
-            println!("dlm 0.27.0-mvp");
+            println!("dlm 0.33.0");
         }
         "help" | "--help" | "-h" => print_usage_and_exit(0),
         other => {

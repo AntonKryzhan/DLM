@@ -1,5 +1,5 @@
 use crate::ast::*;
-use crate::diagnostics::{Diagnostic, DiagnosticKind};
+use crate::diagnostics::{Diagnostic, DiagnosticKind, SourceSpan};
 
 pub fn parse_module(source: &str) -> Result<Module, Vec<Diagnostic>> {
     let mut diagnostics = Vec::new();
@@ -42,7 +42,7 @@ pub fn parse_module(source: &str) -> Result<Module, Vec<Diagnostic>> {
                 continue;
             }
             if let Some(rest) = line.strip_prefix("let ") {
-                match parse_let(rest, line_no) {
+                match parse_let(rest, line_no, find_column(raw_line, "let").unwrap_or(1) + 4) {
                     Ok(let_decl) => theory.items.push(TheoryItem::Let(let_decl)),
                     Err(diag) => diagnostics.push(diag),
                 }
@@ -52,7 +52,7 @@ pub fn parse_module(source: &str) -> Result<Module, Vec<Diagnostic>> {
                 // MVP parser accepts but ignores declarations not needed by checker v0.1.
                 continue;
             }
-            match parse_expr(&line, line_no) {
+            match parse_expr_at(&line, line_no, find_column(raw_line, line.as_str()).unwrap_or(1)) {
                 Ok(expr) => theory.items.push(TheoryItem::Expr(expr)),
                 Err(diag) => diagnostics.push(diag),
             }
@@ -74,9 +74,9 @@ pub fn parse_module(source: &str) -> Result<Module, Vec<Diagnostic>> {
         if let Some(rest) = line.strip_prefix("theory ") {
             let name = rest.trim().trim_end_matches('{').trim().to_string();
             if name.is_empty() {
-                diagnostics.push(Diagnostic::error(
+                diagnostics.push(Diagnostic::error_at(
                     DiagnosticKind::ParseError,
-                    Some(line_no),
+                    SourceSpan::line_col(line_no, find_column(raw_line, "theory").unwrap_or(1), line.len()),
                     "missing theory name",
                 ));
             } else {
@@ -139,25 +139,27 @@ fn strip_comment(line: &str) -> &str {
     line.split("//").next().unwrap_or(line)
 }
 
-fn parse_let(rest: &str, line: usize) -> Result<LetDecl, Diagnostic> {
+fn parse_let(rest: &str, line: usize, rest_col: usize) -> Result<LetDecl, Diagnostic> {
     let trimmed = rest.trim().trim_end_matches(';');
+    let trimmed_col = rest_col + rest.find(trimmed).unwrap_or(0);
     let Some((name, expr_text)) = trimmed.split_once('=') else {
-        return Err(Diagnostic::error(
+        return Err(Diagnostic::error_at(
             DiagnosticKind::ParseError,
-            Some(line),
+            SourceSpan::line_col(line, trimmed_col, trimmed.len()),
             "expected let name = expression",
         ));
     };
-    let name = name.trim().to_string();
-    if name.is_empty() {
-        return Err(Diagnostic::error(
+    let name_text = name.trim();
+    if name_text.is_empty() {
+        return Err(Diagnostic::error_at(
             DiagnosticKind::ParseError,
-            Some(line),
+            SourceSpan::line_col(line, trimmed_col, 1),
             "missing let binding name",
         ));
     }
-    let expr = parse_expr(expr_text.trim(), line)?;
-    Ok(LetDecl { name, expr, line })
+    let eq_col = trimmed_col + trimmed.find('=').unwrap_or(0);
+    let expr = parse_expr_at(expr_text, line, eq_col + 1)?;
+    Ok(LetDecl { name: name_text.to_string(), expr, line })
 }
 
 fn parse_bridge_header(rest: &str, line: usize) -> Result<BridgeDecl, Diagnostic> {
@@ -202,40 +204,46 @@ fn parse_bridge_kind(text: &str) -> BridgeKind {
 }
 
 pub fn parse_expr(text: &str, line: usize) -> Result<Expr, Diagnostic> {
-    let text = text.trim().trim_end_matches(';').trim();
+    parse_expr_at(text, line, 1)
+}
+
+fn parse_expr_at(text: &str, line: usize, col: usize) -> Result<Expr, Diagnostic> {
+    let (text, col) = trim_with_col(text, col);
+    let text = text.trim_end();
+    let text = text.trim_end_matches(';').trim_end();
     if text.is_empty() {
-        return Err(Diagnostic::error(
+        return Err(Diagnostic::error_at(
             DiagnosticKind::ParseError,
-            Some(line),
+            SourceSpan::line_col(line, col, 1),
             "empty expression",
         ));
     }
 
-    if let Some((lhs, rhs)) = split_top_level(text, '>') {
+    if let Some(idx) = split_top_level_index(text, '>') {
         return Ok(Expr {
             kind: ExprKind::CompareGt {
-                lhs: Box::new(parse_expr(lhs, line)?),
-                rhs: Box::new(parse_expr(rhs, line)?),
+                lhs: Box::new(parse_expr_at(&text[..idx], line, col)?),
+                rhs: Box::new(parse_expr_at(&text[idx + 1..], line, col + idx + 1)?),
             },
             line,
         });
     }
 
-    if let Some((lhs, rhs)) = split_top_level(text, '+') {
+    if let Some(idx) = split_top_level_index(text, '+') {
         return Ok(Expr {
             kind: ExprKind::Add {
-                lhs: Box::new(parse_expr(lhs, line)?),
-                rhs: Box::new(parse_expr(rhs, line)?),
+                lhs: Box::new(parse_expr_at(&text[..idx], line, col)?),
+                rhs: Box::new(parse_expr_at(&text[idx + 1..], line, col + idx + 1)?),
             },
             line,
         });
     }
 
-    if let Some((lhs, rhs)) = split_top_level(text, '^') {
+    if let Some(idx) = split_top_level_index(text, '^') {
         return Ok(Expr {
             kind: ExprKind::Power {
-                base: Box::new(parse_expr(lhs, line)?),
-                exp: Box::new(parse_expr(rhs, line)?),
+                base: Box::new(parse_expr_at(&text[..idx], line, col)?),
+                exp: Box::new(parse_expr_at(&text[idx + 1..], line, col + idx + 1)?),
             },
             line,
         });
@@ -245,13 +253,13 @@ pub fn parse_expr(text: &str, line: usize) -> Result<Expr, Diagnostic> {
         return Ok(Expr::int(text, line));
     }
 
-    if let Some((name, args_text)) = parse_call_parts(text) {
+    if let Some((name, args_text, args_col)) = parse_call_parts(text, col) {
         let args = if args_text.trim().is_empty() {
             Vec::new()
         } else {
-            split_args(args_text)
+            split_args(args_text, args_col)
                 .into_iter()
-                .map(|arg| parse_expr(arg, line))
+                .map(|(arg, arg_col)| parse_expr_at(arg, line, arg_col))
                 .collect::<Result<Vec<_>, _>>()?
         };
         return Ok(Expr {
@@ -279,14 +287,14 @@ pub fn parse_expr(text: &str, line: usize) -> Result<Expr, Diagnostic> {
         return Ok(Expr::ident(text, line));
     }
 
-    Err(Diagnostic::error(
+    Err(Diagnostic::error_at(
         DiagnosticKind::ParseError,
-        Some(line),
+        SourceSpan::line_col(line, col, text.len()),
         format!("could not parse expression '{text}'"),
     ))
 }
 
-fn parse_call_parts(text: &str) -> Option<(&str, &str)> {
+fn parse_call_parts(text: &str, col: usize) -> Option<(&str, &str, usize)> {
     let open = text.find('(')?;
     if !text.ends_with(')') {
         return None;
@@ -295,7 +303,7 @@ fn parse_call_parts(text: &str) -> Option<(&str, &str)> {
     if !is_ident(name) {
         return None;
     }
-    Some((name, &text[open + 1..text.len() - 1]))
+    Some((name, &text[open + 1..text.len() - 1], col + open + 1))
 }
 
 fn is_ident(text: &str) -> bool {
@@ -307,7 +315,7 @@ fn is_ident(text: &str) -> bool {
         && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
-fn split_top_level(text: &str, needle: char) -> Option<(&str, &str)> {
+fn split_top_level_index(text: &str, needle: char) -> Option<usize> {
     let mut depth = 0i32;
     for (idx, ch) in text.char_indices().rev() {
         match ch {
@@ -316,13 +324,13 @@ fn split_top_level(text: &str, needle: char) -> Option<(&str, &str)> {
             _ => {}
         }
         if depth == 0 && ch == needle {
-            return Some((&text[..idx], &text[idx + ch.len_utf8()..]));
+            return Some(idx);
         }
     }
     None
 }
 
-fn split_args(text: &str) -> Vec<&str> {
+fn split_args(text: &str, col: usize) -> Vec<(&str, usize)> {
     let mut args = Vec::new();
     let mut start = 0usize;
     let mut depth = 0i32;
@@ -331,12 +339,25 @@ fn split_args(text: &str) -> Vec<&str> {
             '(' => depth += 1,
             ')' => depth -= 1,
             ',' if depth == 0 => {
-                args.push(text[start..idx].trim());
+                let raw = &text[start..idx];
+                let (trimmed, arg_col) = trim_with_col(raw, col + start);
+                args.push((trimmed.trim_end(), arg_col));
                 start = idx + 1;
             }
             _ => {}
         }
     }
-    args.push(text[start..].trim());
+    let raw = &text[start..];
+    let (trimmed, arg_col) = trim_with_col(raw, col + start);
+    args.push((trimmed.trim_end(), arg_col));
     args
+}
+
+fn trim_with_col(text: &str, col: usize) -> (&str, usize) {
+    let trimmed = text.trim_start();
+    (trimmed, col + text.len().saturating_sub(trimmed.len()))
+}
+
+fn find_column(line: &str, needle: &str) -> Option<usize> {
+    line.find(needle).map(|idx| idx + 1)
 }

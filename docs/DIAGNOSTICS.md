@@ -47,6 +47,42 @@ JSON format:
 }
 ```
 
+
+## 2.1. Current implementation status — v0.33.0
+
+`v0.33.0` introduces the first concrete span foundation in the Rust prototype. The public diagnostic object now keeps both the old line-only API and a new source span:
+
+```rust
+pub struct Diagnostic {
+    pub line: Option<usize>,
+    pub span: Option<SourceSpan>,
+    // ...
+}
+```
+
+The compatibility rule is strict:
+
+```text
+Diagnostic::error(kind, Some(line), message)
+    -> keeps old human output
+    -> also stores SourceSpan::line(line)
+
+Diagnostic::error_at(kind, SourceSpan::line_col(line, col, len), message)
+    -> stores precise line/column span
+    -> prints line + column in human diagnostics
+```
+
+Current human output examples:
+
+```text
+error[E0002 NameError] at line 3: unknown name
+error[E0001 ParseError] at line 7, column 12: bad token
+```
+
+This is intentionally a foundation layer. It does not yet implement full source snippets, secondary labels, byte offsets, file ids, or JSON emission. Those should be added after the resolver/ID skeleton, when source locations can be attached to RawAST/HIR nodes consistently.
+
+---
+
 ## 3. Source errors
 
 ```text

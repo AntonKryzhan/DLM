@@ -33,8 +33,8 @@ DLM должен оставаться языком, где программа н
 
 ```text
 v0.31.2 — stable Reflection / Self-Reference Guard
-v0.32.0 — Semantic Core Hardening
-v0.33.0 — Span / Diagnostic Foundation
+v0.32.0 — Semantic Core Hardening ✅
+v0.33.0 — Span / Diagnostic Foundation ✅
 v0.34.0 — ID / Resolver Skeleton
 v0.35.0 — Checker Orchestration / First Pass Split
 v0.36.0 — Property-Based Invariant Tests
@@ -48,7 +48,9 @@ v0.37.0 — Meta-Level Stratification
 Потом продолжать наращивать метаматематику.
 ```
 
-`v0.32.0` начинает этот разворот: bridge preservation, trust policy и capability/passport rules выносятся из монолитного чекера в отдельные модули.
+`v0.32.0` начал этот разворот: bridge preservation, trust policy и capability/passport rules вынесены из монолитного чекера в отдельные модули.
+
+`v0.33.0` продолжает hardening-линию: добавлен `SourceSpan` и foundation для точных diagnostics без изменения синтаксиса языка и без пересборки AST-модели.
 
 ---
 
@@ -74,10 +76,10 @@ dlm explain <file.dlm>
 v0.31.2 — Reflection / Self-Reference Guard stable baseline
 ```
 
-Следующий активный слой:
+Текущий активный слой:
 
 ```text
-v0.32.0 — Semantic Core Hardening
+v0.33.0 — Span / Diagnostic Foundation
 ```
 
 Текущая baseline-проверка для `v0.31.2` и последующих hardening-патчей:
@@ -90,7 +92,7 @@ cargo run -p dlm_cli -- run examples\valid\reflection_self_reference_guard.dlm
 cargo run -p dlm_cli -- explain examples\valid\reflection_summary_axiom.dlm
 ```
 
-После успешной проверки `v0.31.2` стала стабильной базой; следующий этап — `v0.32.0 Semantic Core Hardening`.
+После успешной проверки `v0.32.0` архитектурный hardening продолжен этапом `v0.33.0 Span / Diagnostic Foundation`.
 
 ---
 
