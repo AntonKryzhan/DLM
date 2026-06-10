@@ -668,3 +668,19 @@ Coverage:
 - rewrite rules apply forward and reverse only on exact source terms;
 - rewrite traces preserve step order;
 - axiom equality taint is preserved in rewrite certificates.
+
+
+## v0.44 Rewrite normalization tests
+
+```powershell
+cargo test -p dlm_core --test rewrite_normalization
+```
+
+Coverage:
+
+- ordered normalization to normal form;
+- zero-step already-normal terms;
+- rejection of non-`RewriteRule` passports;
+- step-limit guard for cyclic rewrites;
+- taint preservation;
+- audit rejection of tampered reports.

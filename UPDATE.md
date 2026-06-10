@@ -313,3 +313,28 @@ Primary invariants:
 - raw `ProofTerm` must be kernel-checked first.
 - `EqProof` must be converted into a `RewriteRule` before application.
 - rewrite certificates preserve ordered rewrite traces and trust taint.
+
+
+## v0.44.0 — Rewrite Normalization / Audit Foundation
+
+Added bounded rewrite normalization on top of v0.43 equality rewrite certificates.
+
+Changed/added files:
+
+- `crates/dlm_core/src/rewrite_normalization.rs`
+- `crates/dlm_core/tests/rewrite_normalization.rs`
+- `docs/REWRITE_NORMALIZATION.md`
+
+New diagnostic kind:
+
+- `RewriteNormalizationError[E0915]`
+
+Protected laws:
+
+- normalization is ordered and bounded;
+- cyclic rewrite systems fail by `max_steps`;
+- only `RewriteRule` passports can participate;
+- report/certificate endpoints must match;
+- axiom taint is preserved through normalization.
+
+No `.dlm` syntax, checker behavior or runtime behavior changed.

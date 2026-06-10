@@ -547,3 +547,8 @@ Bool equality result != EqProof<A,B> != RewriteCertificate<A,B>
 ```
 
 Rewrite certificates preserve rule order and trust taint. Axiom-derived equality remains visibly `trust=Axiom` after rewriting.
+
+
+## v0.44.0 — Rewrite Normalization / Audit Foundation
+
+The core now has a bounded rewrite-normalization layer over typed equality proofs and rewrite rules. It can build stable normalization reports and audit that a rewrite certificate matches the report endpoints and taint state. No `.dlm` syntax or runtime behavior changed.

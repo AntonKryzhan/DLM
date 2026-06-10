@@ -572,3 +572,14 @@ parse -> resolve -> type/check -> proof/equality checking -> rewrite planning ->
 ```
 
 `v0.43.0` only introduces the artifacts and laws needed for a later rewrite-planning pass.
+
+
+## v0.44 Rewrite normalization foundation
+
+The rewrite normalization layer is a core-only foundation pass. It operates on internal `RewriteRule` passports and emits `RewriteNormalizationReport` plus a `RewriteCertificate`. It is not yet wired into `.dlm` parsing or checker execution.
+
+```text
+EqProof -> RewriteRule -> bounded ordered normalization -> RewriteCertificate
+```
+
+The pass is deliberately bounded by `max_steps`; cyclic rewrite systems are rejected instead of looping.

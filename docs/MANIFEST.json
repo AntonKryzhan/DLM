@@ -6,8 +6,8 @@
   },
   {
     "file": "AST_IR.md",
-    "bytes": 8894,
-    "sha256": "5043a33c906d30aa2236c52d49807e883e0f2e2916699f0b772a0dd0938fbc55"
+    "bytes": 9162,
+    "sha256": "a107849cad9973595849a3ed66844a490e6307c79e0ff2347ef2fa5a25002a78"
   },
   {
     "file": "BIG_NUMBER_HIERARCHY.md",
@@ -31,8 +31,8 @@
   },
   {
     "file": "COMPILER_PASSES.md",
-    "bytes": 12327,
-    "sha256": "bc13034a8b6484dab6c811848c40e449d971bf2f6749518f6cc60a397916f531"
+    "bytes": 12811,
+    "sha256": "b78b4f3f4464a7061d5515750a501f718e176f96d8bc8b35b4034d1c0bb2e8e8"
   },
   {
     "file": "CONSISTENCY_INCOMPLETENESS.md",
@@ -46,8 +46,8 @@
   },
   {
     "file": "DIAGNOSTICS.md",
-    "bytes": 10583,
-    "sha256": "ecb96c47a9f82c2598b6436e51adee329dbc20ba543a8c6d3ebd345b8b2dd479"
+    "bytes": 10947,
+    "sha256": "5e8795848d73ad1bfacba450de1f4ba999ccd13e2fd1bfad558a939af9f2c160"
   },
   {
     "file": "DISTRIBUTED_MEMORY_REGION.md",
@@ -180,6 +180,11 @@
     "sha256": "99d77e18cb4c25641720adfbf0fc628df2ff0d4ae887cf2803cbcf2ad7de4d5f"
   },
   {
+    "file": "REWRITE_NORMALIZATION.md",
+    "bytes": 1674,
+    "sha256": "3b820b3a2cccd002af7a99efe2dc5cd4e68fa993af3f405db50f5a8eb403df49"
+  },
+  {
     "file": "SCHEDULER.md",
     "bytes": 2380,
     "sha256": "72a7b088ee9ff1fe2fd49c1d0c85ade2f55c53b849b9118da323328d8864f53d"
@@ -206,8 +211,8 @@
   },
   {
     "file": "TEST_MATRIX.md",
-    "bytes": 13230,
-    "sha256": "2d76f8095f25f31818a611324fae1fd96f2ca9d441a1666f1e50b1c5f9c0ee2d"
+    "bytes": 13571,
+    "sha256": "ef402f10bc72af198077bf85c8a20b2f31a65c11b81c6df18d4f57707ef1a0a9"
   },
   {
     "file": "UNIVERSE_HIERARCHY.md",

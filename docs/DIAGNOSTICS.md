@@ -490,3 +490,15 @@ Typical triggers:
 - applying an `EqProof` directly without first deriving a `RewriteRule`.
 
 The invariant is: `Bool == true` is not the same artifact as `EqProof<A,B>`, and a rewrite certificate must preserve the trust/taint of every equality proof used in its trace.
+
+
+## E0915 RewriteNormalizationError
+
+Raised by the bounded rewrite normalization/audit foundation.
+
+Typical causes:
+
+- normalization rule is not a `RewriteRule` passport;
+- rewrite cycle exceeds `max_steps`;
+- normalization report input/normal form does not match its trace;
+- attached `RewriteCertificate` endpoints, trust or provenance do not match the report.

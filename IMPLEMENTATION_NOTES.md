@@ -502,3 +502,10 @@ The implementation keeps equality proof evidence distinct from boolean equality 
 The patch intentionally avoids parser and checker integration. It is a core semantic layer for later HIR rewriting and tactic automation.
 
 Important invariant: rewrite construction never lowers trust. If a rewrite rule comes from `axiom_eq_proof`, the resulting trace and certificate remain `trust=Axiom`.
+
+
+## v0.44 implementation notes
+
+Rewrite normalization intentionally remains a core-only API. It repeatedly applies the first forward rewrite rule matching the current term and requires an explicit `max_steps` bound. This prevents cyclic rewrite systems from becoming non-terminating hidden compiler work.
+
+Normalization certificates reuse the existing `RewriteCertificate` passport; the new report/audit layer validates that the certificate endpoints, trust and provenance match the trace.

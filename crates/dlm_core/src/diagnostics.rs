@@ -36,6 +36,7 @@ pub enum DiagnosticKind {
     ProofCertificateError,
     ProofCertificateAuditError,
     EqualityRewriteError,
+    RewriteNormalizationError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -184,6 +185,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::ProofCertificateError => "E0912 ProofCertificateError",
             DiagnosticKind::ProofCertificateAuditError => "E0913 ProofCertificateAuditError",
             DiagnosticKind::EqualityRewriteError => "E0914 EqualityRewriteError",
+            DiagnosticKind::RewriteNormalizationError => "E0915 RewriteNormalizationError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

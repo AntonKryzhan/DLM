@@ -480,3 +480,17 @@ The distinction is intentional:
 ```text
 Bool != EqProof != RewriteCertificate
 ```
+
+
+## v0.44 Rewrite normalization IR note
+
+Rewrite normalization is represented as core IR data only. It is not yet syntax.
+
+```text
+RewriteNormalizationReport {
+  input,
+  normal_form,
+  trace: RewriteTrace,
+  certificate: RewriteCertificate<input, normal_form>
+}
+```

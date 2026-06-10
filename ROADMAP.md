@@ -2774,3 +2774,19 @@ Completed:
 - regression tests for boolean equality separation, runtime/static separation, trace order, and trust preservation.
 
 This prepares future theorem/tactic automation while keeping current `.dlm` programs stable.
+
+
+## v0.44.0 completed — Rewrite Normalization / Audit foundation
+
+`v0.44.0` adds bounded rewrite normalization and audit/export reporting over the equality rewrite layer.
+
+Completed:
+
+- ordered forward rewrite normalization;
+- step-bound guard against cyclic rewrite systems;
+- `RewriteNormalizationReport`;
+- audit validation for trace/certificate endpoint consistency;
+- stable text export for normalization reports;
+- taint-preserving normalization certificates.
+
+This prepares future simplification passes and theorem/tactic automation while keeping existing `.dlm` programs stable.
