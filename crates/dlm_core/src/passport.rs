@@ -132,6 +132,13 @@ pub enum TypeKind {
     TruthClaim {
         proposition: String,
     },
+    ReflectionClaim {
+        object_theory: String,
+        proposition: String,
+    },
+    SelfReferenceClaim {
+        proposition: String,
+    },
     Statement {
         proposition: String,
     },
@@ -229,6 +236,11 @@ impl fmt::Display for TypeKind {
                 proposition,
             } => write!(f, "Provable<{object_theory}.{proposition}>"),
             TypeKind::TruthClaim { proposition } => write!(f, "TruthClaim<{proposition}>"),
+            TypeKind::ReflectionClaim {
+                object_theory,
+                proposition,
+            } => write!(f, "Reflection<{object_theory}.{proposition}>"),
+            TypeKind::SelfReferenceClaim { proposition } => write!(f, "SelfReference<{proposition}>"),
             TypeKind::Statement { proposition } => write!(f, "Statement<{proposition}>"),
             TypeKind::Theorem { name, proposition } => write!(f, "Theorem<{name}:{proposition}>"),
             TypeKind::Goal { proposition } => write!(f, "Goal<{proposition}>"),
@@ -1499,6 +1511,128 @@ impl Passport {
         }
     }
 
+    pub fn reflection_claim(
+        theory: &str,
+        object_theory: impl Into<String>,
+        proposition: impl Into<String>,
+        source: &Passport,
+    ) -> Self {
+        let object_theory = object_theory.into();
+        let proposition = proposition.into();
+        Self {
+            ty: TypeKind::ReflectionClaim {
+                object_theory: object_theory.clone(),
+                proposition: proposition.clone(),
+            },
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([
+                Capability::CanSymbolicPrint,
+                Capability::CanProvabilityReason,
+                Capability::CanTruthBoundaryReason,
+            ]),
+            cost: CostClass::ProofRequired,
+            trust: source.trust.max(TrustLevel::Builtin),
+            provenance: source.provenance.max(Provenance::BuiltinKnown),
+            validation: ValidationState::StaticChecked,
+            theory: TheoryContext::new(theory),
+            history: HistoryChain::from_source(
+                &source.history,
+                format!("reflection:claim:{object_theory}:{proposition}"),
+            ),
+            location: LocationContext::local(),
+        }
+    }
+
+    pub fn axiom_reflection_proof(
+        theory: &str,
+        object_theory: impl Into<String>,
+        proposition: impl Into<String>,
+        source: &Passport,
+    ) -> Self {
+        let object_theory = object_theory.into();
+        let proposition = proposition.into();
+        Self {
+            ty: TypeKind::StaticProof(format!("reflection_axiom:{object_theory}:{proposition}")),
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([Capability::CanSymbolicPrint]),
+            cost: CostClass::ProofRequired,
+            trust: TrustLevel::Axiom,
+            provenance: source.provenance.max(Provenance::BuiltinKnown),
+            validation: ValidationState::StaticChecked,
+            theory: TheoryContext::new(theory),
+            history: HistoryChain::from_source(
+                &source.history,
+                format!("reflection:axiom:{object_theory}:{proposition}"),
+            ),
+            location: LocationContext::local(),
+        }
+    }
+
+    pub fn self_reference_claim(
+        theory: &str,
+        proposition: impl Into<String>,
+        source: Option<&Passport>,
+        event: impl Into<String>,
+    ) -> Self {
+        let proposition = proposition.into();
+        let event = event.into();
+        let (trust, provenance, validation, history) = match source {
+            Some(source) => (
+                source.trust.max(TrustLevel::Builtin),
+                source.provenance.max(Provenance::BuiltinKnown),
+                source.validation,
+                HistoryChain::from_source(&source.history, event),
+            ),
+            None => (
+                TrustLevel::Builtin,
+                Provenance::BuiltinKnown,
+                ValidationState::StaticChecked,
+                HistoryChain::from_event(event),
+            ),
+        };
+        Self {
+            ty: TypeKind::SelfReferenceClaim {
+                proposition: proposition.clone(),
+            },
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([
+                Capability::CanSymbolicPrint,
+                Capability::CanPropositionReason,
+                Capability::CanTruthBoundaryReason,
+            ]),
+            cost: CostClass::ProofRequired,
+            trust,
+            provenance,
+            validation,
+            theory: TheoryContext::new(theory),
+            history,
+            location: LocationContext::local(),
+        }
+    }
+
+    pub fn axiom_self_reference_proof(
+        theory: &str,
+        proposition: impl Into<String>,
+        source: &Passport,
+    ) -> Self {
+        let proposition = proposition.into();
+        Self {
+            ty: TypeKind::StaticProof(format!("self_reference_axiom:{proposition}")),
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([Capability::CanSymbolicPrint]),
+            cost: CostClass::ProofRequired,
+            trust: TrustLevel::Axiom,
+            provenance: source.provenance.max(Provenance::BuiltinKnown),
+            validation: ValidationState::StaticChecked,
+            theory: TheoryContext::new(theory),
+            history: HistoryChain::from_source(
+                &source.history,
+                format!("self_reference:axiom:{proposition}"),
+            ),
+            location: LocationContext::local(),
+        }
+    }
+
     pub fn consistency_claim(
         theory: &str,
         target_theory: impl Into<String>,
@@ -2162,7 +2296,9 @@ impl Passport {
                 Capability::CanExtractDefinabilityMeta,
             ]),
             TypeKind::Bool | TypeKind::Text => CapabilitySet::from([Capability::CanSymbolicPrint]),
-            TypeKind::Statement { .. }
+            TypeKind::ReflectionClaim { .. }
+            | TypeKind::SelfReferenceClaim { .. }
+            | TypeKind::Statement { .. }
             | TypeKind::Theorem { .. }
             | TypeKind::Goal { .. }
             | TypeKind::Hypothesis { .. } => CapabilitySet::from([
