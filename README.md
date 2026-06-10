@@ -1,5 +1,55 @@
 # DLM — Deductive Logic Machine
 
+## Origin story
+
+DLM began as an unusual research experiment.
+
+The starting point was not a normal question about syntax, compilers, or software architecture. The starting point was a much deeper question:
+
+> “If a neural network had to invent mathematics from scratch, how would it make mathematics better?”
+
+Not “better” in the sense of replacing classical mathematics, but better in a different sense:
+
+> more explicit;
+> more traceable;
+> more machine-readable;
+> more verifiable;
+> more honest about assumptions;
+> more precise about the boundary between truth, proof, computation, and trust.
+
+The project began with a request to an AI system: imagine mathematics rebuilt from the ground up, not as a collection of isolated formulas, but as a living structure where every object knows what it is, where it came from, how it was derived, what theory it belongs to, whether it was proven or assumed, and how much trust should be assigned to it.
+
+From this experiment, the idea of DLM appeared.
+
+At first, it was a philosophical and mathematical question. But gradually it became clear that such a system needed a concrete language. A language where mathematical objects would not be passive symbols, and programs would not be just executable instructions. They would also carry proof information, validation metadata, provenance, theory context, and derivation history.
+
+That is how DLM became a programming language.
+
+DLM is therefore not only a technical project. It is an attempt to explore a different view of mathematics: mathematics as a structured, auditable, proof-aware, machine-checkable system.
+
+The central idea is simple:
+
+> A result should not only exist.
+> It should be able to explain itself.
+
+DLM tries to answer questions that ordinary programming languages usually ignore:
+
+> Where did this value come from?
+> Was it computed, proven, assumed, imported, or derived?
+> Which theory makes it valid?
+> What is its proof status?
+> What is its trust level?
+> Can the system check it?
+> Can the system explain how it was obtained?
+
+This origin defines the whole language.
+
+DLM grew out of the idea that a future mathematical programming language should not separate computation from meaning. It should connect code, logic, proof, trust, validation, and symbolic structure into one coherent system.
+
+---
+
+## What is DLM?
+
 **DLM** is an experimental programming language and formal reasoning system built around one central idea:
 programs should not only execute — they should also carry explicit mathematical meaning, proof status, trust level, provenance, validation history, and logical boundaries.
 
@@ -84,6 +134,16 @@ DLM prefers a more explicit form:
 This gives mathematics a machine-readable structure.
 
 In this sense, DLM is not trying to replace mathematics. It tries to make mathematical reasoning more traceable, auditable, programmable, and mechanically checkable.
+
+The language is based on the idea that mathematical truth, proof, and computation should not be mixed together silently. They should be represented explicitly.
+
+A statement may be true but not proven inside a given system.
+A value may be computed but not trusted.
+A term may be derived but not validated.
+A proof may exist only within a particular theory.
+An assumption may be useful but should still be marked as an assumption.
+
+DLM makes these distinctions visible.
 
 ---
 
@@ -189,6 +249,9 @@ DLM is stricter, more formal, and more mathematical.
 Python is good for fast development and general automation.
 DLM is aimed at formal reasoning, proof tracking, symbolic computation, and auditable mathematical structures.
 
+Python usually trusts the programmer at runtime.
+DLM tries to make trust itself part of the language model.
+
 ---
 
 ### Compared to Haskell
@@ -225,7 +288,8 @@ DLM is designed to provide:
 * symbolic representation of mathematical terms;
 * machine-checkable reasoning structures;
 * a foundation for auditable mathematical and logical systems;
-* a possible bridge between programming languages and proof systems.
+* a possible bridge between programming languages and proof systems;
+* a new way to think about mathematics as executable, inspectable structure.
 
 ---
 
