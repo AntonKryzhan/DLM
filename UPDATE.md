@@ -142,3 +142,12 @@ RawAST
 ```
 
 Пока старый checker остаётся внутри `legacy_checker`, но теперь он явно оформлен как один stage, который позже можно раскалывать на `typeck`, `proofck`, `passport_infer`, `bridgeck` и `audit`.
+
+## v0.37.0 — Meta-Level Stratification foundation
+
+- Added `meta_level.rs` with `MetaLevelIndex`, `MetaStage`, `MetaAccess`, `MetaLevelContext` and strict observer-level validation.
+- Added `MetaLevelError[E0908]` for object/meta-level escape attempts.
+- Added `meta_level_passport(...)`, `object_level_passport(...)` and `meta_quote_passport(...)`.
+- `meta_quote_passport(...)` produces `Term<T>` only; it does not create `TruthClaim`, `Provable` or `StaticProof`.
+- Meta-quote preserves existing trust taint instead of cleaning it.
+- Added regression tests in `crates/dlm_core/tests/meta_levels.rs`.

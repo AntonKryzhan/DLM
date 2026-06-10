@@ -377,3 +377,27 @@ This avoids weakening the runtime merely to satisfy a smoke command and preserve
 - If name resolution fails, the legacy checker is skipped and resolver diagnostics are returned as checker diagnostics.
 - The old semantic implementation remains in place and is represented as `PassId::LegacyChecker`.
 - New regression tests live in `crates/dlm_core/tests/checker_passes.rs`.
+
+## v0.37.0 — Meta-Level Stratification foundation
+
+This patch introduces the first explicit meta-level API without changing surface `.dlm` syntax.
+
+New module:
+
+```text
+crates/dlm_core/src/meta_level.rs
+```
+
+Important implementation laws:
+
+```text
+M0 = object level
+M1 = meta level
+M2 = meta-meta level
+```
+
+Any operation that observes syntax, provability, truth or self-reference of level `N` must run at a strict observer level `> N`.
+
+`meta_quote_passport(...)` intentionally returns `TypeKind::Term { ... }` only. It does not synthesize `TruthClaim`, `Provable` or `StaticProof`, and it preserves the source trust level.
+
+This is a foundation layer for later HIR/TypedIR/ProofIR work. The legacy checker semantics remain unchanged.

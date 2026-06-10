@@ -31,8 +31,8 @@
   },
   {
     "file": "COMPILER_PASSES.md",
-    "bytes": 9478,
-    "sha256": "a29bc18604459292bbfd861b00f11f4bed60d2f041bf5c0d22ccec14208d9e10"
+    "bytes": 9974,
+    "sha256": "ee367e06845129180f26b0004bac697c930c7b1c107e98447ac4588c206a722f"
   },
   {
     "file": "CONSISTENCY_INCOMPLETENESS.md",
@@ -46,8 +46,8 @@
   },
   {
     "file": "DIAGNOSTICS.md",
-    "bytes": 7458,
-    "sha256": "4f810f1c8952d4a3ae9bd66a3ecd227aa7ad077e523f22dfef56abe8a695634b"
+    "bytes": 7951,
+    "sha256": "f45b13808a44592de14fac35e471b44f241d876b033f0a6df89f64c6c77e8056"
   },
   {
     "file": "DISTRIBUTED_MEMORY_REGION.md",
@@ -100,9 +100,9 @@
     "sha256": "308f5fb6b80b65c60643c1a36f471787449e6018348274d08911d7f2bb9fec85"
   },
   {
-    "file": "MANIFEST.json",
-    "bytes": 5648,
-    "sha256": "d7349cd6d7c8862068d212cf1908d0f3ff6edbfa9b09a75b8cfb005990acb121"
+    "file": "META_LEVELS.md",
+    "bytes": 2269,
+    "sha256": "f76b39472d5404e7b795384ff56cf54d411b7a24eb0c277bc078eb7ceca3b932"
   },
   {
     "file": "MVP_ACCEPTANCE.md",
@@ -176,8 +176,8 @@
   },
   {
     "file": "TEST_MATRIX.md",
-    "bytes": 9834,
-    "sha256": "88a4bcc93d467b70118196b7c07f893f0a4c809d9b2a0d563a4c17757ddfdef6"
+    "bytes": 10269,
+    "sha256": "23d14f686040158f0a4d446892b1546ec2a8de3d16e0e99daf61ee426f1ee9fc"
   },
   {
     "file": "UNIVERSE_HIERARCHY.md",

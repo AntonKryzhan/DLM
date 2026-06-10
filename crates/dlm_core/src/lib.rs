@@ -3,6 +3,7 @@ pub mod bridge;
 pub mod checker;
 pub mod diagnostics;
 pub mod ids;
+pub mod meta_level;
 pub mod parser;
 pub mod passes;
 pub mod passport;
@@ -17,6 +18,7 @@ pub use bridge::{bridge_law, find_bridge, has_bridge, profile_for_decl, BridgeLa
 pub use checker::{CheckReport, Checker};
 pub use diagnostics::{Diagnostic, DiagnosticKind, Severity, SourceSpan};
 pub use ids::{BridgeId, FileId, IdAllocator, ModuleId, ProofId, TheoryId, TypeId, ValueId};
+pub use meta_level::{meta_level_passport, meta_quote_passport, object_level_passport, required_observer_level, validate_meta_observer, MetaAccess, MetaLevelContext, MetaLevelIndex, MetaStage};
 pub use parser::{parse_expr, parse_module};
 pub use passes::{run_frontend_passes, FrontendPassOutput, PassId, PassPipelineReport, PassReport, PassStatus};
 pub use passport::*;

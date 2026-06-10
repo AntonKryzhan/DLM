@@ -375,3 +375,23 @@ E1503 InfinityModeRequired
 W2001 AxiomUsed
 W2003 UnsafeUsed
 ```
+
+## E0908 — MetaLevelError
+
+Raised when object/meta-level stratification would be violated.
+
+Typical cause:
+
+```text
+observer level = M0
+object level   = M0
+operation      = truth/provability/self-reference/syntax observation
+```
+
+Required fix:
+
+```text
+perform the operation from a strict higher meta level, e.g. M1 observing M0
+```
+
+This protects the reflection boundary: object-level code must not inspect its own truth, provability or self-reference without an explicit meta-level lift.

@@ -463,3 +463,15 @@ cargo test -p dlm_core --test property_invariants
 ```
 
 This suite is part of the pass-splitting safety net. Future compiler passes must preserve the same trust/passport/bridge laws that the old checker path currently satisfies.
+
+## v0.37.0 — Meta-level foundation before theorem/proof passes
+
+`v0.37.0` adds `meta_level.rs` as a semantic foundation for future HIR/TypedIR/ProofIR passes.
+
+This layer is intentionally not a full pass yet. It defines the invariant that later passes must preserve:
+
+```text
+observing syntax/provability/truth/self-reference of level N requires observer level > N
+```
+
+This prevents future reflection, theorem and proof-goal passes from silently collapsing object language and meta language.

@@ -530,3 +530,22 @@ soundness-sensitive bridge boundaries
 passport trust preservation
 history order and multiplicity
 ```
+
+## v0.37.0 — Meta-level stratification tests
+
+New focused test command:
+
+```powershell
+cargo test -p dlm_core --test meta_levels
+```
+
+Expected checks:
+
+```text
+MetaLevelIndex ordering and naming;
+object-level self-observation is rejected;
+strict meta-level lifts are accepted;
+meta_quote_passport creates Term only;
+meta_quote_passport does not create TruthClaim/StaticProof;
+meta_quote_passport preserves existing trust taint.
+```

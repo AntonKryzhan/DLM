@@ -2633,3 +2633,23 @@ HistoryChain order and multiplicity
 ```
 
 This is intentionally dependency-free for now. The current finite lattices are exhaustively enumerated by deterministic tests. Later property-test work can add randomized AST/passport generators after the IR pipeline is more stable.
+
+## v0.37.0 status note — Meta-Level Stratification foundation
+
+`v0.37.0` adds the first explicit meta-level API before introducing theorem declarations or proof goals.
+
+The implemented foundation is deliberately conservative:
+
+```text
+M0 = object level
+M1 = meta level
+M2 = meta-meta level
+```
+
+The new invariant is:
+
+```text
+syntax/provability/truth/self-reference of level N requires observer level > N
+```
+
+This prepares later reflection, theorem, HIR and ProofIR work without changing current `.dlm` syntax or weakening the legacy checker.

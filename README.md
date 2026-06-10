@@ -456,3 +456,17 @@ Command:
 ```bash
 cargo test -p dlm_core --test property_invariants
 ```
+
+## v0.37 — Meta-Level Stratification foundation
+
+DLM now has an explicit internal meta-level foundation:
+
+```text
+M0 — object level
+M1 — meta level
+M2 — meta-meta level
+```
+
+The new core rule is that syntax/provability/truth/self-reference of a level may only be observed from a strictly higher level. This keeps reflection from becoming an implicit shortcut from object syntax to truth or proof.
+
+`meta_quote_passport(...)` produces a `Term<...>` passport only. It does not create a `TruthClaim`, `Provable` or `StaticProof`, and it does not clean axiom/oracle/unsafe taint.

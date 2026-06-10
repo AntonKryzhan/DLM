@@ -29,6 +29,7 @@ pub enum DiagnosticKind {
     TruthBoundaryError,
     IncompletenessBoundaryError,
     ReflectionBoundaryError,
+    MetaLevelError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -170,6 +171,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::TruthBoundaryError => "E0905 TruthBoundaryError",
             DiagnosticKind::IncompletenessBoundaryError => "E0906 IncompletenessBoundaryError",
             DiagnosticKind::ReflectionBoundaryError => "E0907 ReflectionBoundaryError",
+            DiagnosticKind::MetaLevelError => "E0908 MetaLevelError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,
