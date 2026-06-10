@@ -453,3 +453,13 @@ failed name_resolution => skipped legacy_checker
 ```
 
 This prevents semantic checking from running over an invalid symbol graph and prepares later `HIR`, `ResolvedHIR`, `TypedIR`, `ProofIR` and `PassportIR` stages.
+
+## v0.36.0 — Invariants before deeper pass splitting
+
+Before splitting `legacy_checker` into `typeck`, `proofck`, `passport_infer`, `bridgeck` and `audit`, DLM now has a property-style invariant suite:
+
+```text
+cargo test -p dlm_core --test property_invariants
+```
+
+This suite is part of the pass-splitting safety net. Future compiler passes must preserve the same trust/passport/bridge laws that the old checker path currently satisfies.

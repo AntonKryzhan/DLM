@@ -31,8 +31,8 @@
   },
   {
     "file": "COMPILER_PASSES.md",
-    "bytes": 9036,
-    "sha256": "ce63effc6802f132edb956d88866c9ecacf956b7d3d0931bb60f9932b4101c2e"
+    "bytes": 9478,
+    "sha256": "a29bc18604459292bbfd861b00f11f4bed60d2f041bf5c0d22ccec14208d9e10"
   },
   {
     "file": "CONSISTENCY_INCOMPLETENESS.md",
@@ -101,8 +101,8 @@
   },
   {
     "file": "MANIFEST.json",
-    "bytes": 5214,
-    "sha256": "a9238319d77ee78e05148f6f4428f02f2b7d080fe0d8673e2f286395517923e1"
+    "bytes": 5648,
+    "sha256": "d7349cd6d7c8862068d212cf1908d0f3ff6edbfa9b09a75b8cfb005990acb121"
   },
   {
     "file": "MVP_ACCEPTANCE.md",
@@ -128,6 +128,11 @@
     "file": "PROOF_KERNEL.md",
     "bytes": 1910,
     "sha256": "08581f80095f1f26b866b79f9f77c3efd4039f8d94dbaa639e09d2c9b1b1dc12"
+  },
+  {
+    "file": "PROPERTY_INVARIANTS.md",
+    "bytes": 2435,
+    "sha256": "b306db62ce31a497bc8ceb913ecdeb835ed5ffb43de2e0e2ad84c96d7e6fea7f"
   },
   {
     "file": "PROVABILITY_TRUTH_BOUNDARY.md",
@@ -171,8 +176,8 @@
   },
   {
     "file": "TEST_MATRIX.md",
-    "bytes": 9422,
-    "sha256": "543f9068ed93451983aca9144a7a4cfc40d81400ccfc57941f1d43b7ab11b5be"
+    "bytes": 9834,
+    "sha256": "88a4bcc93d467b70118196b7c07f893f0a4c809d9b2a0d563a4c17757ddfdef6"
   },
   {
     "file": "UNIVERSE_HIERARCHY.md",

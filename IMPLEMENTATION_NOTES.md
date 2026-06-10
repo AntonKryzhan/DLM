@@ -1,3 +1,24 @@
+# Implementation Notes v0.36
+
+## v0.36.0 Property-Based Invariant Tests
+
+- Added `crates/dlm_core/tests/property_invariants.rs`.
+- Added deterministic property-style checks over all current `TrustLevel` values.
+- Added generated checks over all current bridge kinds, including `Unknown`.
+- Added semilattice checks for `policy::join_trust` and `policy::join_many_trust`.
+- Added prefix-closure checks for `CheckPolicy`.
+- Added bridge law consistency checks between `bridge_law` and `BridgeProfile`.
+- Added passport trust preservation checks for binary and source-derived constructors.
+- Added history order/multiplicity checks to protect `HistoryChain` from set-like regressions.
+- Added `docs/PROPERTY_INVARIANTS.md`.
+- No new runtime semantics or public `.dlm` syntax were introduced.
+
+Example:
+
+```powershell
+cargo test -p dlm_core --test property_invariants
+```
+
 # Implementation Notes v0.34
 
 ## v0.34.0 ID / Resolver Skeleton

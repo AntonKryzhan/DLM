@@ -2616,3 +2616,20 @@ raw_ast_accepted -> name_resolution -> legacy_checker
 ```
 
 This keeps the current language behavior stable while making the checker architecture ready for the planned HIR / ResolvedHIR / TypedIR / ProofIR / PassportIR split.
+
+## v0.36.0 status note — Property-style invariant layer started
+
+`v0.36.0` adds the first generated/enumerative invariant tests for the DLM semantic core.
+
+The active protected surfaces are now:
+
+```text
+TrustLevel lattice
+CheckPolicy thresholds
+BridgeProfile / bridge_law consistency
+quote / transport / soundness / reflection / unsafe bridge boundaries
+passport trust preservation
+HistoryChain order and multiplicity
+```
+
+This is intentionally dependency-free for now. The current finite lattices are exhaustively enumerated by deterministic tests. Later property-test work can add randomized AST/passport generators after the IR pipeline is more stable.

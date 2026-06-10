@@ -505,3 +505,28 @@ valid modules reach legacy_checker;
 resolution failures skip legacy_checker;
 CheckReport exposes the pass pipeline.
 ```
+
+## v0.36.0 — Property-style invariant tests
+
+Additional required command:
+
+```powershell
+cargo test -p dlm_core --test property_invariants
+```
+
+Expected result:
+
+```text
+all property_invariants tests pass
+```
+
+The suite protects:
+
+```text
+trust join laws
+policy prefix closure
+bridge profile/law consistency
+soundness-sensitive bridge boundaries
+passport trust preservation
+history order and multiplicity
+```

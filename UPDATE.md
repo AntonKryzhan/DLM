@@ -1,5 +1,50 @@
 # UPDATE.md
 
+## v0.36.0 — Property-Based Invariant Tests
+
+Дата: 2026-06-11
+
+### Цель патча
+
+`v0.36.0` добавляет первый property-style слой проверки инвариантов DLM без изменения публичного синтаксиса `.dlm` и без изменения runtime/checker semantics.
+
+После `v0.35.0` checker уже имеет pass pipeline. Теперь фиксируются свойства, которые должны пережить будущий split на `typeck`, `proofck`, `passport_infer`, `bridgeck` и `audit`.
+
+### Добавлено
+
+```text
+crates/dlm_core/tests/property_invariants.rs
+docs/PROPERTY_INVARIANTS.md
+```
+
+### Проверяемые свойства
+
+```text
+Trust join is idempotent / commutative / associative / monotone.
+CheckPolicy is prefix-closed over the trust lattice.
+BridgeProfile matches the central bridge_law for every bridge kind.
+Truth-preserving bridges must also preserve proof evidence.
+Axiom-requiring bridges must be Axiom-or-worse tainted.
+quote remains syntax-only.
+transport / migration / materialize remain value-only and do not preserve proof/truth by default.
+soundness remains Axiom-tainted.
+unsafe and unknown bridges remain Unsafe-tainted.
+Passport derivations do not lower trust.
+HistoryChain remains ordered and multiplicity-preserving.
+```
+
+### Команда проверки
+
+```powershell
+cargo test -p dlm_core --test property_invariants
+```
+
+### Архитектурный смысл
+
+`v0.36.0` начинает переводить главный смысл проекта из набора ручных examples в набор явно проверяемых мета-инвариантов. Это нужно до дальнейшего расширения IR pipeline, потому что будущие refactor-патчи должны доказывать, что trust/passport/bridge laws не изменились случайно.
+
+# UPDATE.md
+
 ## v0.35.0 — Checker Orchestration / First Pass Split
 
 Дата: 2026-06-11

@@ -432,3 +432,27 @@ raw_ast_accepted -> name_resolution -> legacy_checker
 ```
 
 The existing checker still performs the semantic work, but the frontend resolver is now part of the checked path. If name resolution fails, the legacy checker is skipped instead of running over an invalid symbol graph. This prepares the project for future HIR / ResolvedHIR / TypedIR / PassportIR layers.
+
+## v0.36 — Property-Based Invariant Tests
+
+DLM now has the first property-style invariant test layer for the semantic core.
+
+The new tests enumerate the finite trust lattice and bridge taxonomy to verify that central laws remain stable:
+
+```text
+trust join is monotone and associative
+policy thresholds are prefix-closed
+BridgeProfile matches bridge_law
+quote remains syntax-only
+transport/migration/materialize do not preserve proof or truth by default
+soundness remains Axiom-tainted
+unsafe/unknown bridges remain Unsafe-tainted
+passport derivations do not lower trust
+HistoryChain preserves order and multiplicity
+```
+
+Command:
+
+```bash
+cargo test -p dlm_core --test property_invariants
+```
