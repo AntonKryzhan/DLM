@@ -31,6 +31,7 @@ pub enum DiagnosticKind {
     ReflectionBoundaryError,
     MetaLevelError,
     StatementTheoremError,
+    ProofObligationError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -174,6 +175,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::ReflectionBoundaryError => "E0907 ReflectionBoundaryError",
             DiagnosticKind::MetaLevelError => "E0908 MetaLevelError",
             DiagnosticKind::StatementTheoremError => "E0909 StatementTheoremError",
+            DiagnosticKind::ProofObligationError => "E0910 ProofObligationError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

@@ -415,3 +415,22 @@ Statement<P> != Theorem<P>
 RuntimeWitness<P> != StaticProof<P>
 ProofTerm<P> != StaticProof<P>
 ```
+
+
+## E0910 ProofObligationError
+
+`ProofObligationError` reports invalid proof-context construction or closure.
+
+Typical cases:
+
+```text
+open_proof_context requires Goal<P>
+Goal<P> cannot be closed by Statement<Q>
+Goal<P> cannot be closed by StaticProof<Q>
+```
+
+The intended closing rule is exact:
+
+```text
+Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>
+```

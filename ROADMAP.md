@@ -2674,3 +2674,26 @@ Theorem requires StaticProof or explicit Axiom admission.
 ```
 
 This prepares the next proof-assistant steps: `ProofContext`, `HypothesisSet`, `TacticStep` and `close_proof(...)`.
+
+
+## v0.39.0 completed — Proof Context foundation
+
+`v0.39.0` adds the first internal proof-context layer on top of the statement/theorem foundation.
+
+Implemented foundation:
+
+```text
+ProofContext
+HypothesisSet
+TacticStep
+ProofObligation
+ProofClosure
+```
+
+The protected closure invariant is now explicit:
+
+```text
+Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>
+```
+
+This prepares later `ProofIR`, tactic syntax and theorem-checker passes without changing current `.dlm` syntax.

@@ -568,3 +568,24 @@ RuntimeWitness cannot close a theorem;
 Axiom theorem construction is trust=Axiom;
 Goal/Hypothesis do not become theorems implicitly.
 ```
+
+
+## v0.39.0 — Proof context tests
+
+Required tests:
+
+```powershell
+cargo test -p dlm_core --test proof_context
+cargo test -p dlm_core --test statements_theorems
+cargo test -p dlm_core --test meta_levels
+cargo test -p dlm_core --test property_invariants
+```
+
+Protected invariants:
+
+```text
+ProofContext opens only from Goal<P>
+HypothesisSet preserves order and multiplicity
+Goal<P>, Statement<P>, StaticProof<P> must match exactly
+Axiom proof closure remains trust=Axiom
+```

@@ -484,3 +484,8 @@ RuntimeWitness<P> != StaticProof<P>
 ```
 
 A theorem can be built from `StaticProof` evidence, or admitted explicitly as an axiom-tainted theorem. Raw proof terms and runtime witnesses do not close theorems.
+
+
+### v0.39 proof-context foundation
+
+DLM now includes an internal `ProofContext` foundation for future proof-assistant work. The public `.dlm` syntax is unchanged; the new API models goals, hypotheses, proof obligations and explicit theorem closure.

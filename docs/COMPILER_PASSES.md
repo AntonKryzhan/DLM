@@ -503,3 +503,14 @@ The key pass invariant is:
 ```text
 Theorem export must require StaticProof evidence or explicit axiom-tainted admission.
 ```
+
+
+## v0.39.0 proof-context layer
+
+`v0.39.0` adds an internal proof-context layer after the statement/theorem foundation.
+
+```text
+Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>
+```
+
+This remains API-level only for now. Parser, CLI syntax and legacy checker behavior are unchanged.

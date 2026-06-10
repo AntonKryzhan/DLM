@@ -434,3 +434,10 @@ Hypothesis remains local assumption material, not an exported theorem.
 ```
 
 This is a foundation for later `ProofContext`, `HypothesisSet`, `TacticStep` and `close_proof(...)` APIs. It deliberately avoids desugaring or syntax changes until HIR/ProofIR split is stronger.
+
+
+## v0.39.0 — Proof Context Foundation
+
+This patch deliberately keeps proof contexts as an API-level foundation. It does not add tactic syntax to the parser and does not route existing checker behavior through ProofIR yet.
+
+The strict closure helper checks that the open goal, theorem statement and static proof all describe the same proposition. This prevents the statement layer from becoming a loose wrapper around arbitrary `StaticProof` passports.

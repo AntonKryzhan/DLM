@@ -161,3 +161,28 @@ RawAST
 - `theorem_from_static_proof(...)` accepts only `StaticProof` evidence; it rejects raw `ProofTerm` and `RuntimeWitness` values.
 - `axiom_theorem(...)` makes theorem assumptions visible as `trust=Axiom` and records `theorem:axiom:*` history.
 - Added regression tests in `crates/dlm_core/tests/statements_theorems.rs`.
+
+## v0.39.0 — Proof Context Foundation
+
+Added the first internal proof-context layer:
+
+- `ProofContext`;
+- `HypothesisSet`;
+- `HypothesisId`;
+- `TacticStep`;
+- `ProofObligation`;
+- `ProofClosure`;
+- `open_proof_context(...)`;
+- `assume_hypothesis(...)`;
+- `close_proof_with_static_proof(...)`;
+- `close_proof_by_axiom(...)`.
+
+No `.dlm` syntax was changed.
+
+Main invariant:
+
+```text
+Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>
+```
+
+All three propositions must match exactly.
