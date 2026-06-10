@@ -583,3 +583,10 @@ EqProof -> RewriteRule -> bounded ordered normalization -> RewriteCertificate
 ```
 
 The pass is deliberately bounded by `max_steps`; cyclic rewrite systems are rejected instead of looping.
+
+
+## v0.45 Nat induction foundation
+
+Nat induction is currently a core proof-object layer, not a compiler pass. Future parser/checker work can lower proof-block syntax into these constructors.
+
+The pass boundary is explicit: desugaring must not create `InductionProof` or `Theorem` without the scheme/base/step validation path.

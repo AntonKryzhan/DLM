@@ -509,3 +509,16 @@ Important invariant: rewrite construction never lowers trust. If a rewrite rule 
 Rewrite normalization intentionally remains a core-only API. It repeatedly applies the first forward rewrite rule matching the current term and requires an explicit `max_steps` bound. This prevents cyclic rewrite systems from becoming non-terminating hidden compiler work.
 
 Normalization certificates reuse the existing `RewriteCertificate` passport; the new report/audit layer validates that the certificate endpoints, trust and provenance match the trace.
+
+
+## v0.45 implementation notes
+
+`v0.45.0` adds a dedicated Nat induction proof layer. The implementation is intentionally outside parser/checker/runtime integration. It provides typed passport-level constructors and validators for:
+
+- `InductionScheme<Nat,P>`;
+- `BaseCase<P(0)>`;
+- `StepCase<forall n:Nat. P(n) -> P(succ(n))>`;
+- `InductionProof<forall n:Nat. P(n)>`;
+- explicit theorem construction from an induction proof and matching statement.
+
+The important safety boundary is that induction cases are static proof obligations. Runtime witnesses, raw proof terms and mismatched proposition families are rejected. Trust and provenance are joined monotonically, so axiom-tainted cases stay visible in the final proof/theorem.

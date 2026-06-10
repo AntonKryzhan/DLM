@@ -165,6 +165,18 @@ pub enum TypeKind {
         from: String,
         to: String,
     },
+    NatInductionScheme {
+        proposition_family: String,
+    },
+    InductionBaseCase {
+        proposition: String,
+    },
+    InductionStepCase {
+        proposition: String,
+    },
+    InductionProof {
+        proposition: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -261,6 +273,12 @@ impl fmt::Display for TypeKind {
             TypeKind::EqProof { lhs, rhs } => write!(f, "EqProof<{lhs}={rhs}>"),
             TypeKind::RewriteRule { name, lhs, rhs } => write!(f, "RewriteRule<{name}:{lhs}->{rhs}>"),
             TypeKind::RewriteCertificate { from, to } => write!(f, "RewriteCertificate<{from}->{to}>"),
+            TypeKind::NatInductionScheme { proposition_family } => {
+                write!(f, "InductionScheme<Nat,{proposition_family}>")
+            }
+            TypeKind::InductionBaseCase { proposition } => write!(f, "BaseCase<{proposition}>"),
+            TypeKind::InductionStepCase { proposition } => write!(f, "StepCase<{proposition}>"),
+            TypeKind::InductionProof { proposition } => write!(f, "InductionProof<{proposition}>"),
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),
             TypeKind::Term { of_theory, of_type } => write!(f, "Term<{of_theory}.{of_type}>"),

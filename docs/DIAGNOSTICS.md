@@ -502,3 +502,17 @@ Typical causes:
 - rewrite cycle exceeds `max_steps`;
 - normalization report input/normal form does not match its trace;
 - attached `RewriteCertificate` endpoints, trust or provenance do not match the report.
+
+
+## E0916 — InductionError
+
+Raised by the Nat induction foundation when an induction scheme, base case, step case or final induction proof is malformed.
+
+Examples:
+
+```text
+RuntimeWitness cannot justify a static induction case
+ProofTerm must be kernel-checked into StaticProof before induction use
+base case proves `Q(0)`, but scheme requires `P(0)`
+induction proof proves `forall n:Nat. P(n)`, but theorem statement requires `forall n:Nat. Q(n)`
+```

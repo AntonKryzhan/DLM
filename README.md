@@ -552,3 +552,12 @@ Rewrite certificates preserve rule order and trust taint. Axiom-derived equality
 ## v0.44.0 — Rewrite Normalization / Audit Foundation
 
 The core now has a bounded rewrite-normalization layer over typed equality proofs and rewrite rules. It can build stable normalization reports and audit that a rewrite certificate matches the report endpoints and taint state. No `.dlm` syntax or runtime behavior changed.
+
+
+## v0.45.0 — Nat Induction MVP
+
+DLM now has a core-level Nat induction foundation. This adds internal proof artifacts for `InductionScheme<Nat,P>`, `BaseCase<P(0)>`, `StepCase<forall n:Nat. P(n) -> P(succ(n))>` and `InductionProof<forall n:Nat. P(n)>`.
+
+This is not yet public `.dlm` proof syntax. It is a checked core layer for future theorem/tactic automation.
+
+The protected boundary is explicit: a runtime witness or raw proof term cannot be used as an induction case, and axiom-tainted base/step cases remain visible in the resulting induction proof.

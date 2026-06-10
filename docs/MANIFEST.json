@@ -6,8 +6,8 @@
   },
   {
     "file": "AST_IR.md",
-    "bytes": 9162,
-    "sha256": "a107849cad9973595849a3ed66844a490e6307c79e0ff2347ef2fa5a25002a78"
+    "bytes": 9554,
+    "sha256": "32d82f0e4151372d7af5fb4ae7f6f29862459983b61d6cc28fe0ce00f47fe463"
   },
   {
     "file": "BIG_NUMBER_HIERARCHY.md",
@@ -31,8 +31,8 @@
   },
   {
     "file": "COMPILER_PASSES.md",
-    "bytes": 12811,
-    "sha256": "b78b4f3f4464a7061d5515750a501f718e176f96d8bc8b35b4034d1c0bb2e8e8"
+    "bytes": 13139,
+    "sha256": "62ee7e46ed5b3e815bd8e7d1c823de1fcb4d27098cb4d9c6459110b83705e2e5"
   },
   {
     "file": "CONSISTENCY_INCOMPLETENESS.md",
@@ -46,8 +46,8 @@
   },
   {
     "file": "DIAGNOSTICS.md",
-    "bytes": 10947,
-    "sha256": "5e8795848d73ad1bfacba450de1f4ba999ccd13e2fd1bfad558a939af9f2c160"
+    "bytes": 11401,
+    "sha256": "f65654693d931fef969245cb847a9acb614b798c27fb63601f6886ad4f13ffd5"
   },
   {
     "file": "DISTRIBUTED_MEMORY_REGION.md",
@@ -113,6 +113,11 @@
     "file": "MVP_ACCEPTANCE.md",
     "bytes": 7062,
     "sha256": "0e27f617df3a8cd7d978ace42cf3902ec82a38bb02efa2c44204eb8d652efa19"
+  },
+  {
+    "file": "NAT_INDUCTION.md",
+    "bytes": 1315,
+    "sha256": "0c5a32b4eeacb2670677ece4de609d909c0053a67f031f02ca21f8b3f1f45b3b"
   },
   {
     "file": "PASSPORT_LATTICE.md",
@@ -211,8 +216,8 @@
   },
   {
     "file": "TEST_MATRIX.md",
-    "bytes": 13571,
-    "sha256": "ef402f10bc72af198077bf85c8a20b2f31a65c11b81c6df18d4f57707ef1a0a9"
+    "bytes": 13940,
+    "sha256": "6dff19f07b67f2de93ad45298c5b93bfa8d05c29d2c3b641db90425dd6fc0d0d"
   },
   {
     "file": "UNIVERSE_HIERARCHY.md",

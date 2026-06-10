@@ -2790,3 +2790,17 @@ Completed:
 - taint-preserving normalization certificates.
 
 This prepares future simplification passes and theorem/tactic automation while keeping existing `.dlm` programs stable.
+
+
+### v0.45.0 — Completed: Nat Induction MVP
+
+Implemented the internal Nat induction proof foundation:
+
+```text
+InductionScheme<Nat,P>
+BaseCase<P(0)>
+StepCase<forall n:Nat. P(n) -> P(succ(n))>
+InductionProof<forall n:Nat. P(n)>
+```
+
+The layer is intentionally core-only: no new `.dlm` syntax and no runtime/checker behavior changes.

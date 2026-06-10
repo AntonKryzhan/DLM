@@ -338,3 +338,28 @@ Protected laws:
 - axiom taint is preserved through normalization.
 
 No `.dlm` syntax, checker behavior or runtime behavior changed.
+
+
+## v0.45.0 — Nat Induction MVP
+
+Added the first core-level Nat induction proof foundation.
+
+Changed/added files:
+
+- `crates/dlm_core/src/induction.rs`
+- `crates/dlm_core/tests/nat_induction.rs`
+- `docs/NAT_INDUCTION.md`
+
+New diagnostic kind:
+
+- `InductionError[E0916]`
+
+Protected laws:
+
+- Nat induction requires an explicit `InductionScheme<Nat,P>`.
+- Base and step cases require exact `StaticProof` evidence.
+- `RuntimeWitness` and raw `ProofTerm` cannot close induction cases.
+- `InductionProof` is not silently a theorem; theorem construction requires a matching `Statement`.
+- Axiom taint from base or step cases is preserved.
+
+No `.dlm` syntax, checker behavior or runtime behavior changed.

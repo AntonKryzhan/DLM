@@ -684,3 +684,20 @@ Coverage:
 - step-limit guard for cyclic rewrites;
 - taint preservation;
 - audit rejection of tampered reports.
+
+
+## v0.45 Nat induction tests
+
+```powershell
+cargo test -p dlm_core --test nat_induction
+```
+
+Covers:
+
+- scheme construction;
+- exact base/step static proof requirements;
+- rejection of runtime witnesses and raw proof terms;
+- family mismatch rejection;
+- theorem construction from matching induction proof;
+- axiom taint preservation;
+- ordered history preservation.

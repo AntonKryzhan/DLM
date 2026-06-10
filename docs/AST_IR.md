@@ -494,3 +494,17 @@ RewriteNormalizationReport {
   certificate: RewriteCertificate<input, normal_form>
 }
 ```
+
+
+## v0.45 Nat induction IR note
+
+Nat induction is represented as passport-level proof artifacts before any surface syntax exists:
+
+```text
+NatInductionScheme { proposition_family }
+InductionBaseCase { proposition }
+InductionStepCase { proposition }
+InductionProof { proposition }
+```
+
+These artifacts prepare a future ProofIR/TacticIR layer. They are not parsed from `.dlm` syntax in v0.45.
