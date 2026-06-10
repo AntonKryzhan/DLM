@@ -422,3 +422,13 @@ SymbolTable
 ```
 
 This does not change the public `.dlm` syntax or checker behavior yet. It prepares the project to move away from string-only semantic references before imports, aliases and multi-file project checking are expanded.
+
+## v0.35 — Checker Orchestration / First Pass Split
+
+DLM now records an explicit checker pass pipeline in `CheckReport`:
+
+```text
+raw_ast_accepted -> name_resolution -> legacy_checker
+```
+
+The existing checker still performs the semantic work, but the frontend resolver is now part of the checked path. If name resolution fails, the legacy checker is skipped instead of running over an invalid symbol graph. This prepares the project for future HIR / ResolvedHIR / TypedIR / PassportIR layers.

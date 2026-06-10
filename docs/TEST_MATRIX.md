@@ -488,3 +488,20 @@ resolver assigns IDs to theories, values and bridges
 resolver rejects duplicate values inside one theory
 resolver rejects bridge declarations with unknown source/target theories
 ```
+
+## v0.35.0 — Checker pass pipeline tests
+
+Additional required checks:
+
+```powershell
+cargo test -p dlm_core --test checker_passes
+```
+
+The test file verifies:
+
+```text
+frontend pass report contains raw_ast_accepted and name_resolution;
+valid modules reach legacy_checker;
+resolution failures skip legacy_checker;
+CheckReport exposes the pass pipeline.
+```

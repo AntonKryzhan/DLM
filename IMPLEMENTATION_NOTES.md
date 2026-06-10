@@ -347,3 +347,12 @@ The v0.31 reflection guard keeps `prove(...)` static-only. The test matrix now s
 - `reflection_runtime_symbolic_guard.dlm` for `dlm run`.
 
 This avoids weakening the runtime merely to satisfy a smoke command and preserves the existing proof-kernel invariant.
+
+## v0.35.0 — Checker orchestration skeleton
+
+- Added `passes.rs` with `PassId`, `PassStatus`, `PassReport`, `PassPipelineReport` and `run_frontend_passes(...)`.
+- `CheckReport` now carries `passes: PassPipelineReport`.
+- `Checker::check_module(...)` runs the resolver frontend before the legacy semantic checker.
+- If name resolution fails, the legacy checker is skipped and resolver diagnostics are returned as checker diagnostics.
+- The old semantic implementation remains in place and is represented as `PassId::LegacyChecker`.
+- New regression tests live in `crates/dlm_core/tests/checker_passes.rs`.

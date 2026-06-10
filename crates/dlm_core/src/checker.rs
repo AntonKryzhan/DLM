@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use crate::ast::*;
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use crate::passport::*;
+use crate::passes::{run_frontend_passes, PassId, PassPipelineReport, PassReport, PassStatus};
 use crate::policy;
 pub use crate::policy::CheckPolicy;
 
@@ -14,6 +15,7 @@ pub struct CheckReport {
     pub inferred: Vec<(String, Passport)>,
     pub bridges: Vec<BridgeDecl>,
     pub diagnostics: Vec<Diagnostic>,
+    pub passes: PassPipelineReport,
 }
 
 impl CheckReport {
@@ -41,6 +43,26 @@ impl Checker {
     }
 
     pub fn check_module(mut self, module: &Module) -> CheckReport {
+        let mut passes = match run_frontend_passes(module) {
+            Ok(frontend) => frontend.report,
+            Err(mut report) => {
+                report.push(PassReport::skipped(
+                    PassId::LegacyChecker,
+                    "legacy checker skipped because frontend resolution failed",
+                ));
+                let diagnostics = report.diagnostics().cloned().collect();
+                return CheckReport {
+                    module_name: module.name.clone(),
+                    theory_count: 0,
+                    value_count: 0,
+                    inferred: Vec::new(),
+                    bridges: Vec::new(),
+                    diagnostics,
+                    passes: report,
+                };
+            }
+        };
+
         self.bridges = module.items.iter().filter_map(|item| match item {
             ModuleItem::Bridge(bridge) => Some(bridge.clone()),
             _ => None,
@@ -54,6 +76,22 @@ impl Checker {
             }
         }
 
+        let legacy_status = if self.diagnostics.is_empty() {
+            PassStatus::Passed
+        } else {
+            PassStatus::Failed
+        };
+        passes.push(PassReport {
+            id: PassId::LegacyChecker,
+            status: legacy_status,
+            diagnostics: Vec::new(),
+            note: Some(format!(
+                "legacy semantic checker visited {} theories and inferred {} values",
+                theory_count,
+                self.inferred.len()
+            )),
+        });
+
         CheckReport {
             module_name: module.name.clone(),
             theory_count,
@@ -61,6 +99,7 @@ impl Checker {
             inferred: self.inferred,
             bridges: self.bridges,
             diagnostics: self.diagnostics,
+            passes,
         }
     }
 

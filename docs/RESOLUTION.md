@@ -135,3 +135,16 @@ This is the first step toward:
 AST -> HIR -> ResolvedHIR -> TypedIR -> PassportIR -> CheckedModule
 ```
 
+
+## v0.35.0 integration with checker orchestration
+
+The resolver is now part of the checker frontend pipeline.
+
+```text
+Checker::check_module
+  -> run_frontend_passes
+  -> resolve_module
+  -> legacy_checker
+```
+
+If resolver diagnostics are produced, the checker returns them directly and marks the legacy checker pass as skipped.

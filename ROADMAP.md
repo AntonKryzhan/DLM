@@ -2606,3 +2606,13 @@ DLM должен стать языком, где программа может �
 ```text
 DLM должен расти не как набор функций, а как маленькое формальное ядро плюс цепочка проверяемых passes.
 ```
+
+## v0.35.0 status note — Checker orchestration started
+
+`v0.35.0` adds the first explicit pass pipeline around the checker:
+
+```text
+raw_ast_accepted -> name_resolution -> legacy_checker
+```
+
+This keeps the current language behavior stable while making the checker architecture ready for the planned HIR / ResolvedHIR / TypedIR / ProofIR / PassportIR split.

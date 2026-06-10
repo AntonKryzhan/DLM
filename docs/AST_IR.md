@@ -435,3 +435,29 @@ Do not implement in MVP:
 - proof normalization;
 - full dependent elimination;
 - codegen backend.
+
+## v0.35.0 pass boundary
+
+`v0.35.0` keeps the current AST unchanged but introduces the first explicit pass boundary in `CheckReport`.
+
+Current state:
+
+```text
+Module AST
+  -> resolver skeleton
+  -> legacy checker
+```
+
+Target state:
+
+```text
+RawAST
+  -> HIR
+  -> ResolvedHIR
+  -> TypedIR
+  -> ProofIR
+  -> PassportIR
+  -> CheckedModule
+```
+
+The name `legacy_checker` is used only to mark the current monolithic semantic stage before it is split.

@@ -435,3 +435,21 @@ Source loading
 12. TheoryBridge checks for quote/transport.
 13. Test runner.
 14. JSON emit for PassportIR.
+
+## v0.35.0 — First executable pass pipeline
+
+The compiler/checker pipeline now has an explicit runtime representation:
+
+```text
+raw_ast_accepted -> name_resolution -> legacy_checker
+```
+
+The existing semantic checker is intentionally called `legacy_checker` in the pass report. This is not a deprecation of semantics; it is a boundary marker showing where future split passes will be inserted.
+
+The new invariant is:
+
+```text
+failed name_resolution => skipped legacy_checker
+```
+
+This prevents semantic checking from running over an invalid symbol graph and prepares later `HIR`, `ResolvedHIR`, `TypedIR`, `ProofIR` and `PassportIR` stages.

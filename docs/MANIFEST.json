@@ -6,8 +6,8 @@
   },
   {
     "file": "AST_IR.md",
-    "bytes": 8058,
-    "sha256": "64241d4a13a25b69f2811111735dd6a482a739ad8e1dd22336b7f9446d360085"
+    "bytes": 8504,
+    "sha256": "aa17bf8ba54ff64e3b0db9555d7cb548540162f41eb0bc32a882c248415406fd"
   },
   {
     "file": "BIG_NUMBER_HIERARCHY.md",
@@ -20,14 +20,19 @@
     "sha256": "908096124a0741d2997b81c2aff17d7c65ebcd8ae79705de944d0826a8d0264e"
   },
   {
+    "file": "CHECKER_ORCHESTRATION.md",
+    "bytes": 1762,
+    "sha256": "8a1d06502d343021cddf4459954e470ee59709ecb9599190c1c8ac1aadb11146"
+  },
+  {
     "file": "CHECKPOINT_RESTORE.md",
     "bytes": 1709,
     "sha256": "d6d03724621f20c1ad70876df7874b3e52ec2615dbd150234904e7c215978532"
   },
   {
     "file": "COMPILER_PASSES.md",
-    "bytes": 8392,
-    "sha256": "99ace7dde5a92d36663d7048ab8cd2df52cd4d0d34e3f2770d619bc26545ae03"
+    "bytes": 9036,
+    "sha256": "ce63effc6802f132edb956d88866c9ecacf956b7d3d0931bb60f9932b4101c2e"
   },
   {
     "file": "CONSISTENCY_INCOMPLETENESS.md",
@@ -95,6 +100,11 @@
     "sha256": "308f5fb6b80b65c60643c1a36f471787449e6018348274d08911d7f2bb9fec85"
   },
   {
+    "file": "MANIFEST.json",
+    "bytes": 5214,
+    "sha256": "a9238319d77ee78e05148f6f4428f02f2b7d080fe0d8673e2f286395517923e1"
+  },
+  {
     "file": "MVP_ACCEPTANCE.md",
     "bytes": 7062,
     "sha256": "0e27f617df3a8cd7d978ace42cf3902ec82a38bb02efa2c44204eb8d652efa19"
@@ -141,8 +151,8 @@
   },
   {
     "file": "RESOLUTION.md",
-    "bytes": 3118,
-    "sha256": "7b58b1928465f59cba031c9983e58c3c0c60f39725e9853135fa3ed8f560dbc6"
+    "bytes": 3448,
+    "sha256": "99d77e18cb4c25641720adfbf0fc628df2ff0d4ae887cf2803cbcf2ad7de4d5f"
   },
   {
     "file": "SCHEDULER.md",
@@ -161,8 +171,8 @@
   },
   {
     "file": "TEST_MATRIX.md",
-    "bytes": 9063,
-    "sha256": "df3faf6f21dc0402f76e5073fc977445ac3fedf85b5c1d90fcf334aa1bccb3f7"
+    "bytes": 9422,
+    "sha256": "543f9068ed93451983aca9144a7a4cfc40d81400ccfc57941f1d43b7ab11b5be"
   },
   {
     "file": "UNIVERSE_HIERARCHY.md",
