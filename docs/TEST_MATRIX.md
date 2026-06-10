@@ -470,3 +470,21 @@ cargo run -p dlm_cli -- run examples\valid\reflection_runtime_symbolic_guard.dlm
 ```
 
 The invariant is intentional: static proof construction is not runtime execution, while symbolic self-reference claim construction may still be demonstrated at runtime.
+
+
+## v0.34 resolver / ID regression checks
+
+Additional Rust regression target:
+
+```powershell
+cargo test -p dlm_core --test resolver_ids
+```
+
+Expected:
+
+```text
+id allocator uses separate monotonic ID spaces
+resolver assigns IDs to theories, values and bridges
+resolver rejects duplicate values inside one theory
+resolver rejects bridge declarations with unknown source/target theories
+```

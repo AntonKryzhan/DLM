@@ -140,6 +140,35 @@ pub struct BridgeId(u32);
 pub struct ItemId(u32);
 ```
 
+
+## 7.1 v0.34 concrete ID skeleton
+
+`crates/dlm_core/src/ids.rs` now provides concrete typed IDs for the current Rust implementation:
+
+```rust
+pub struct FileId(pub u32);
+pub struct ModuleId(pub u32);
+pub struct TheoryId(pub u32);
+pub struct ValueId(pub u32);
+pub struct TypeId(pub u32);
+pub struct BridgeId(pub u32);
+pub struct ProofId(pub u32);
+```
+
+The current `IdAllocator` gives each ID kind its own monotonic space. These IDs are compiler-local and are not source syntax.
+
+`crates/dlm_core/src/resolve.rs` adds the first concrete resolved representation:
+
+```text
+ResolvedModule
+ResolvedTheory
+ResolvedValue
+ResolvedBridge
+SymbolTable
+```
+
+This is not full HIR yet. It is the compatibility-safe bridge between the old string-based AST/checker world and the future ResolvedHIR world.
+
 ## 8. TheoryContext in HIR
 
 Each theory item receives ambient theory:

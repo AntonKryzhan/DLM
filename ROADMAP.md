@@ -35,7 +35,7 @@ DLM должен оставаться языком, где программа н
 v0.31.2 — stable Reflection / Self-Reference Guard
 v0.32.0 — Semantic Core Hardening ✅
 v0.33.0 — Span / Diagnostic Foundation ✅
-v0.34.0 — ID / Resolver Skeleton
+v0.34.0 — ID / Resolver Skeleton ✅
 v0.35.0 — Checker Orchestration / First Pass Split
 v0.36.0 — Property-Based Invariant Tests
 v0.37.0 — Meta-Level Stratification
@@ -51,6 +51,8 @@ v0.37.0 — Meta-Level Stratification
 `v0.32.0` начал этот разворот: bridge preservation, trust policy и capability/passport rules вынесены из монолитного чекера в отдельные модули.
 
 `v0.33.0` продолжает hardening-линию: добавлен `SourceSpan` и foundation для точных diagnostics без изменения синтаксиса языка и без пересборки AST-модели.
+
+`v0.34.0` добавляет первый ID / resolver skeleton: typed IDs, `IdAllocator`, `Resolver`, `ResolvedModule` и `SymbolTable`. Это не меняет публичный язык, но готовит AST -> HIR -> ResolvedHIR pipeline.
 
 ---
 
@@ -79,7 +81,7 @@ v0.31.2 — Reflection / Self-Reference Guard stable baseline
 Текущий активный слой:
 
 ```text
-v0.33.0 — Span / Diagnostic Foundation
+v0.34.0 — ID / Resolver Skeleton
 ```
 
 Текущая baseline-проверка для `v0.31.2` и последующих hardening-патчей:
@@ -92,7 +94,7 @@ cargo run -p dlm_cli -- run examples\valid\reflection_self_reference_guard.dlm
 cargo run -p dlm_cli -- explain examples\valid\reflection_summary_axiom.dlm
 ```
 
-После успешной проверки `v0.32.0` архитектурный hardening продолжен этапом `v0.33.0 Span / Diagnostic Foundation`.
+После успешной проверки `v0.33.0` архитектурный hardening продолжен этапом `v0.34.0 ID / Resolver Skeleton`.
 
 ---
 
@@ -1146,6 +1148,39 @@ LevelEscapeError
 - не смешивать object syntax и meta syntax;
 - meta_quote должен создавать Term<T>, а не TruthClaim<T>;
 - каждый lift_to_meta должен записываться в HistoryChain.
+```
+
+### v0.34.0 — ID / Resolver Skeleton
+
+Статус:
+
+```text
+реализовано как hardening-патч перед HIR / ResolvedHIR.
+```
+
+Добавлено:
+
+```text
+ids.rs
+resolve.rs
+FileId / ModuleId / TheoryId / ValueId / TypeId / BridgeId / ProofId
+IdAllocator
+Resolver
+ResolvedModule / ResolvedTheory / ResolvedValue / ResolvedBridge
+SymbolTable
+```
+
+Главный закон:
+
+```text
+после успешного resolver pass каждая declared theory/value/bridge имеет typed ID,
+а bridge endpoints указывают на существующие TheoryId.
+```
+
+Ограничение:
+
+```text
+checker.rs ещё не переведён на ResolvedModule; это будет следующий orchestration шаг.
 ```
 
 ### v0.33 — Statement / Theorem Layer

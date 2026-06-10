@@ -406,3 +406,19 @@ DLM now rejects dangerous reflection and self-reference forms at the semantic bo
 ### v0.31 runtime note
 
 Reflection examples that call `prove(...)` are checker-level examples. Run-time smoke testing for v0.31 uses `examples/valid/reflection_runtime_symbolic_guard.dlm`, because proof construction remains static-only.
+
+## v0.34 — ID / Resolver Skeleton
+
+DLM now has the first explicit ID and resolver foundation for future HIR / ResolvedHIR passes.
+
+Added architectural pieces:
+
+```text
+FileId / ModuleId / TheoryId / ValueId / TypeId / BridgeId / ProofId
+IdAllocator
+Resolver
+ResolvedModule / ResolvedTheory / ResolvedValue / ResolvedBridge
+SymbolTable
+```
+
+This does not change the public `.dlm` syntax or checker behavior yet. It prepares the project to move away from string-only semantic references before imports, aliases and multi-file project checking are expanded.

@@ -142,6 +142,35 @@ E0402 ModulePathMismatch
 E0403 ImportCycle
 ```
 
+
+## 7.1 v0.34 resolver skeleton status
+
+`v0.34.0` implements the first isolated resolver skeleton before full HIR exists.
+
+Current implemented subset:
+
+```text
+AST Module
+  -> ModuleId
+  -> TheoryId for each theory declaration
+  -> ValueId for let declarations inside theories
+  -> BridgeId for bridge declarations
+  -> bridge source/target names resolved to TheoryId
+  -> SymbolTable
+```
+
+Current resolver checks:
+
+```text
+duplicate theory names
+duplicate value names within one theory
+duplicate bridge names
+unknown bridge source theory
+unknown bridge target theory
+```
+
+The checker is not yet driven by this resolver. This keeps the patch compatible while establishing the ID-based contract for the next HIR / ResolvedHIR split.
+
 ## 8. Import resolution
 
 Responsibilities:

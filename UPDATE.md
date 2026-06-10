@@ -1,5 +1,107 @@
 # UPDATE.md
 
+## v0.34.0 — ID / Resolver Skeleton
+
+Дата: 2026-06-11
+
+### Цель патча
+
+После `v0.33.0 Span / Diagnostic Foundation` следующий hardening-шаг — подготовить ID-based resolution layer. До этого parser и checker в основном работали со строковыми именами теорий, значений и мостов. Это нормально для MVP, но опасно для будущих imports, HIR, TypedIR, PassportIR и project-level checking.
+
+`v0.34.0` добавляет минимальный, изолированный skeleton:
+
+```text
+ids.rs
+resolve.rs
+resolver regression tests
+```
+
+Публичное поведение языка не меняется: `dlm check`, `dlm run`, `dlm explain`, passport semantics, bridge laws и runtime остаются прежними.
+
+### Добавлено
+
+```text
+FileId
+ModuleId
+TheoryId
+ValueId
+TypeId
+BridgeId
+ProofId
+IdAllocator
+Resolver
+resolve_module(...)
+ResolvedModule
+ResolvedTheory
+ResolvedValue
+ResolvedBridge
+SymbolTable
+crates/dlm_core/tests/resolver_ids.rs
+docs/RESOLUTION.md
+```
+
+### Resolver skeleton
+
+Новый resolver выполняет первый deterministic structural pass:
+
+```text
+AST Module
+  -> ModuleId
+  -> TheoryId для каждой theory
+  -> ValueId для let binding внутри theory
+  -> BridgeId для bridge declarations
+  -> source/target bridge theories resolved to TheoryId
+  -> SymbolTable
+```
+
+### Новые проверки
+
+Resolver теперь отдельно фиксирует ранние name-resolution ошибки:
+
+```text
+duplicate theory names
+duplicate value names within one theory
+duplicate bridge names
+unknown bridge source theory
+unknown bridge target theory
+```
+
+Ошибки идут как `DiagnosticKind::NameError`.
+
+### Regression tests
+
+Добавлен файл:
+
+```text
+crates/dlm_core/tests/resolver_ids.rs
+```
+
+Он проверяет:
+
+```text
+ID allocator keeps separate monotonic spaces
+resolver assigns IDs to theories, values and bridges
+resolver rejects duplicate values
+resolver rejects bridges to unknown theories
+```
+
+### Что принципиально НЕ менялось
+
+```text
+синтаксис .dlm
+checker.rs orchestration
+runtime behavior
+passport rules
+trust policy
+bridge preservation laws
+reflection/self-reference guard
+SourceSpan API
+```
+
+Это подготовительный слой для следующих версий: HIR / ResolvedHIR и постепенного разделения checker на passes.
+
+---
+
 ## v0.33.0 — Span / Diagnostic Foundation
 
 Дата: 2026-06-11

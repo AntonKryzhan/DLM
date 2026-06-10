@@ -1,4 +1,21 @@
-# Implementation Notes v0.27
+# Implementation Notes v0.34
+
+## v0.34.0 ID / Resolver Skeleton
+
+- Added typed compiler/checker IDs: `FileId`, `ModuleId`, `TheoryId`, `ValueId`, `TypeId`, `BridgeId`, `ProofId`.
+- Added `IdAllocator` with independent monotonic spaces for each ID kind.
+- Added `resolve.rs` as the first name-resolution skeleton separate from `checker.rs`.
+- Added `ResolvedModule`, `ResolvedTheory`, `ResolvedValue`, `ResolvedBridge` and `SymbolTable`.
+- Resolver currently assigns IDs to module-local theories, let bindings and bridges.
+- Resolver rejects duplicate theories, duplicate values inside one theory, duplicate bridges and unknown bridge endpoints.
+- Checker behavior is not changed yet; this patch prepares the later AST -> HIR -> ResolvedHIR split.
+
+Example:
+
+```powershell
+cargo test -p dlm_core --test resolver_ids
+```
+
 
 ## v0.27.0 bridge soundness classification
 
