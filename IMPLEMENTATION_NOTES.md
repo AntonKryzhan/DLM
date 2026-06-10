@@ -305,3 +305,28 @@ Implemented additional typed infinity modes beyond the original cardinal/ordinal
 - `potential_step(p)` models one step of a potential infinite process.
 
 The invariant is unchanged: there is still no untyped `infinity()`, and no arithmetic bridge can silently coerce cardinal/ordinal/limit/potential/class/universe infinities into one another.
+
+## v0.30 — Consistency / Incompleteness Boundary
+
+Implemented a first incompleteness guard:
+
+- `TypeKind::ConsistencyClaim { theory }`.
+- `consistency_claim()` / `consistency_of_current()` / `consistent_current()`.
+- `prove_consistency(...)` rejected with `IncompletenessBoundaryError[E0906]`.
+- `assume_consistency(...)` / `consistency_axiom(...)` creates `StaticProof<consistency_axiom:T>` with `TrustLevel::Axiom`.
+- `SoundnessSummary` counts consistency claims and axiom consistency assumptions.
+
+This keeps consistency claims separate from checked proofs. A future stronger meta-theory bridge may provide checked consistency proofs for weaker theories, but this must be explicit and passported.
+## v0.31 — Reflection / Self-Reference Guard
+
+Added an explicit boundary for reflective and self-referential forms. Dangerous self-reference functions are rejected with `ReflectionBoundaryError`. Safe MVP claim constructors are symbolic and do not produce checked truth/proof objects unless the user explicitly requests an axiom-tainted lift.
+
+The implementation keeps the v0.31 layer conservative: no implicit theorem/proof synthesis is added. `reflection_claim(...)` requires `kind = reflection`; `self_reference(...)` and `godel_sentence()` create claim objects only; `reflection_axiom(...)` and `self_reference_axiom(...)` make axiom-taint visible in the passport/history path.
+## v0.31 fix #3 — preserve static proof/runtime separation
+
+The v0.31 reflection guard keeps `prove(...)` static-only. The test matrix now separates:
+
+- `reflection_self_reference_guard.dlm` for `dlm check` / `dlm explain`;
+- `reflection_runtime_symbolic_guard.dlm` for `dlm run`.
+
+This avoids weakening the runtime merely to satisfy a smoke command and preserves the existing proof-kernel invariant.

@@ -94,10 +94,16 @@ pub enum ExprKind {
 
 impl Expr {
     pub fn int(value: impl Into<String>, line: usize) -> Self {
-        Self { kind: ExprKind::IntLiteral(value.into()), line }
+        Self {
+            kind: ExprKind::IntLiteral(value.into()),
+            line,
+        }
     }
 
     pub fn ident(name: impl Into<String>, line: usize) -> Self {
-        Self { kind: ExprKind::Ident(name.into()), line }
+        Self {
+            kind: ExprKind::Ident(name.into()),
+            line,
+        }
     }
 }

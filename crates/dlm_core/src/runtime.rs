@@ -9,33 +9,85 @@ pub enum RuntimeValue {
     NatSymbolic(String),
     Bool(bool),
     Text(String),
-    Infinity { mode: String, repr: String },
-    Universe { level: u8 },
-    Set { of_level: u8, lives_in: u8 },
-    Class { of_level: u8 },
+    Infinity {
+        mode: String,
+        repr: String,
+    },
+    Universe {
+        level: u8,
+    },
+    Set {
+        of_level: u8,
+        lives_in: u8,
+    },
+    Class {
+        of_level: u8,
+    },
     Language(String),
     Encoding(String),
     MetaLevel(u8),
-    DefinableNat { language: String, encoding: String, theory: String, bound: u128, meta_level: u8 },
+    DefinableNat {
+        language: String,
+        encoding: String,
+        theory: String,
+        bound: u128,
+        meta_level: u8,
+    },
     Proposition(String),
-    Provable { theory: String, proposition: String },
+    Provable {
+        theory: String,
+        proposition: String,
+    },
+    ConsistencyClaim {
+        theory: String,
+    },
     ProofTerm(String),
     StaticProof(String),
     Bytes(Vec<u8>),
     Term(String),
     RuntimeWitness(String),
-    Node { arch: String, cores: u128, memory_mib: u128 },
-    GpuDevice { backend: String, memory_mib: u128 },
-    GpuPool { devices: Vec<(String, u128)> },
-    VirtualCluster { nodes: Vec<(String, u128, u128)> },
-    DistributedMemory { memory_mib: u128 },
-    DistributedGpuMemory { memory_mib: u128 },
-    GpuValue { inner: Box<RuntimeValue>, memory_mib: u128 },
-    GpuKernel { inner: Box<RuntimeValue> },
-    MemoryCheckpoint { memory_mib: u128 },
-    RemoteCheckpoint { arch: String, inner: Box<RuntimeValue> },
-    PortableCode { inner: Box<RuntimeValue> },
-    Remote { arch: String, inner: Box<RuntimeValue> },
+    Node {
+        arch: String,
+        cores: u128,
+        memory_mib: u128,
+    },
+    GpuDevice {
+        backend: String,
+        memory_mib: u128,
+    },
+    GpuPool {
+        devices: Vec<(String, u128)>,
+    },
+    VirtualCluster {
+        nodes: Vec<(String, u128, u128)>,
+    },
+    DistributedMemory {
+        memory_mib: u128,
+    },
+    DistributedGpuMemory {
+        memory_mib: u128,
+    },
+    GpuValue {
+        inner: Box<RuntimeValue>,
+        memory_mib: u128,
+    },
+    GpuKernel {
+        inner: Box<RuntimeValue>,
+    },
+    MemoryCheckpoint {
+        memory_mib: u128,
+    },
+    RemoteCheckpoint {
+        arch: String,
+        inner: Box<RuntimeValue>,
+    },
+    PortableCode {
+        inner: Box<RuntimeValue>,
+    },
+    Remote {
+        arch: String,
+        inner: Box<RuntimeValue>,
+    },
 }
 
 #[derive(Debug, Clone, Default)]
@@ -67,10 +119,14 @@ impl Runtime {
     }
 
     pub fn run_module(mut self, module: &Module) -> Result<RunReport, Diagnostic> {
-        self.bridges = module.items.iter().filter_map(|item| match item {
-            ModuleItem::Bridge(bridge) => Some(bridge.clone()),
-            _ => None,
-        }).collect();
+        self.bridges = module
+            .items
+            .iter()
+            .filter_map(|item| match item {
+                ModuleItem::Bridge(bridge) => Some(bridge.clone()),
+                _ => None,
+            })
+            .collect();
 
         let mut theory_count = 0usize;
         let mut values_evaluated = 0usize;
@@ -90,7 +146,11 @@ impl Runtime {
         })
     }
 
-    fn run_theory(&mut self, theory: &TheoryDecl, values_evaluated: &mut usize) -> Result<(), Diagnostic> {
+    fn run_theory(
+        &mut self,
+        theory: &TheoryDecl,
+        values_evaluated: &mut usize,
+    ) -> Result<(), Diagnostic> {
         self.scopes.entry(theory.name.clone()).or_default();
 
         for item in &theory.items {
@@ -156,7 +216,11 @@ impl Runtime {
                                 "power result overflows MVP runtime exact Nat range",
                             ).with_help("Use dlm check for symbolic/compressed reasoning; dlm run v0.13 executes only u128-sized exact Nat values."))
                     }
-                    (lhs, rhs) => Ok(RuntimeValue::NatSymbolic(format!("({} ^ {})", lhs.display_atom(), rhs.display_atom()))),
+                    (lhs, rhs) => Ok(RuntimeValue::NatSymbolic(format!(
+                        "({} ^ {})",
+                        lhs.display_atom(),
+                        rhs.display_atom()
+                    ))),
                 }
             }
             ExprKind::Add { lhs, rhs } => {
@@ -177,7 +241,9 @@ impl Runtime {
                 let lhs = self.eval_expr(lhs, ambient_theory)?;
                 let rhs = self.eval_expr(rhs, ambient_theory)?;
                 match (lhs, rhs) {
-                    (RuntimeValue::NatExact(lhs), RuntimeValue::NatExact(rhs)) => Ok(RuntimeValue::Bool(lhs > rhs)),
+                    (RuntimeValue::NatExact(lhs), RuntimeValue::NatExact(rhs)) => {
+                        Ok(RuntimeValue::Bool(lhs > rhs))
+                    }
                     _ => Err(Diagnostic::error(
                         DiagnosticKind::RuntimeError,
                         Some(expr.line),
@@ -189,8 +255,83 @@ impl Runtime {
         }
     }
 
-    fn eval_call(&mut self, name: &str, args: &[Expr], ambient_theory: &str, line: usize) -> Result<RuntimeValue, Diagnostic> {
+    fn has_reflection_bridge(&self, ambient_theory: &str) -> bool {
+        self.bridges.iter().any(|bridge| {
+            matches!(bridge.kind, BridgeKind::Reflection)
+                && (bridge.source == ambient_theory || bridge.target == ambient_theory)
+        })
+    }
+
+    fn reflection_runtime_error(&self, line: usize, message: impl Into<String>) -> Diagnostic {
+        Diagnostic::error(DiagnosticKind::ReflectionBoundaryError, Some(line), message.into())
+            .with_help(
+                "reflection/self-reference runtime forms are symbolic; use explicit reflection_claim(...) or axiom-tainted self_reference_axiom(...)",
+            )
+    }
+
+    fn eval_call(
+        &mut self,
+        name: &str,
+        args: &[Expr],
+        ambient_theory: &str,
+        line: usize,
+    ) -> Result<RuntimeValue, Diagnostic> {
         match name {
+
+            "reflection_claim" => {
+                if args.len() != 1 {
+                    return Err(self.reflection_runtime_error(line, "reflection_claim expects one argument"));
+                }
+                if !self.has_reflection_bridge(ambient_theory) {
+                    return Err(self.reflection_runtime_error(
+                        line,
+                        "reflection_claim requires an explicit bridge with kind = reflection touching the ambient theory",
+                    ));
+                }
+                let value = self.eval_expr(&args[0], ambient_theory)?;
+                Ok(RuntimeValue::Term(format!("ReflectionClaim<{}>", value.display_atom())))
+            }
+            "reflection_axiom" => {
+                if args.len() != 1 {
+                    return Err(self.reflection_runtime_error(line, "reflection_axiom expects one argument"));
+                }
+                let value = self.eval_expr(&args[0], ambient_theory)?;
+                Ok(RuntimeValue::Proposition(format!("reflection_axiom({})", value.display_atom())))
+            }
+            "self_reference" => {
+                if args.len() != 1 {
+                    return Err(self.reflection_runtime_error(line, "self_reference expects one argument"));
+                }
+                let value = self.eval_expr(&args[0], ambient_theory)?;
+                Ok(RuntimeValue::Term(format!("SelfReferenceClaim<{}>", value.display_atom())))
+            }
+            "godel_sentence" => {
+                if !args.is_empty() {
+                    return Err(self.reflection_runtime_error(line, "godel_sentence expects no arguments"));
+                }
+                Ok(RuntimeValue::Term("SelfReferenceClaim<godel_sentence>".to_string()))
+            }
+            "self_reference_axiom" => {
+                if args.len() != 1 {
+                    return Err(self.reflection_runtime_error(line, "self_reference_axiom expects one argument"));
+                }
+                let value = self.eval_expr(&args[0], ambient_theory)?;
+                Ok(RuntimeValue::Proposition(format!("self_reference_axiom({})", value.display_atom())))
+            }
+            "reflect"
+            | "reflect_provable"
+            | "prove_self_reference"
+            | "truth_of_self_reference"
+            | "truth_of_own_truth"
+            | "truth_of_self"
+            | "says_unprovable_self"
+            | "liar_sentence"
+            | "diagonalize"
+            | "fixed_point" => Err(self.reflection_runtime_error(
+                line,
+                format!("dangerous reflection/self-reference form '{name}' is not executable in DLM v0.31"),
+            )),
+
             "print_decimal" => {
                 if args.len() != 1 {
                     return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), "print_decimal expects one argument"));
@@ -1306,6 +1447,42 @@ impl Runtime {
                     ).with_help(format!("runtime value was: {}", other.display_atom()))),
                 }
             }
+            "consistency_claim" | "consistency_of_current" | "consistent_current" => {
+                if !args.is_empty() {
+                    return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), format!("{name} expects no arguments in MVP")));
+                }
+                Ok(RuntimeValue::ConsistencyClaim { theory: ambient_theory.to_string() })
+            }
+            "prove_consistency" | "prove_own_consistency" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), format!("{name} expects one Consistency<T> claim")));
+                }
+                match self.eval_expr(&args[0], ambient_theory)? {
+                    RuntimeValue::ConsistencyClaim { theory } => Err(Diagnostic::error(
+                        DiagnosticKind::IncompletenessBoundaryError,
+                        Some(line),
+                        format!("cannot execute proof of Consistency<{theory}> in the current MVP theory context"),
+                    ).with_help("Use assume_consistency(...) for an explicit Axiom-tainted assumption.")),
+                    other => Err(Diagnostic::error(
+                        DiagnosticKind::IncompletenessBoundaryError,
+                        Some(line),
+                        "prove_consistency can execute only Consistency<T> claims",
+                    ).with_help(format!("runtime value was: {}", other.display_atom()))),
+                }
+            }
+            "consistency_axiom" | "assume_consistency" | "consistency_from_axiom" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), format!("{name} expects one Consistency<T> claim")));
+                }
+                match self.eval_expr(&args[0], ambient_theory)? {
+                    RuntimeValue::ConsistencyClaim { theory } => Ok(RuntimeValue::StaticProof(format!("consistency_axiom:{theory}"))),
+                    other => Err(Diagnostic::error(
+                        DiagnosticKind::IncompletenessBoundaryError,
+                        Some(line),
+                        "assume_consistency can execute only Consistency<T> claims",
+                    ).with_help(format!("runtime value was: {}", other.display_atom()))),
+                }
+            }
             "proof_true" | "true_intro" => {
                 if !args.is_empty() {
                     return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), format!("{name} expects no arguments")));
@@ -1441,66 +1618,125 @@ impl Runtime {
         }
     }
 
-    fn eval_node_with(&mut self, arch: &str, args: &[Expr], line: usize) -> Result<RuntimeValue, Diagnostic> {
+    fn eval_node_with(
+        &mut self,
+        arch: &str,
+        args: &[Expr],
+        line: usize,
+    ) -> Result<RuntimeValue, Diagnostic> {
         if args.len() != 2 {
-            return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), "node_*_with expects cores and memory_mib"));
+            return Err(Diagnostic::error(
+                DiagnosticKind::RuntimeError,
+                Some(line),
+                "node_*_with expects cores and memory_mib",
+            ));
         }
         let cores = self.eval_expr(&args[0], "")?;
         let memory = self.eval_expr(&args[1], "")?;
         let RuntimeValue::NatExact(cores) = cores else {
-            return Err(Diagnostic::error(DiagnosticKind::DistributedResourceError, Some(line), "node cores must evaluate to exact Nat in MVP"));
+            return Err(Diagnostic::error(
+                DiagnosticKind::DistributedResourceError,
+                Some(line),
+                "node cores must evaluate to exact Nat in MVP",
+            ));
         };
         let RuntimeValue::NatExact(memory_mib) = memory else {
-            return Err(Diagnostic::error(DiagnosticKind::DistributedResourceError, Some(line), "node memory_mib must evaluate to exact Nat in MVP"));
+            return Err(Diagnostic::error(
+                DiagnosticKind::DistributedResourceError,
+                Some(line),
+                "node memory_mib must evaluate to exact Nat in MVP",
+            ));
         };
         if cores == 0 || memory_mib == 0 {
-            return Err(Diagnostic::error(DiagnosticKind::DistributedResourceError, Some(line), "node resources must be greater than zero"));
+            return Err(Diagnostic::error(
+                DiagnosticKind::DistributedResourceError,
+                Some(line),
+                "node resources must be greater than zero",
+            ));
         }
-        Ok(RuntimeValue::Node { arch: arch.to_string(), cores, memory_mib })
+        Ok(RuntimeValue::Node {
+            arch: arch.to_string(),
+            cores,
+            memory_mib,
+        })
     }
 
-    fn eval_gpu_with(&mut self, backend: &str, args: &[Expr], line: usize) -> Result<RuntimeValue, Diagnostic> {
+    fn eval_gpu_with(
+        &mut self,
+        backend: &str,
+        args: &[Expr],
+        line: usize,
+    ) -> Result<RuntimeValue, Diagnostic> {
         if args.len() != 1 {
-            return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), "gpu_*_with expects memory_mib"));
+            return Err(Diagnostic::error(
+                DiagnosticKind::RuntimeError,
+                Some(line),
+                "gpu_*_with expects memory_mib",
+            ));
         }
         let memory = self.eval_expr(&args[0], "")?;
         let RuntimeValue::NatExact(memory_mib) = memory else {
-            return Err(Diagnostic::error(DiagnosticKind::DistributedResourceError, Some(line), "gpu memory_mib must evaluate to exact Nat in MVP"));
+            return Err(Diagnostic::error(
+                DiagnosticKind::DistributedResourceError,
+                Some(line),
+                "gpu memory_mib must evaluate to exact Nat in MVP",
+            ));
         };
         if memory_mib == 0 {
-            return Err(Diagnostic::error(DiagnosticKind::DistributedResourceError, Some(line), "gpu memory_mib must be greater than zero"));
+            return Err(Diagnostic::error(
+                DiagnosticKind::DistributedResourceError,
+                Some(line),
+                "gpu memory_mib must be greater than zero",
+            ));
         }
-        Ok(RuntimeValue::GpuDevice { backend: backend.to_string(), memory_mib })
+        Ok(RuntimeValue::GpuDevice {
+            backend: backend.to_string(),
+            memory_mib,
+        })
     }
 
-    fn lookup_ident(&self, name: &str, ambient_theory: &str, line: usize) -> Result<RuntimeValue, Diagnostic> {
+    fn lookup_ident(
+        &self,
+        name: &str,
+        ambient_theory: &str,
+        line: usize,
+    ) -> Result<RuntimeValue, Diagnostic> {
         self.scopes
             .get(ambient_theory)
             .and_then(|scope| scope.get(name))
             .cloned()
-            .ok_or_else(|| Diagnostic::error(
-                DiagnosticKind::RuntimeError,
-                Some(line),
-                format!("runtime name '{name}' is not defined in theory {ambient_theory}"),
-            ))
+            .ok_or_else(|| {
+                Diagnostic::error(
+                    DiagnosticKind::RuntimeError,
+                    Some(line),
+                    format!("runtime name '{name}' is not defined in theory {ambient_theory}"),
+                )
+            })
     }
 
-    fn lookup_qualified_runtime(&self, theory: &str, name: &str, line: usize) -> Result<RuntimeValue, Diagnostic> {
+    fn lookup_qualified_runtime(
+        &self,
+        theory: &str,
+        name: &str,
+        line: usize,
+    ) -> Result<RuntimeValue, Diagnostic> {
         self.scopes
             .get(theory)
             .and_then(|scope| scope.get(name))
             .cloned()
-            .ok_or_else(|| Diagnostic::error(
-                DiagnosticKind::RuntimeError,
-                Some(line),
-                format!("runtime qualified name '{theory}.{name}' is not defined"),
-            ))
+            .ok_or_else(|| {
+                Diagnostic::error(
+                    DiagnosticKind::RuntimeError,
+                    Some(line),
+                    format!("runtime qualified name '{theory}.{name}' is not defined"),
+                )
+            })
     }
 
     fn has_bridge(&self, source: &str, target: &str, kind: BridgeKind) -> bool {
-        self.bridges.iter().any(|bridge| {
-            bridge.source == source && bridge.target == target && bridge.kind == kind
-        })
+        self.bridges
+            .iter()
+            .any(|bridge| bridge.source == source && bridge.target == target && bridge.kind == kind)
     }
 }
 
@@ -1518,33 +1754,75 @@ impl RuntimeValue {
             RuntimeValue::Language(value) => format!("language<{value}>"),
             RuntimeValue::Encoding(value) => format!("encoding<{value}>"),
             RuntimeValue::MetaLevel(value) => format!("M{value}"),
-            RuntimeValue::DefinableNat { language, encoding, theory, bound, meta_level } => format!("definable_nat<{language},{encoding},{theory},bound={bound},M{meta_level}>"),
+            RuntimeValue::DefinableNat {
+                language,
+                encoding,
+                theory,
+                bound,
+                meta_level,
+            } => {
+                format!("definable_nat<{language},{encoding},{theory},bound={bound},M{meta_level}>")
+            }
             RuntimeValue::Proposition(name) => format!("Prop<{name}>"),
-            RuntimeValue::Provable { theory, proposition } => format!("Provable<{theory}.{proposition}>"),
+            RuntimeValue::Provable {
+                theory,
+                proposition,
+            } => format!("Provable<{theory}.{proposition}>"),
+            RuntimeValue::ConsistencyClaim { theory } => format!("Consistency<{theory}>"),
             RuntimeValue::ProofTerm(rule) => format!("proof_term<{rule}>"),
             RuntimeValue::StaticProof(predicate) => format!("StaticProof<{predicate}>"),
             RuntimeValue::Bytes(bytes) => format!("<{} bytes>", bytes.len()),
             RuntimeValue::Term(value) => format!("term({value})"),
             RuntimeValue::RuntimeWitness(value) => format!("witness({value})"),
-            RuntimeValue::Node { arch, cores, memory_mib } => format!("node<{arch}>{{cores={cores}, memory_mib={memory_mib}}}"),
-            RuntimeValue::GpuDevice { backend, memory_mib } => format!("gpu<{backend}>{{memory_mib={memory_mib}}}"),
+            RuntimeValue::Node {
+                arch,
+                cores,
+                memory_mib,
+            } => format!("node<{arch}>{{cores={cores}, memory_mib={memory_mib}}}"),
+            RuntimeValue::GpuDevice {
+                backend,
+                memory_mib,
+            } => format!("gpu<{backend}>{{memory_mib={memory_mib}}}"),
             RuntimeValue::GpuPool { devices } => {
                 let memory_mib: u128 = devices.iter().map(|(_, m)| *m).sum();
-                format!("gpu_pool<devices={}, memory_mib={memory_mib}>", devices.len())
+                format!(
+                    "gpu_pool<devices={}, memory_mib={memory_mib}>",
+                    devices.len()
+                )
             }
             RuntimeValue::VirtualCluster { nodes } => {
                 let cores: u128 = nodes.iter().map(|(_, c, _)| *c).sum();
                 let memory_mib: u128 = nodes.iter().map(|(_, _, m)| *m).sum();
-                format!("virtual_cluster<nodes={}, cores={}, memory_mib={}>" , nodes.len(), cores, memory_mib)
+                format!(
+                    "virtual_cluster<nodes={}, cores={}, memory_mib={}>",
+                    nodes.len(),
+                    cores,
+                    memory_mib
+                )
             }
-            RuntimeValue::DistributedMemory { memory_mib } => format!("distributed_memory<memory_mib={memory_mib}>"),
-            RuntimeValue::DistributedGpuMemory { memory_mib } => format!("distributed_gpu_memory<memory_mib={memory_mib}>"),
-            RuntimeValue::GpuValue { inner, memory_mib } => format!("gpu_value<memory_mib={memory_mib}>({})", inner.display_atom()),
+            RuntimeValue::DistributedMemory { memory_mib } => {
+                format!("distributed_memory<memory_mib={memory_mib}>")
+            }
+            RuntimeValue::DistributedGpuMemory { memory_mib } => {
+                format!("distributed_gpu_memory<memory_mib={memory_mib}>")
+            }
+            RuntimeValue::GpuValue { inner, memory_mib } => format!(
+                "gpu_value<memory_mib={memory_mib}>({})",
+                inner.display_atom()
+            ),
             RuntimeValue::GpuKernel { inner } => format!("gpu_kernel({})", inner.display_atom()),
-            RuntimeValue::MemoryCheckpoint { memory_mib } => format!("memory_checkpoint<memory_mib={memory_mib}>"),
-            RuntimeValue::RemoteCheckpoint { arch, inner } => format!("remote_checkpoint[{arch}]({})", inner.display_atom()),
-            RuntimeValue::PortableCode { inner } => format!("portable_code({})", inner.display_atom()),
-            RuntimeValue::Remote { arch, inner } => format!("remote[{arch}]({})", inner.display_atom()),
+            RuntimeValue::MemoryCheckpoint { memory_mib } => {
+                format!("memory_checkpoint<memory_mib={memory_mib}>")
+            }
+            RuntimeValue::RemoteCheckpoint { arch, inner } => {
+                format!("remote_checkpoint[{arch}]({})", inner.display_atom())
+            }
+            RuntimeValue::PortableCode { inner } => {
+                format!("portable_code({})", inner.display_atom())
+            }
+            RuntimeValue::Remote { arch, inner } => {
+                format!("remote[{arch}]({})", inner.display_atom())
+            }
         }
     }
 }

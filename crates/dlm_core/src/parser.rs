@@ -65,16 +65,25 @@ pub fn parse_module(source: &str) -> Result<Module, Vec<Diagnostic>> {
         }
 
         if let Some(rest) = line.strip_prefix("import ") {
-            imports.push(ImportDecl { path: rest.trim().trim_end_matches(';').to_string() });
+            imports.push(ImportDecl {
+                path: rest.trim().trim_end_matches(';').to_string(),
+            });
             continue;
         }
 
         if let Some(rest) = line.strip_prefix("theory ") {
             let name = rest.trim().trim_end_matches('{').trim().to_string();
             if name.is_empty() {
-                diagnostics.push(Diagnostic::error(DiagnosticKind::ParseError, Some(line_no), "missing theory name"));
+                diagnostics.push(Diagnostic::error(
+                    DiagnosticKind::ParseError,
+                    Some(line_no),
+                    "missing theory name",
+                ));
             } else {
-                current_theory = Some(TheoryDecl { name, items: Vec::new() });
+                current_theory = Some(TheoryDecl {
+                    name,
+                    items: Vec::new(),
+                });
             }
             continue;
         }
@@ -133,11 +142,19 @@ fn strip_comment(line: &str) -> &str {
 fn parse_let(rest: &str, line: usize) -> Result<LetDecl, Diagnostic> {
     let trimmed = rest.trim().trim_end_matches(';');
     let Some((name, expr_text)) = trimmed.split_once('=') else {
-        return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), "expected let name = expression"));
+        return Err(Diagnostic::error(
+            DiagnosticKind::ParseError,
+            Some(line),
+            "expected let name = expression",
+        ));
     };
     let name = name.trim().to_string();
     if name.is_empty() {
-        return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), "missing let binding name"));
+        return Err(Diagnostic::error(
+            DiagnosticKind::ParseError,
+            Some(line),
+            "missing let binding name",
+        ));
     }
     let expr = parse_expr(expr_text.trim(), line)?;
     Ok(LetDecl { name, expr, line })
@@ -147,10 +164,18 @@ fn parse_bridge_header(rest: &str, line: usize) -> Result<BridgeDecl, Diagnostic
     // bridge PA_quote : PA -> MetaArithmetic {
     let header = rest.trim().trim_end_matches('{').trim();
     let Some((name, rhs)) = header.split_once(':') else {
-        return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), "expected bridge Name : Source -> Target"));
+        return Err(Diagnostic::error(
+            DiagnosticKind::ParseError,
+            Some(line),
+            "expected bridge Name : Source -> Target",
+        ));
     };
     let Some((source, target)) = rhs.split_once("->") else {
-        return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), "expected bridge source -> target"));
+        return Err(Diagnostic::error(
+            DiagnosticKind::ParseError,
+            Some(line),
+            "expected bridge source -> target",
+        ));
     };
     Ok(BridgeDecl {
         name: name.trim().to_string(),
@@ -179,28 +204,41 @@ fn parse_bridge_kind(text: &str) -> BridgeKind {
 pub fn parse_expr(text: &str, line: usize) -> Result<Expr, Diagnostic> {
     let text = text.trim().trim_end_matches(';').trim();
     if text.is_empty() {
-        return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), "empty expression"));
+        return Err(Diagnostic::error(
+            DiagnosticKind::ParseError,
+            Some(line),
+            "empty expression",
+        ));
     }
 
     if let Some((lhs, rhs)) = split_top_level(text, '>') {
-        return Ok(Expr { kind: ExprKind::CompareGt {
-            lhs: Box::new(parse_expr(lhs, line)?),
-            rhs: Box::new(parse_expr(rhs, line)?),
-        }, line });
+        return Ok(Expr {
+            kind: ExprKind::CompareGt {
+                lhs: Box::new(parse_expr(lhs, line)?),
+                rhs: Box::new(parse_expr(rhs, line)?),
+            },
+            line,
+        });
     }
 
     if let Some((lhs, rhs)) = split_top_level(text, '+') {
-        return Ok(Expr { kind: ExprKind::Add {
-            lhs: Box::new(parse_expr(lhs, line)?),
-            rhs: Box::new(parse_expr(rhs, line)?),
-        }, line });
+        return Ok(Expr {
+            kind: ExprKind::Add {
+                lhs: Box::new(parse_expr(lhs, line)?),
+                rhs: Box::new(parse_expr(rhs, line)?),
+            },
+            line,
+        });
     }
 
     if let Some((lhs, rhs)) = split_top_level(text, '^') {
-        return Ok(Expr { kind: ExprKind::Power {
-            base: Box::new(parse_expr(lhs, line)?),
-            exp: Box::new(parse_expr(rhs, line)?),
-        }, line });
+        return Ok(Expr {
+            kind: ExprKind::Power {
+                base: Box::new(parse_expr(lhs, line)?),
+                exp: Box::new(parse_expr(rhs, line)?),
+            },
+            line,
+        });
     }
 
     if text.chars().all(|c| c.is_ascii_digit()) {
@@ -211,16 +249,29 @@ pub fn parse_expr(text: &str, line: usize) -> Result<Expr, Diagnostic> {
         let args = if args_text.trim().is_empty() {
             Vec::new()
         } else {
-            split_args(args_text).into_iter()
+            split_args(args_text)
+                .into_iter()
                 .map(|arg| parse_expr(arg, line))
                 .collect::<Result<Vec<_>, _>>()?
         };
-        return Ok(Expr { kind: ExprKind::Call { name: name.to_string(), args }, line });
+        return Ok(Expr {
+            kind: ExprKind::Call {
+                name: name.to_string(),
+                args,
+            },
+            line,
+        });
     }
 
     if let Some((theory, name)) = text.split_once('.') {
         if is_ident(theory) && is_ident(name) {
-            return Ok(Expr { kind: ExprKind::QualifiedIdent { theory: theory.to_string(), name: name.to_string() }, line });
+            return Ok(Expr {
+                kind: ExprKind::QualifiedIdent {
+                    theory: theory.to_string(),
+                    name: name.to_string(),
+                },
+                line,
+            });
         }
     }
 
@@ -228,7 +279,11 @@ pub fn parse_expr(text: &str, line: usize) -> Result<Expr, Diagnostic> {
         return Ok(Expr::ident(text, line));
     }
 
-    Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("could not parse expression '{text}'")))
+    Err(Diagnostic::error(
+        DiagnosticKind::ParseError,
+        Some(line),
+        format!("could not parse expression '{text}'"),
+    ))
 }
 
 fn parse_call_parts(text: &str) -> Option<(&str, &str)> {
@@ -245,8 +300,11 @@ fn parse_call_parts(text: &str) -> Option<(&str, &str)> {
 
 fn is_ident(text: &str) -> bool {
     let mut chars = text.chars();
-    let Some(first) = chars.next() else { return false; };
-    (first.is_ascii_alphabetic() || first == '_') && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    (first.is_ascii_alphabetic() || first == '_')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
 fn split_top_level(text: &str, needle: char) -> Option<(&str, &str)> {

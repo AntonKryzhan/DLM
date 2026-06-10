@@ -206,7 +206,9 @@ fn print_usage_and_exit(code: i32) -> ! {
     eprintln!("DLM / ЯРД MVP checker + exact-runtime prototype");
     eprintln!("usage:");
     eprintln!("  dlm check [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm>");
-    eprintln!("  dlm run [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm> [--stdin <text>]");
+    eprintln!(
+        "  dlm run [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm> [--stdin <text>]"
+    );
     eprintln!("  dlm explain [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm>");
     eprintln!("  dlm --version");
     process::exit(code);

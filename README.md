@@ -400,3 +400,9 @@ DLM is an experiment in that direction.
 ## License
 
 The license is currently defined by the repository owner.
+## v0.31 — Reflection / Self-Reference Guard
+
+DLM now rejects dangerous reflection and self-reference forms at the semantic boundary instead of allowing them to fall through as ordinary missing functions. Reflection is explicit: `reflection_claim(...)` requires a `kind = reflection` bridge, and any intentional reflective/self-referential truth lift must be axiom-tainted.
+### v0.31 runtime note
+
+Reflection examples that call `prove(...)` are checker-level examples. Run-time smoke testing for v0.31 uses `examples/valid/reflection_runtime_symbolic_guard.dlm`, because proof construction remains static-only.

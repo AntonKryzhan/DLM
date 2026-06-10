@@ -343,3 +343,21 @@ Later versions can bootstrap std_core from `.dlm` files.
 ## v0.24 BigNumber Hierarchy
 
 Added explicit huge-number passports for `Graham()`, `TREE(n)`, `BB(n)` and `fast_growing(level)`. Bare huge numbers are rejected; huge finite numbers can be symbolically printed/proof-compared but are not decimal-printable unless a future checked evaluator provides that capability.
+## v0.31 reflection and self-reference core forms
+
+Reflection/self-reference primitives are symbolic metatheory forms, not general runtime proof execution.
+
+Checker-oriented forms:
+
+```text
+reflection_claim(provable)
+reflection_axiom(reflection_claim)
+```
+
+Runtime-safe symbolic smoke form:
+
+```text
+self_reference(prop)
+```
+
+`prove(...)` remains static-only; use `dlm check` / `dlm explain` for examples that construct `StaticProof` values.

@@ -441,3 +441,32 @@ examples/invalid/print_decimal_gpu_value.dlm
 ## v0.24 BigNumber Hierarchy
 
 Added explicit huge-number passports for `Graham()`, `TREE(n)`, `BB(n)` and `fast_growing(level)`. Bare huge numbers are rejected; huge finite numbers can be symbolically printed/proof-compared but are not decimal-printable unless a future checked evaluator provides that capability.
+## v0.31 reflection/self-reference guard
+
+```powershell
+cargo check
+cargo test
+cargo run -p dlm_cli -- check examples\valid\reflection_self_reference_guard.dlm
+cargo run -p dlm_cli -- run examples\valid\reflection_runtime_symbolic_guard.dlm
+cargo run -p dlm_cli -- explain examples\valid\reflection_summary_axiom.dlm
+cargo run -p dlm_cli -- check examples\invalid\reflection_quote_without_bridge.dlm
+cargo run -p dlm_cli -- check examples\invalid\reflection_self_truth.dlm
+cargo run -p dlm_cli -- check examples\invalid\reflection_self_unprovability.dlm
+```
+### v0.31 fix #2 — reflection_claim input contract
+
+`reflection_claim(...)` must be tested with `Provable`, produced explicitly through `provable_of(proof)`. This prevents the valid reflection example from failing with `reflection_claim requires Provable; got StaticProof<...>`.
+### v0.31 fix #3 — static checker proof vs runtime validation
+
+`prove(...)` remains a static checker operation. Therefore `reflection_self_reference_guard.dlm` is a `check`/`explain` validation target, not a `run` target.
+
+Use the runtime-safe symbolic example for `dlm run`:
+
+```powershell
+cargo run -p dlm_cli -- check examples\valid\reflection_self_reference_guard.dlm
+cargo run -p dlm_cli -- explain examples\valid\reflection_summary_axiom.dlm
+cargo run -p dlm_cli -- check examples\valid\reflection_runtime_symbolic_guard.dlm
+cargo run -p dlm_cli -- run examples\valid\reflection_runtime_symbolic_guard.dlm
+```
+
+The invariant is intentional: static proof construction is not runtime execution, while symbolic self-reference claim construction may still be demonstrated at runtime.

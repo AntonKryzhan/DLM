@@ -27,6 +27,8 @@ pub enum DiagnosticKind {
     BigNumberError,
     ProofKernelError,
     TruthBoundaryError,
+    IncompletenessBoundaryError,
+    ReflectionBoundaryError,
 }
 
 #[derive(Debug, Clone)]
@@ -81,6 +83,8 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::BigNumberError => "E0903 BigNumberError",
             DiagnosticKind::ProofKernelError => "E0904 ProofKernelError",
             DiagnosticKind::TruthBoundaryError => "E0905 TruthBoundaryError",
+            DiagnosticKind::IncompletenessBoundaryError => "E0906 IncompletenessBoundaryError",
+            DiagnosticKind::ReflectionBoundaryError => "E0907 ReflectionBoundaryError",
         };
         match self.line {
             Some(line) => writeln!(f, "{severity}[{code}] at line {line}: {}", self.message)?,

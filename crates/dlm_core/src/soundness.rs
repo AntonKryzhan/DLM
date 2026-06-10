@@ -117,6 +117,8 @@ pub struct SoundnessSummary {
     pub propositions: usize,
     pub provability_claims: usize,
     pub truth_axiom_lifts: usize,
+    pub consistency_claims: usize,
+    pub consistency_axiom_lifts: usize,
     pub runtime_witnesses: usize,
     pub runtime_input_values: usize,
     pub axiom_tainted: usize,
@@ -198,6 +200,7 @@ impl SoundnessSummary {
             TypeKind::ProofTerm { .. } => self.proof_terms += 1,
             TypeKind::Prop { .. } => self.propositions += 1,
             TypeKind::Provable { .. } => self.provability_claims += 1,
+            TypeKind::ConsistencyClaim { .. } => self.consistency_claims += 1,
             TypeKind::RuntimeWitness(_) => self.runtime_witnesses += 1,
             _ => {}
         }
@@ -222,6 +225,8 @@ impl SoundnessSummary {
                 self.soundness_bridge_events += 1;
             } else if event.starts_with("truth:from_provable_axiom") {
                 self.truth_axiom_lifts += 1;
+            } else if event.starts_with("consistency:axiom:") {
+                self.consistency_axiom_lifts += 1;
             } else if event.starts_with("migration:") || event.starts_with("cluster:schedule:") {
                 self.migration_events += 1;
             } else if event.starts_with("remote:materialize:") {
@@ -286,11 +291,14 @@ impl SoundnessSummary {
         {
             self.issues.push(SoundnessIssue {
                 subject: name.to_string(),
-                message: "direct soundness bridge event produced a non-StaticProof passport".to_string(),
+                message: "direct soundness bridge event produced a non-StaticProof passport"
+                    .to_string(),
             });
         }
 
-        if matches!(passport.ty, TypeKind::StaticProof(_)) && passport.provenance == Provenance::RuntimeInput {
+        if matches!(passport.ty, TypeKind::StaticProof(_))
+            && passport.provenance == Provenance::RuntimeInput
+        {
             self.issues.push(SoundnessIssue {
                 subject: name.to_string(),
                 message: "StaticProof has RuntimeInput provenance".to_string(),
@@ -313,33 +321,101 @@ impl SoundnessSummary {
         out.push_str(&format!("  static proofs: {}\n", self.static_proofs));
         out.push_str(&format!("  proof terms: {}\n", self.proof_terms));
         out.push_str(&format!("  propositions: {}\n", self.propositions));
-        out.push_str(&format!("  provability claims: {}\n", self.provability_claims));
-        out.push_str(&format!("  axiom truth lifts from provability: {}\n", self.truth_axiom_lifts));
-        out.push_str(&format!("  kernel-checked proofs: {}\n", self.kernel_checked_proofs));
-        out.push_str(&format!("  runtime witnesses: {}\n", self.runtime_witnesses));
-        out.push_str(&format!("  runtime-input values: {}\n", self.runtime_input_values));
+        out.push_str(&format!(
+            "  provability claims: {}\n",
+            self.provability_claims
+        ));
+        out.push_str(&format!(
+            "  axiom truth lifts from provability: {}\n",
+            self.truth_axiom_lifts
+        ));
+        out.push_str(&format!(
+            "  consistency claims: {}\n",
+            self.consistency_claims
+        ));
+        out.push_str(&format!(
+            "  axiom consistency assumptions: {}\n",
+            self.consistency_axiom_lifts
+        ));
+        out.push_str(&format!(
+            "  kernel-checked proofs: {}\n",
+            self.kernel_checked_proofs
+        ));
+        out.push_str(&format!(
+            "  runtime witnesses: {}\n",
+            self.runtime_witnesses
+        ));
+        out.push_str(&format!(
+            "  runtime-input values: {}\n",
+            self.runtime_input_values
+        ));
         out.push_str(&format!("  axiom-tainted values: {}\n", self.axiom_tainted));
-        out.push_str(&format!("  oracle-tainted values: {}\n", self.oracle_tainted));
-        out.push_str(&format!("  unsafe-tainted values: {}\n", self.unsafe_tainted));
+        out.push_str(&format!(
+            "  oracle-tainted values: {}\n",
+            self.oracle_tainted
+        ));
+        out.push_str(&format!(
+            "  unsafe-tainted values: {}\n",
+            self.unsafe_tainted
+        ));
         out.push_str("\nBridge/history events:\n");
-        out.push_str(&format!("  quote bridge events: {}\n", self.quote_bridge_events));
-        out.push_str(&format!("  transport bridge events: {}\n", self.transport_bridge_events));
-        out.push_str(&format!("  soundness bridge events: {}\n", self.soundness_bridge_events));
-        out.push_str(&format!("  migration/schedule events: {}\n", self.migration_events));
-        out.push_str(&format!("  materialize events: {}\n", self.materialize_events));
+        out.push_str(&format!(
+            "  quote bridge events: {}\n",
+            self.quote_bridge_events
+        ));
+        out.push_str(&format!(
+            "  transport bridge events: {}\n",
+            self.transport_bridge_events
+        ));
+        out.push_str(&format!(
+            "  soundness bridge events: {}\n",
+            self.soundness_bridge_events
+        ));
+        out.push_str(&format!(
+            "  migration/schedule events: {}\n",
+            self.migration_events
+        ));
+        out.push_str(&format!(
+            "  materialize events: {}\n",
+            self.materialize_events
+        ));
         out.push_str(&format!("  gpu-related events: {}\n", self.gpu_events));
         out.push_str("\nBridge declarations:\n");
         out.push_str(&format!("  total: {}\n", self.bridge_declarations));
-        out.push_str(&format!("  definitional: {}\n", self.definitional_bridge_declarations));
-        out.push_str(&format!("  conservative: {}\n", self.conservative_bridge_declarations));
+        out.push_str(&format!(
+            "  definitional: {}\n",
+            self.definitional_bridge_declarations
+        ));
+        out.push_str(&format!(
+            "  conservative: {}\n",
+            self.conservative_bridge_declarations
+        ));
         out.push_str(&format!("  quote: {}\n", self.quote_bridge_declarations));
-        out.push_str(&format!("  transport: {}\n", self.transport_bridge_declarations));
-        out.push_str(&format!("  soundness: {}\n", self.soundness_bridge_declarations));
-        out.push_str(&format!("  reflection: {}\n", self.reflection_bridge_declarations));
-        out.push_str(&format!("  migration: {}\n", self.migration_bridge_declarations));
-        out.push_str(&format!("  materialize: {}\n", self.materialize_bridge_declarations));
+        out.push_str(&format!(
+            "  transport: {}\n",
+            self.transport_bridge_declarations
+        ));
+        out.push_str(&format!(
+            "  soundness: {}\n",
+            self.soundness_bridge_declarations
+        ));
+        out.push_str(&format!(
+            "  reflection: {}\n",
+            self.reflection_bridge_declarations
+        ));
+        out.push_str(&format!(
+            "  migration: {}\n",
+            self.migration_bridge_declarations
+        ));
+        out.push_str(&format!(
+            "  materialize: {}\n",
+            self.materialize_bridge_declarations
+        ));
         out.push_str(&format!("  unsafe: {}\n", self.unsafe_bridge_declarations));
-        out.push_str(&format!("  unknown: {}\n", self.unknown_bridge_declarations));
+        out.push_str(&format!(
+            "  unknown: {}\n",
+            self.unknown_bridge_declarations
+        ));
         if !self.bridge_profiles.is_empty() {
             out.push_str("\nBridge soundness profiles:\n");
             for profile in &self.bridge_profiles {
@@ -358,7 +434,9 @@ impl SoundnessSummary {
         if self.is_clean() {
             out.push_str("  clean under current passport soundness checks: no Axiom/Oracle/Unsafe taint detected.\n");
         } else {
-            out.push_str("  not clean: result depends on Axiom/Oracle/Unsafe taint or invariant issues.\n");
+            out.push_str(
+                "  not clean: result depends on Axiom/Oracle/Unsafe taint or invariant issues.\n",
+            );
         }
         if !self.issues.is_empty() {
             out.push_str("\nInvariant issues:\n");

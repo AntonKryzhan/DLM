@@ -27,15 +27,21 @@ pub struct CheckPolicy {
 
 impl CheckPolicy {
     pub fn research() -> Self {
-        Self { max_trust: TrustLevel::Axiom }
+        Self {
+            max_trust: TrustLevel::Axiom,
+        }
     }
 
     pub fn trusted_only() -> Self {
-        Self { max_trust: TrustLevel::Builtin }
+        Self {
+            max_trust: TrustLevel::Builtin,
+        }
     }
 
     pub fn allow_unsafe() -> Self {
-        Self { max_trust: TrustLevel::Unsafe }
+        Self {
+            max_trust: TrustLevel::Unsafe,
+        }
     }
 }
 
@@ -60,14 +66,21 @@ impl Checker {
     }
 
     pub fn with_policy(policy: CheckPolicy) -> Self {
-        Self { policy, ..Self::default() }
+        Self {
+            policy,
+            ..Self::default()
+        }
     }
 
     pub fn check_module(mut self, module: &Module) -> CheckReport {
-        self.bridges = module.items.iter().filter_map(|item| match item {
-            ModuleItem::Bridge(bridge) => Some(bridge.clone()),
-            _ => None,
-        }).collect();
+        self.bridges = module
+            .items
+            .iter()
+            .filter_map(|item| match item {
+                ModuleItem::Bridge(bridge) => Some(bridge.clone()),
+                _ => None,
+            })
+            .collect();
 
         let mut theory_count = 0usize;
         for item in &module.items {
@@ -91,28 +104,28 @@ impl Checker {
         self.theories.entry(theory.name.clone()).or_default();
         for item in &theory.items {
             match item {
-                TheoryItem::Let(let_decl) => {
-                    match self.infer_expr(&let_decl.expr, &theory.name) {
-                        Ok(passport) => {
-                            if let Err(diag) = self.validate_policy(&passport, let_decl.line) {
-                                self.diagnostics.push(diag);
-                            }
-                            self.theories.entry(theory.name.clone()).or_default().insert(let_decl.name.clone(), passport.clone());
-                            self.inferred.push((format!("{}.{}", theory.name, let_decl.name), passport));
+                TheoryItem::Let(let_decl) => match self.infer_expr(&let_decl.expr, &theory.name) {
+                    Ok(passport) => {
+                        if let Err(diag) = self.validate_policy(&passport, let_decl.line) {
+                            self.diagnostics.push(diag);
                         }
-                        Err(diag) => self.diagnostics.push(diag),
+                        self.theories
+                            .entry(theory.name.clone())
+                            .or_default()
+                            .insert(let_decl.name.clone(), passport.clone());
+                        self.inferred
+                            .push((format!("{}.{}", theory.name, let_decl.name), passport));
                     }
-                }
-                TheoryItem::Expr(expr) => {
-                    match self.infer_expr(expr, &theory.name) {
-                        Ok(passport) => {
-                            if let Err(diag) = self.validate_policy(&passport, expr.line) {
-                                self.diagnostics.push(diag);
-                            }
+                    Err(diag) => self.diagnostics.push(diag),
+                },
+                TheoryItem::Expr(expr) => match self.infer_expr(expr, &theory.name) {
+                    Ok(passport) => {
+                        if let Err(diag) = self.validate_policy(&passport, expr.line) {
+                            self.diagnostics.push(diag);
                         }
-                        Err(diag) => self.diagnostics.push(diag),
                     }
-                }
+                    Err(diag) => self.diagnostics.push(diag),
+                },
             }
         }
     }
@@ -127,19 +140,41 @@ impl Checker {
                 }
             }
             ExprKind::Ident(name) => self.lookup_ident(name, ambient_theory, expr.line),
-            ExprKind::QualifiedIdent { theory, name } => self.lookup_qualified(theory, name, ambient_theory, expr.line),
+            ExprKind::QualifiedIdent { theory, name } => {
+                self.lookup_qualified(theory, name, ambient_theory, expr.line)
+            }
             ExprKind::Power { base, exp } => {
                 let base = self.infer_expr(base, ambient_theory)?;
                 let exp = self.infer_expr(exp, ambient_theory)?;
-                self.require_capability(&base, Capability::CanAddAsNat, expr.line, "power base must be Nat-like")?;
-                self.require_capability(&exp, Capability::CanAddAsNat, expr.line, "power exponent must be Nat-like")?;
+                self.require_capability(
+                    &base,
+                    Capability::CanAddAsNat,
+                    expr.line,
+                    "power base must be Nat-like",
+                )?;
+                self.require_capability(
+                    &exp,
+                    Capability::CanAddAsNat,
+                    expr.line,
+                    "power exponent must be Nat-like",
+                )?;
                 Ok(Passport::compressed_nat(ambient_theory))
             }
             ExprKind::Add { lhs, rhs } => {
                 let lhs = self.infer_expr(lhs, ambient_theory)?;
                 let rhs = self.infer_expr(rhs, ambient_theory)?;
-                self.require_capability(&lhs, Capability::CanAddAsNat, expr.line, "left operand of + must support Nat addition")?;
-                self.require_capability(&rhs, Capability::CanAddAsNat, expr.line, "right operand of + must support Nat addition")?;
+                self.require_capability(
+                    &lhs,
+                    Capability::CanAddAsNat,
+                    expr.line,
+                    "left operand of + must support Nat addition",
+                )?;
+                self.require_capability(
+                    &rhs,
+                    Capability::CanAddAsNat,
+                    expr.line,
+                    "right operand of + must support Nat addition",
+                )?;
                 Ok(Passport::add_result(&lhs, &rhs, ambient_theory))
             }
             ExprKind::CompareGt { lhs, rhs } => {
@@ -173,8 +208,174 @@ impl Checker {
         }
     }
 
-    fn infer_call(&self, name: &str, args: &[Expr], ambient_theory: &str, line: usize) -> Result<Passport, Diagnostic> {
+    fn has_reflection_bridge(&self, ambient_theory: &str) -> bool {
+        self.bridges.iter().any(|bridge| {
+            matches!(bridge.kind, BridgeKind::Reflection)
+                && (bridge.source == ambient_theory || bridge.target == ambient_theory)
+        })
+    }
+
+    fn reflection_boundary_error(&self, line: usize, message: impl Into<String>) -> Diagnostic {
+        Diagnostic::error(DiagnosticKind::ReflectionBoundaryError, Some(line), message.into())
+            .with_help(
+                "reflection/self-reference is not implicit in DLM v0.31; use an explicit reflection bridge for reflection_claim(...) or an explicit axiom-tainted lift for self_reference_axiom(...)",
+            )
+    }
+
+    fn symbolic_reflection_passport(
+        &self,
+        ambient_theory: &str,
+        ty_name: String,
+        source: Option<&Passport>,
+        history_event: String,
+        trust: TrustLevel,
+        validation: ValidationState,
+    ) -> Passport {
+        let history = match source {
+            Some(source) => HistoryChain::from_source(&source.history, history_event),
+            None => HistoryChain::from_event(history_event),
+        };
+        Passport {
+            ty: TypeKind::Unknown(ty_name),
+            construction: ConstructionMode::ProofFinite,
+            capabilities: CapabilitySet::from([Capability::CanSymbolicPrint]),
+            cost: CostClass::ProofRequired,
+            trust,
+            provenance: Provenance::BuiltinKnown,
+            validation,
+            theory: TheoryContext::new(ambient_theory),
+            history,
+            location: LocationContext::local(),
+        }
+    }
+
+    fn infer_call(
+        &self,
+        name: &str,
+        args: &[Expr],
+        ambient_theory: &str,
+        line: usize,
+    ) -> Result<Passport, Diagnostic> {
         match name {
+
+            "reflection_claim" => {
+                if args.len() != 1 {
+                    return Err(self.reflection_boundary_error(line, "reflection_claim expects one Provable argument"));
+                }
+                if !self.has_reflection_bridge(ambient_theory) {
+                    return Err(self.reflection_boundary_error(
+                        line,
+                        "reflection_claim requires an explicit bridge with kind = reflection touching the ambient theory",
+                    ));
+                }
+                let value = self.infer_expr(&args[0], ambient_theory)?;
+                match &value.ty {
+                    TypeKind::Provable {
+                        object_theory,
+                        proposition,
+                    } => Ok(self.symbolic_reflection_passport(
+                        ambient_theory,
+                        format!("ReflectionClaim<{}.{}>", object_theory, proposition),
+                        Some(&value),
+                        format!("reflection:claim:{}:{}", object_theory, proposition),
+                        value.trust,
+                        value.validation,
+                    )),
+                    other => Err(self.reflection_boundary_error(
+                        line,
+                        format!("reflection_claim requires Provable; got {other}"),
+                    )),
+                }
+            }
+            "reflection_axiom" => {
+                if args.len() != 1 {
+                    return Err(self.reflection_boundary_error(line, "reflection_axiom expects one ReflectionClaim argument"));
+                }
+                let value = self.infer_expr(&args[0], ambient_theory)?;
+                let ty = value.ty.to_string();
+                if !ty.starts_with("ReflectionClaim<") {
+                    return Err(self.reflection_boundary_error(
+                        line,
+                        format!("reflection_axiom requires ReflectionClaim; got {}", value.ty),
+                    ));
+                }
+                Ok(self.symbolic_reflection_passport(
+                    ambient_theory,
+                    format!("TruthClaim<{}>", ty),
+                    Some(&value),
+                    "reflection:axiom".to_string(),
+                    TrustLevel::Axiom,
+                    ValidationState::Assumed,
+                ))
+            }
+            "self_reference" => {
+                if args.len() != 1 {
+                    return Err(self.reflection_boundary_error(line, "self_reference expects one Prop argument"));
+                }
+                let value = self.infer_expr(&args[0], ambient_theory)?;
+                match &value.ty {
+                    TypeKind::Prop { name } => Ok(self.symbolic_reflection_passport(
+                        ambient_theory,
+                        format!("SelfReferenceClaim<{}>", name),
+                        Some(&value),
+                        format!("self_reference:claim:{}", name),
+                        value.trust,
+                        value.validation,
+                    )),
+                    other => Err(self.reflection_boundary_error(
+                        line,
+                        format!("self_reference requires Prop; got {other}"),
+                    )),
+                }
+            }
+            "godel_sentence" => {
+                if !args.is_empty() {
+                    return Err(self.reflection_boundary_error(line, "godel_sentence expects no arguments"));
+                }
+                Ok(self.symbolic_reflection_passport(
+                    ambient_theory,
+                    "SelfReferenceClaim<godel_sentence>".to_string(),
+                    None,
+                    "self_reference:godel_sentence".to_string(),
+                    TrustLevel::Checked,
+                    ValidationState::StaticChecked,
+                ))
+            }
+            "self_reference_axiom" => {
+                if args.len() != 1 {
+                    return Err(self.reflection_boundary_error(line, "self_reference_axiom expects one SelfReferenceClaim argument"));
+                }
+                let value = self.infer_expr(&args[0], ambient_theory)?;
+                let ty = value.ty.to_string();
+                if !ty.starts_with("SelfReferenceClaim<") {
+                    return Err(self.reflection_boundary_error(
+                        line,
+                        format!("self_reference_axiom requires SelfReferenceClaim; got {}", value.ty),
+                    ));
+                }
+                Ok(self.symbolic_reflection_passport(
+                    ambient_theory,
+                    format!("TruthClaim<{}>", ty),
+                    Some(&value),
+                    "self_reference:axiom".to_string(),
+                    TrustLevel::Axiom,
+                    ValidationState::Assumed,
+                ))
+            }
+            "reflect"
+            | "reflect_provable"
+            | "prove_self_reference"
+            | "truth_of_self_reference"
+            | "truth_of_own_truth"
+            | "truth_of_self"
+            | "says_unprovable_self"
+            | "liar_sentence"
+            | "diagonalize"
+            | "fixed_point" => Err(self.reflection_boundary_error(
+                line,
+                format!("dangerous reflection/self-reference form '{name}' is not allowed in DLM v0.31"),
+            )),
+
             "universe" => Err(Diagnostic::error(
                 DiagnosticKind::UniverseLevelError,
                 Some(line),
@@ -1368,6 +1569,46 @@ impl Checker {
                 };
                 Ok(Passport::axiom_truth_from_provable(ambient_theory, predicate, &claim))
             }
+            "consistency_claim" | "consistency_of_current" | "consistent_current" => {
+                if !args.is_empty() {
+                    return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("{name} expects no arguments in MVP")));
+                }
+                Ok(Passport::consistency_claim(ambient_theory, ambient_theory, None))
+            }
+            "prove_consistency" | "prove_own_consistency" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("{name} expects one Consistency<T> claim")));
+                }
+                let claim = self.infer_expr(&args[0], ambient_theory)?;
+                let target = match &claim.ty {
+                    TypeKind::ConsistencyClaim { theory } => theory.clone(),
+                    _ => return Err(Diagnostic::error(
+                        DiagnosticKind::IncompletenessBoundaryError,
+                        Some(line),
+                        "prove_consistency requires Consistency<T>",
+                    ).with_help(format!("value passport: {claim}"))),
+                };
+                Err(Diagnostic::error(
+                    DiagnosticKind::IncompletenessBoundaryError,
+                    Some(line),
+                    format!("cannot prove Consistency<{target}> inside the current MVP theory context"),
+                ).with_help("Use assume_consistency(...) to mark the result Axiom-tainted, or move the claim through an explicit stronger meta-theory/soundness framework in a future proof-kernel layer."))
+            }
+            "consistency_axiom" | "assume_consistency" | "consistency_from_axiom" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("{name} expects one Consistency<T> claim")));
+                }
+                let claim = self.infer_expr(&args[0], ambient_theory)?;
+                let target = match &claim.ty {
+                    TypeKind::ConsistencyClaim { theory } => theory.clone(),
+                    _ => return Err(Diagnostic::error(
+                        DiagnosticKind::IncompletenessBoundaryError,
+                        Some(line),
+                        "assume_consistency requires Consistency<T>",
+                    ).with_help(format!("value passport: {claim}"))),
+                };
+                Ok(Passport::axiom_consistency_proof(ambient_theory, target, &claim))
+            }
             "proof_true" | "true_intro" => {
                 if !args.is_empty() {
                     return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("{name} expects no arguments")));
@@ -1599,33 +1840,58 @@ impl Checker {
     fn is_runtime_dependent(passport: &Passport) -> bool {
         matches!(
             passport.provenance,
-            Provenance::RuntimeInput | Provenance::ExternalFile | Provenance::OracleInput | Provenance::UnsafeExternal
+            Provenance::RuntimeInput
+                | Provenance::ExternalFile
+                | Provenance::OracleInput
+                | Provenance::UnsafeExternal
         ) || matches!(
             passport.validation,
-            ValidationState::Raw | ValidationState::Parsed | ValidationState::RuntimeChecked | ValidationState::ConstraintChecked | ValidationState::Assumed
+            ValidationState::Raw
+                | ValidationState::Parsed
+                | ValidationState::RuntimeChecked
+                | ValidationState::ConstraintChecked
+                | ValidationState::Assumed
         )
     }
 
-    fn lookup_ident(&self, name: &str, ambient_theory: &str, line: usize) -> Result<Passport, Diagnostic> {
-        self.theories.get(ambient_theory)
+    fn lookup_ident(
+        &self,
+        name: &str,
+        ambient_theory: &str,
+        line: usize,
+    ) -> Result<Passport, Diagnostic> {
+        self.theories
+            .get(ambient_theory)
             .and_then(|scope| scope.get(name))
             .cloned()
-            .ok_or_else(|| Diagnostic::error(
-                DiagnosticKind::NameError,
-                Some(line),
-                format!("unknown name '{name}' in theory {ambient_theory}"),
-            ))
+            .ok_or_else(|| {
+                Diagnostic::error(
+                    DiagnosticKind::NameError,
+                    Some(line),
+                    format!("unknown name '{name}' in theory {ambient_theory}"),
+                )
+            })
     }
 
-    fn lookup_qualified(&self, theory: &str, name: &str, ambient_theory: &str, line: usize) -> Result<Passport, Diagnostic> {
-        let value = self.theories.get(theory)
+    fn lookup_qualified(
+        &self,
+        theory: &str,
+        name: &str,
+        ambient_theory: &str,
+        line: usize,
+    ) -> Result<Passport, Diagnostic> {
+        let value = self
+            .theories
+            .get(theory)
             .and_then(|scope| scope.get(name))
             .cloned()
-            .ok_or_else(|| Diagnostic::error(
-                DiagnosticKind::NameError,
-                Some(line),
-                format!("unknown qualified name '{theory}.{name}'"),
-            ))?;
+            .ok_or_else(|| {
+                Diagnostic::error(
+                    DiagnosticKind::NameError,
+                    Some(line),
+                    format!("unknown qualified name '{theory}.{name}'"),
+                )
+            })?;
 
         if theory == ambient_theory {
             Ok(value)
@@ -1634,7 +1900,8 @@ impl Checker {
                 DiagnosticKind::TheoryBridgeError,
                 Some(line),
                 format!("cannot use {theory}.{name} directly inside theory {ambient_theory}"),
-            ).with_help("use quote(...), transport(...), or an explicit TheoryBridge"))
+            )
+            .with_help("use quote(...), transport(...), or an explicit TheoryBridge"))
         }
     }
 
@@ -1655,107 +1922,145 @@ impl Checker {
         )))
     }
 
-    fn require_capability(&self, passport: &Passport, capability: Capability, line: usize, reason: &str) -> Result<(), Diagnostic> {
+    fn require_capability(
+        &self,
+        passport: &Passport,
+        capability: Capability,
+        line: usize,
+        reason: &str,
+    ) -> Result<(), Diagnostic> {
         if passport.capabilities.contains(capability) {
             Ok(())
         } else {
-            Err(Diagnostic::error(
-                DiagnosticKind::AccessError,
-                Some(line),
-                reason,
-            ).with_help(format!(
-                "value passport: {passport}\n  missing capability: {:?}",
-                capability
-            )))
+            Err(
+                Diagnostic::error(DiagnosticKind::AccessError, Some(line), reason).with_help(
+                    format!(
+                        "value passport: {passport}\n  missing capability: {:?}",
+                        capability
+                    ),
+                ),
+            )
         }
     }
 
-
-    fn require_language(&self, passport: &Passport, line: usize, message: &str) -> Result<(), Diagnostic> {
+    fn require_language(
+        &self,
+        passport: &Passport,
+        line: usize,
+        message: &str,
+    ) -> Result<(), Diagnostic> {
         match &passport.ty {
             TypeKind::Language { .. } => Ok(()),
-            _ => Err(Diagnostic::error(
-                DiagnosticKind::DefinabilityError,
-                Some(line),
-                message,
-            ).with_help(format!("value passport: {passport}"))),
+            _ => Err(
+                Diagnostic::error(DiagnosticKind::DefinabilityError, Some(line), message)
+                    .with_help(format!("value passport: {passport}")),
+            ),
         }
     }
 
-    fn require_encoding(&self, passport: &Passport, line: usize, message: &str) -> Result<(), Diagnostic> {
+    fn require_encoding(
+        &self,
+        passport: &Passport,
+        line: usize,
+        message: &str,
+    ) -> Result<(), Diagnostic> {
         match &passport.ty {
             TypeKind::Encoding { .. } => Ok(()),
-            _ => Err(Diagnostic::error(
-                DiagnosticKind::DefinabilityError,
-                Some(line),
-                message,
-            ).with_help(format!("value passport: {passport}"))),
+            _ => Err(
+                Diagnostic::error(DiagnosticKind::DefinabilityError, Some(line), message)
+                    .with_help(format!("value passport: {passport}")),
+            ),
         }
     }
 
-    fn require_meta_level(&self, passport: &Passport, line: usize, message: &str) -> Result<(), Diagnostic> {
+    fn require_meta_level(
+        &self,
+        passport: &Passport,
+        line: usize,
+        message: &str,
+    ) -> Result<(), Diagnostic> {
         match &passport.ty {
             TypeKind::MetaLevel { .. } => Ok(()),
-            _ => Err(Diagnostic::error(
-                DiagnosticKind::DefinabilityError,
-                Some(line),
-                message,
-            ).with_help(format!("value passport: {passport}"))),
+            _ => Err(
+                Diagnostic::error(DiagnosticKind::DefinabilityError, Some(line), message)
+                    .with_help(format!("value passport: {passport}")),
+            ),
         }
     }
 
-    fn require_definable_nat(&self, passport: &Passport, line: usize, message: &str) -> Result<(), Diagnostic> {
+    fn require_definable_nat(
+        &self,
+        passport: &Passport,
+        line: usize,
+        message: &str,
+    ) -> Result<(), Diagnostic> {
         match &passport.ty {
             TypeKind::DefinableNat { .. } => Ok(()),
-            _ => Err(Diagnostic::error(
-                DiagnosticKind::DefinabilityError,
-                Some(line),
-                message,
-            ).with_help(format!("value passport: {passport}"))),
+            _ => Err(
+                Diagnostic::error(DiagnosticKind::DefinabilityError, Some(line), message)
+                    .with_help(format!("value passport: {passport}")),
+            ),
         }
     }
 
-    fn require_big_nat(&self, passport: &Passport, line: usize, message: &str) -> Result<(), Diagnostic> {
+    fn require_big_nat(
+        &self,
+        passport: &Passport,
+        line: usize,
+        message: &str,
+    ) -> Result<(), Diagnostic> {
         match &passport.ty {
             TypeKind::BigNat { .. } => Ok(()),
-            _ => Err(Diagnostic::error(
-                DiagnosticKind::BigNumberError,
-                Some(line),
-                message,
-            ).with_help(format!("value passport: {passport}"))),
+            _ => Err(
+                Diagnostic::error(DiagnosticKind::BigNumberError, Some(line), message)
+                    .with_help(format!("value passport: {passport}")),
+            ),
         }
     }
 
-    fn require_universe(&self, passport: &Passport, line: usize, message: &str) -> Result<(), Diagnostic> {
+    fn require_universe(
+        &self,
+        passport: &Passport,
+        line: usize,
+        message: &str,
+    ) -> Result<(), Diagnostic> {
         match &passport.ty {
             TypeKind::Universe { .. } => Ok(()),
-            _ => Err(Diagnostic::error(
-                DiagnosticKind::UniverseLevelError,
-                Some(line),
-                message,
-            ).with_help(format!("value passport: {passport}"))),
+            _ => Err(
+                Diagnostic::error(DiagnosticKind::UniverseLevelError, Some(line), message)
+                    .with_help(format!("value passport: {passport}")),
+            ),
         }
     }
 
-    fn require_class(&self, passport: &Passport, line: usize, message: &str) -> Result<(), Diagnostic> {
+    fn require_class(
+        &self,
+        passport: &Passport,
+        line: usize,
+        message: &str,
+    ) -> Result<(), Diagnostic> {
         match &passport.ty {
             TypeKind::Class { .. } => Ok(()),
-            _ => Err(Diagnostic::error(
-                DiagnosticKind::InfinityModeError,
-                Some(line),
-                message,
-            ).with_help(format!("value passport: {passport}"))),
+            _ => Err(
+                Diagnostic::error(DiagnosticKind::InfinityModeError, Some(line), message)
+                    .with_help(format!("value passport: {passport}")),
+            ),
         }
     }
 
-    fn require_infinity_mode(&self, passport: &Passport, mode: InfinityMode, line: usize, reason: &str) -> Result<(), Diagnostic> {
+    fn require_infinity_mode(
+        &self,
+        passport: &Passport,
+        mode: InfinityMode,
+        line: usize,
+        reason: &str,
+    ) -> Result<(), Diagnostic> {
         match &passport.ty {
             TypeKind::Infinity { mode: actual } if *actual == mode => Ok(()),
-            _ => Err(Diagnostic::error(
-                DiagnosticKind::InfinityModeError,
-                Some(line),
-                reason,
-            ).with_help(format!("value passport: {passport}"))),
+            _ => Err(
+                Diagnostic::error(DiagnosticKind::InfinityModeError, Some(line), reason)
+                    .with_help(format!("value passport: {passport}")),
+            ),
         }
     }
 
