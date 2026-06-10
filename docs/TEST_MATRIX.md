@@ -549,3 +549,22 @@ meta_quote_passport creates Term only;
 meta_quote_passport does not create TruthClaim/StaticProof;
 meta_quote_passport preserves existing trust taint.
 ```
+
+## v0.38.0 — Statement / theorem tests
+
+New focused test command:
+
+```powershell
+cargo test -p dlm_core --test statements_theorems
+```
+
+Expected checks:
+
+```text
+Statement is not Theorem or StaticProof;
+Theorem requires StaticProof evidence;
+ProofTerm must be kernel-checked before theorem construction;
+RuntimeWitness cannot close a theorem;
+Axiom theorem construction is trust=Axiom;
+Goal/Hypothesis do not become theorems implicitly.
+```

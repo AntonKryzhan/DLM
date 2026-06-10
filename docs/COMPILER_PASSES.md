@@ -475,3 +475,31 @@ observing syntax/provability/truth/self-reference of level N requires observer l
 ```
 
 This prevents future reflection, theorem and proof-goal passes from silently collapsing object language and meta language.
+
+## v0.38.0 statement/theorem layer
+
+`v0.38.0` introduces the declaration vocabulary that future HIR/ProofIR passes will use:
+
+```text
+Statement<P>
+Goal<P>
+Hypothesis<P>
+Theorem<name:P>
+```
+
+The legacy checker is not split yet. The new layer is a pure passport/model API so later passes can separate:
+
+```text
+proposition formation
+statement declaration
+goal opening
+hypothesis accounting
+proof closure
+theorem export
+```
+
+The key pass invariant is:
+
+```text
+Theorem export must require StaticProof evidence or explicit axiom-tainted admission.
+```

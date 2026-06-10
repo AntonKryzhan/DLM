@@ -12,6 +12,7 @@ pub mod policy;
 pub mod runtime;
 pub mod resolve;
 pub mod soundness;
+pub mod statement;
 
 pub use ast::*;
 pub use bridge::{bridge_law, find_bridge, has_bridge, profile_for_decl, BridgeLaw, BridgeProfile};
@@ -26,3 +27,4 @@ pub use policy::CheckPolicy;
 pub use runtime::{RunReport, Runtime, RuntimeValue};
 pub use resolve::{resolve_module, ResolvedBridge, ResolvedImport, ResolvedModule, ResolvedTheory, ResolvedValue, Resolver, SymbolTable};
 pub use soundness::{BridgeSoundnessProfile, SoundnessIssue, SoundnessSummary};
+pub use statement::{axiom_theorem, goal_decl, goal_passport, hypothesis_decl, hypothesis_passport, proposition_of, require_statement_like, require_static_proof, statement_decl, statement_passport, theorem_decl, theorem_from_static_proof, DeclarationKind, GoalDecl, HypothesisDecl, StatementDecl, TheoremDecl};

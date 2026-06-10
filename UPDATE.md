@@ -151,3 +151,13 @@ RawAST
 - `meta_quote_passport(...)` produces `Term<T>` only; it does not create `TruthClaim`, `Provable` or `StaticProof`.
 - Meta-quote preserves existing trust taint instead of cleaning it.
 - Added regression tests in `crates/dlm_core/tests/meta_levels.rs`.
+
+## v0.38.0 — Statement / Theorem foundation
+
+- Added `statement.rs` with `StatementDecl`, `TheoremDecl`, `GoalDecl`, `HypothesisDecl` and declaration-kind helpers.
+- Added `TypeKind::Statement`, `TypeKind::Theorem`, `TypeKind::Goal` and `TypeKind::Hypothesis`.
+- Added `StatementTheoremError[E0909]` for invalid theorem-layer construction attempts.
+- Added passport constructors for statements, goals, hypotheses, checked theorems and axiom-tainted theorems.
+- `theorem_from_static_proof(...)` accepts only `StaticProof` evidence; it rejects raw `ProofTerm` and `RuntimeWitness` values.
+- `axiom_theorem(...)` makes theorem assumptions visible as `trust=Axiom` and records `theorem:axiom:*` history.
+- Added regression tests in `crates/dlm_core/tests/statements_theorems.rs`.

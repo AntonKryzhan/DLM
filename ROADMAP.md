@@ -2653,3 +2653,24 @@ syntax/provability/truth/self-reference of level N requires observer level > N
 ```
 
 This prepares later reflection, theorem, HIR and ProofIR work without changing current `.dlm` syntax or weakening the legacy checker.
+
+## v0.38.0 completed — Statement / Theorem foundation
+
+`v0.38.0` adds the first internal theorem-declaration layer without introducing new surface syntax yet.
+
+Implemented foundation:
+
+```text
+Statement<P>
+Theorem<name:P>
+Goal<P>
+Hypothesis<P>
+```
+
+The main invariant is now represented in code and regression tests:
+
+```text
+Theorem requires StaticProof or explicit Axiom admission.
+```
+
+This prepares the next proof-assistant steps: `ProofContext`, `HypothesisSet`, `TacticStep` and `close_proof(...)`.

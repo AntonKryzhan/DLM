@@ -395,3 +395,23 @@ perform the operation from a strict higher meta level, e.g. M1 observing M0
 ```
 
 This protects the reflection boundary: object-level code must not inspect its own truth, provability or self-reference without an explicit meta-level lift.
+
+## E0909 StatementTheoremError
+
+`StatementTheoremError` reports invalid construction at the statement/theorem declaration layer.
+
+Examples:
+
+```text
+Theorem requires StaticProof; ProofTerm must be kernel-checked first
+Theorem requires StaticProof; RuntimeWitness is not a static proof
+theorem construction requires a Statement or Prop object
+```
+
+This diagnostic protects the boundary:
+
+```text
+Statement<P> != Theorem<P>
+RuntimeWitness<P> != StaticProof<P>
+ProofTerm<P> != StaticProof<P>
+```

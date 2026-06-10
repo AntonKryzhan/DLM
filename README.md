@@ -470,3 +470,17 @@ M2 — meta-meta level
 The new core rule is that syntax/provability/truth/self-reference of a level may only be observed from a strictly higher level. This keeps reflection from becoming an implicit shortcut from object syntax to truth or proof.
 
 `meta_quote_passport(...)` produces a `Term<...>` passport only. It does not create a `TruthClaim`, `Provable` or `StaticProof`, and it does not clean axiom/oracle/unsafe taint.
+
+## v0.38 — Statement / Theorem foundation
+
+DLM now has an internal declaration layer for `Statement`, `Theorem`, `Goal` and `Hypothesis` passports.
+
+This does not yet add new `.dlm` syntax. It prepares the proof-assistant layer while preserving the existing law:
+
+```text
+Statement<P> != Theorem<name:P>
+Theorem<name:P> != StaticProof<P>
+RuntimeWitness<P> != StaticProof<P>
+```
+
+A theorem can be built from `StaticProof` evidence, or admitted explicitly as an axiom-tainted theorem. Raw proof terms and runtime witnesses do not close theorems.

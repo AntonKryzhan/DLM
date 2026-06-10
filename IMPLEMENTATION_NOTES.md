@@ -401,3 +401,36 @@ Any operation that observes syntax, provability, truth or self-reference of leve
 `meta_quote_passport(...)` intentionally returns `TypeKind::Term { ... }` only. It does not synthesize `TruthClaim`, `Provable` or `StaticProof`, and it preserves the source trust level.
 
 This is a foundation layer for later HIR/TypedIR/ProofIR work. The legacy checker semantics remain unchanged.
+
+## v0.38.0 — Statement / Theorem foundation
+
+This patch introduces a declaration-layer vocabulary without changing surface `.dlm` syntax or legacy checker behavior.
+
+New source module:
+
+```text
+crates/dlm_core/src/statement.rs
+```
+
+New type forms:
+
+```text
+Statement<P>
+Theorem<name:P>
+Goal<P>
+Hypothesis<P>
+```
+
+Implementation rules:
+
+```text
+Statement is proposition carrier only.
+Theorem is not StaticProof.
+Theorem from proof requires StaticProof evidence.
+Raw ProofTerm must be kernel-checked before theorem construction.
+RuntimeWitness cannot close a theorem.
+Axiom theorem construction records trust=Axiom and theorem:axiom history.
+Hypothesis remains local assumption material, not an exported theorem.
+```
+
+This is a foundation for later `ProofContext`, `HypothesisSet`, `TacticStep` and `close_proof(...)` APIs. It deliberately avoids desugaring or syntax changes until HIR/ProofIR split is stronger.
