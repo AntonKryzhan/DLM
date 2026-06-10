@@ -1,15 +1,20 @@
 pub mod ast;
+pub mod bridge;
 pub mod checker;
 pub mod diagnostics;
 pub mod parser;
 pub mod passport;
+pub mod passport_rules;
+pub mod policy;
 pub mod runtime;
 pub mod soundness;
 
 pub use ast::*;
-pub use checker::{CheckPolicy, CheckReport, Checker};
+pub use bridge::{bridge_law, find_bridge, has_bridge, profile_for_decl, BridgeLaw, BridgeProfile};
+pub use checker::{CheckReport, Checker};
 pub use diagnostics::{Diagnostic, DiagnosticKind, Severity};
 pub use parser::parse_module;
 pub use passport::*;
+pub use policy::CheckPolicy;
 pub use runtime::{RunReport, Runtime, RuntimeValue};
 pub use soundness::{BridgeSoundnessProfile, SoundnessIssue, SoundnessSummary};

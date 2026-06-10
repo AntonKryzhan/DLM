@@ -3,6 +3,8 @@ use std::collections::BTreeMap;
 use crate::ast::*;
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use crate::passport::*;
+use crate::policy;
+pub use crate::policy::CheckPolicy;
 
 #[derive(Debug, Clone)]
 pub struct CheckReport {
@@ -17,31 +19,6 @@ pub struct CheckReport {
 impl CheckReport {
     pub fn ok(&self) -> bool {
         self.diagnostics.is_empty()
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CheckPolicy {
-    pub max_trust: TrustLevel,
-}
-
-impl CheckPolicy {
-    pub fn research() -> Self {
-        Self { max_trust: TrustLevel::Axiom }
-    }
-
-    pub fn trusted_only() -> Self {
-        Self { max_trust: TrustLevel::Builtin }
-    }
-
-    pub fn allow_unsafe() -> Self {
-        Self { max_trust: TrustLevel::Unsafe }
-    }
-}
-
-impl Default for CheckPolicy {
-    fn default() -> Self {
-        Self::research()
     }
 }
 
@@ -1769,35 +1746,11 @@ impl Checker {
     }
 
     fn validate_policy(&self, passport: &Passport, line: usize) -> Result<(), Diagnostic> {
-        if passport.trust <= self.policy.max_trust {
-            return Ok(());
-        }
-
-        Err(Diagnostic::error(
-            DiagnosticKind::TrustTaintError,
-            Some(line),
-            format!(
-                "value trust level {:?} exceeds current policy {:?}",
-                passport.trust, self.policy.max_trust
-            ),
-        ).with_help(format!(
-            "value passport: {passport}\n  use --allow-unsafe for unsafe prototypes, or avoid Axiom/Unsafe sources for --trusted-only checks"
-        )))
+        policy::validate_policy(passport, self.policy, line)
     }
 
     fn require_capability(&self, passport: &Passport, capability: Capability, line: usize, reason: &str) -> Result<(), Diagnostic> {
-        if passport.capabilities.contains(capability) {
-            Ok(())
-        } else {
-            Err(Diagnostic::error(
-                DiagnosticKind::AccessError,
-                Some(line),
-                reason,
-            ).with_help(format!(
-                "value passport: {passport}\n  missing capability: {:?}",
-                capability
-            )))
-        }
+        crate::passport_rules::require_capability(passport, capability, line, reason)
     }
 
 
@@ -1916,8 +1869,6 @@ impl Checker {
     }
 
     fn find_bridge(&self, source: &str, target: &str, kind: BridgeKind) -> Option<&BridgeDecl> {
-        self.bridges.iter().find(|bridge| {
-            bridge.source == source && bridge.target == target && bridge.kind == kind
-        })
+        crate::bridge::find_bridge(&self.bridges, source, target, &kind)
     }
 }

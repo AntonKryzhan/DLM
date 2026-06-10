@@ -1611,9 +1611,7 @@ impl Runtime {
     }
 
     fn has_bridge(&self, source: &str, target: &str, kind: BridgeKind) -> bool {
-        self.bridges.iter().any(|bridge| {
-            bridge.source == source && bridge.target == target && bridge.kind == kind
-        })
+        crate::bridge::has_bridge(&self.bridges, source, target, &kind)
     }
 }
 

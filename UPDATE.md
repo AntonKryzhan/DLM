@@ -1,5 +1,148 @@
 # UPDATE.md
 
+## v0.32.0 — Semantic Core Hardening
+
+Дата: 2026-06-10
+
+### Цель патча
+
+После стабилизации `v0.31.2` следующий шаг сделан не в сторону новой метаматематической фичи, а в сторону укрепления архитектурного ядра. Это ответ на главный риск ROADMAP: не дать `checker.rs` превратиться в монолит, где одновременно живут trust policy, bridge preservation, capability checks и passport-инварианты.
+
+`v0.32.0` начинает Nanopass-style hardening: поведение языка сохраняется, но safety-sensitive правила вынесены в отдельные модули.
+
+### Добавлено
+
+```text
+crates/dlm_core/src/bridge.rs
+crates/dlm_core/src/policy.rs
+crates/dlm_core/src/passport_rules.rs
+crates/dlm_core/tests/semantic_invariants.rs
+```
+
+### BridgeProfile как единый источник истины
+
+Добавлен модуль `bridge.rs`.
+
+Теперь preservation law для bridge-типов описан централизованно:
+
+```text
+BridgeKind -> BridgeLaw -> BridgeProfile
+```
+
+Это фиксирует единую таблицу:
+
+```text
+quote       preserves syntax only
+transport   preserves value only
+soundness   preserves proof/truth but requires Axiom taint
+reflection  preserves syntax/proof, never truth, requires Axiom taint
+unsafe      remains Unsafe-tainted
+unknown     treated as unsafe for metatheory
+```
+
+`soundness.rs` больше не содержит независимую копию bridge-profile логики. Он использует `BridgeProfile` из `bridge.rs`.
+
+### Trust policy вынесена из checker
+
+Добавлен модуль `policy.rs`.
+
+Туда вынесены:
+
+```text
+CheckPolicy
+join_trust(...)
+join_many_trust(...)
+is_allowed_by_policy(...)
+validate_policy(...)
+history_requires_at_least_axiom(...)
+history_requires_unsafe(...)
+```
+
+Для обратной совместимости `CheckPolicy` остаётся доступен через публичный API:
+
+```text
+dlm_core::CheckPolicy
+dlm_core::checker::CheckPolicy
+```
+
+Главный закон остаётся прежним:
+
+```text
+Checked < Builtin < Axiom < Oracle < Unsafe
+```
+
+Обычная операция не должна бесшумно понижать trust.
+
+### Passport/capability rules вынесены из checker
+
+Добавлен модуль `passport_rules.rs`.
+
+Туда вынесена первая часть правил:
+
+```text
+require_capability(...)
+trust_join_from_sources(...)
+passport_is_axiom_or_worse(...)
+passport_is_unsafe(...)
+history_contains_ordered_subsequence(...)
+```
+
+`checker.rs` теперь вызывает общий helper `passport_rules::require_capability(...)`, а не держит весь capability error path внутри себя.
+
+### Новый semantic invariant test layer
+
+Добавлен тестовый файл:
+
+```text
+crates/dlm_core/tests/semantic_invariants.rs
+```
+
+Он проверяет не конкретные `.dlm` программы, а базовые законы ядра:
+
+```text
+trust join is monotonic
+trusted-only rejects Axiom
+allow-unsafe accepts Unsafe
+quote does not preserve value/proof/truth
+transport does not preserve proof/truth
+soundness bridge requires Axiom taint
+reflection bridge does not preserve truth
+unsafe bridge remains Unsafe
+BridgeLaw matches BridgeProfile
+HistoryChain order is semantic data, not a set
+```
+
+### Изменённые файлы
+
+```text
+Cargo.toml
+Cargo.lock
+UPDATE.md
+ROADMAP.md
+crates/dlm_core/src/lib.rs
+crates/dlm_core/src/checker.rs
+crates/dlm_core/src/runtime.rs
+crates/dlm_core/src/soundness.rs
+crates/dlm_core/src/bridge.rs
+crates/dlm_core/src/policy.rs
+crates/dlm_core/src/passport_rules.rs
+crates/dlm_core/tests/semantic_invariants.rs
+```
+
+### Что принципиально НЕ менялось
+
+```text
+синтаксис .dlm
+семантика reflection/self-reference
+valid/invalid examples
+runtime output
+public README model
+```
+
+Это архитектурный hardening-патч: он должен давать то же поведение, но с более безопасной внутренней декомпозицией.
+
+---
+
 ## v0.31.2 — Self-unprovability boundary hotfix
 
 Дата: 2026-06-10
