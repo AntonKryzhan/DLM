@@ -1,0 +1,52 @@
+[
+  {
+    "file": "AST_IR.md",
+    "bytes": 7268,
+    "sha256": "21fc9a6e1cb56b1415a3bc1a847b183d4d9e80187263e19981853caf3c480207"
+  },
+  {
+    "file": "COMPILER_PASSES.md",
+    "bytes": 7659,
+    "sha256": "e663450ebf5c5e0eff1f0c15373be207636c6137ef25ca3384a36c1c34157307"
+  },
+  {
+    "file": "DIAGNOSTICS.md",
+    "bytes": 6366,
+    "sha256": "160d0f52efab4e0de6f8c1fbd1a238b55894b5790c7b5f39fb54a731965eb35e"
+  },
+  {
+    "file": "GRAMMAR.md",
+    "bytes": 6245,
+    "sha256": "3868cf561c1f493059b5860fb7b7f21c9f9c43bbc0c2ec9dc79659623743e023"
+  },
+  {
+    "file": "MVP_ACCEPTANCE.md",
+    "bytes": 7062,
+    "sha256": "0e27f617df3a8cd7d978ace42cf3902ec82a38bb02efa2c44204eb8d652efa19"
+  },
+  {
+    "file": "PASSPORT_LATTICE.md",
+    "bytes": 8312,
+    "sha256": "c6c69a724a11d6af3b242395af52766f9dce382996049442d4d5e276036158f4"
+  },
+  {
+    "file": "README.md",
+    "bytes": 2918,
+    "sha256": "733876e9b8e71f6502cb00ed8f96ab80c12978c32f011b630c65491e1a07e857"
+  },
+  {
+    "file": "SPEC.md",
+    "bytes": 9546,
+    "sha256": "0fd00a78556f5d48dfed87986b2ccc71399d07b5cef11cb67c1f1e6d1967ecae"
+  },
+  {
+    "file": "STD_CORE.md",
+    "bytes": 6376,
+    "sha256": "7e98509a0035acbbfceda10a5ff91f5029fb80abd429816241de90c1be479f9c"
+  },
+  {
+    "file": "TEST_MATRIX.md",
+    "bytes": 6406,
+    "sha256": "11dd474fbf3235b0f032cfcd86e452cecca0446480e78154dbf42e9223f1c969"
+  }
+]

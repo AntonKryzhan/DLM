@@ -1,0 +1,341 @@
+# DIAGNOSTICS.md — DLM / ЯРД Diagnostic Codes
+
+## 1. Diagnostic philosophy
+
+DLM/ЯРД diagnostics must not merely say “type error”.
+
+They must explain:
+
+```text
+what operation was attempted;
+which passport field blocked it;
+what capability/trust/theory/validation was missing;
+where the value came from;
+how to fix it safely.
+```
+
+## 2. Diagnostic format
+
+Human format:
+
+```text
+error[E1203]: cannot print decimal representation of non-expandable value
+  --> examples/big_numbers.dlm:6:5
+   |
+ 6 |     print_decimal(g)
+   |     ^^^^^^^^^^^^^ operation requires capability PRINT_DECIMAL
+   |
+   = value `g` has passport:
+       type: Nat
+       construction: Recursive
+       cost: NonExpandable
+       capabilities: SYMBOLIC_PRINT, COMPARE_BY_PROOF
+       trust: Builtin
+   = help: use `describe(g)` or prove a modular/structural property instead
+```
+
+JSON format:
+
+```json
+{
+  "severity": "error",
+  "code": "E1203",
+  "message": "cannot print decimal representation of non-expandable value",
+  "span": { "file": "examples/big_numbers.dlm", "start": 42, "end": 56 },
+  "passport": { "type": "Nat", "cost": "NonExpandable" },
+  "help": "use describe(g) or prove a modular/structural property"
+}
+```
+
+## 3. Source errors
+
+```text
+E0001 SourceReadError
+E0002 InvalidUtf8
+```
+
+## 4. Lexer errors
+
+```text
+E0101 UnknownCharacter
+E0102 UnterminatedString
+E0103 UnterminatedBlockComment
+```
+
+## 5. Parser errors
+
+```text
+E0201 ExpectedModuleDecl
+E0202 ExpectedToken
+E0203 InvalidTheoryItem
+E0204 InvalidBridgeDecl
+E0205 InvalidTypeExpr
+E0206 InvalidExpr
+```
+
+## 6. AST validation errors
+
+```text
+E0301 ValueOutsideTheory
+E0302 DuplicateLocalDecl
+E0303 MissingBridgeKind
+E0304 DuplicateBridgeKind
+E0305 TopLevelProofNotAllowed
+```
+
+Example:
+
+```dlm
+module bad
+let n = 7;
+```
+
+Diagnostic:
+
+```text
+error[E0301]: value-level declaration outside theory context
+help: wrap it in `theory Name { ... }` or `in theory Name { ... }`
+```
+
+## 7. Module/import errors
+
+```text
+E0401 DuplicateModule
+E0402 ModulePathMismatch
+E0403 ImportCycle
+E0501 UnknownImport
+E0502 AmbiguousImport
+E0503 PrivateItemImport
+```
+
+## 8. Theory errors
+
+```text
+E0601 DuplicateTheory
+E0602 UnknownTheory
+E0603 NoAmbientTheory
+E0604 TheoryNameConflict
+```
+
+## 9. Bridge errors
+
+```text
+E0701 UnknownBridgeTheory
+E0702 DuplicateBridge
+E0703 InvalidBridgeKind
+E0704 PrivateBridgeUse
+E0705 UnsafeBridgeNotAllowed
+E1401 TheoryBridgeRequired
+E1402 NoBridgeInScope
+E1403 InvalidBridgeApplication
+E1404 SoundnessBridgeRequired
+E1405 ProofIsProvabilityNotTruth
+E1406 QuoteProducesSyntaxOnly
+```
+
+Example:
+
+```dlm
+in theory MetaArithmetic {
+    let n = PA.seven;
+}
+```
+
+Diagnostic:
+
+```text
+error[E1401]: value from theory `PA` used in theory `MetaArithmetic` without bridge
+help: use `quote[PA_quote](PA.seven)` to treat it as syntax, or `transport[bridge](PA.seven)` if a transport bridge exists
+```
+
+## 10. Name resolution errors
+
+```text
+E0801 UnknownName
+E0802 AmbiguousName
+E0803 TheoryQualifiedValueRequiresBridge
+E0804 InvalidNamespacePath
+```
+
+## 11. Type errors
+
+```text
+E0901 TypeMismatch
+E0902 ExpectedProof
+E0903 ExpectedRuntimeWitness
+E0904 RuntimeStaticMismatch
+E0905 InvalidInfinityMode
+E0906 InvalidEqualityMode
+```
+
+Example:
+
+```dlm
+let n = read_nat(stdin);
+proof p : StaticProof<n > 0> = require(n > 0);
+```
+
+Diagnostic:
+
+```text
+error[E0904]: runtime witness cannot be used as static proof
+help: `require(n > 0)` produces RuntimeWitness<n > 0>, not StaticProof<n > 0>
+```
+
+## 12. Effect errors
+
+```text
+E1001 EffectNotAllowed
+E1002 MissingEffectAnnotation
+E1003 OracleEffectNotAllowed
+E1004 UnsafeEffectNotAllowed
+```
+
+Example:
+
+```dlm
+fn pure_read() -> Nat {
+    io.read_nat(stdin)
+}
+```
+
+Diagnostic:
+
+```text
+error[E1001]: IO effect is not allowed in pure function
+help: add `effects IO, ExternalInput` or move read operation outside pure function
+```
+
+## 13. Passport inference errors
+
+```text
+E1101 PassportInferenceFailed
+E1102 UnsupportedPassportAnnotation
+E1103 InvalidPassportConstraint
+E1104 PassportConflict
+```
+
+## 14. Capability/access errors
+
+```text
+E1201 CapabilityMissing
+E1202 AccessError
+E1203 CannotPrintNonExpandable
+E1204 CannotCompareWithoutProof
+E1205 ExternalInputNotValidated
+E1206 CannotUseRuntimeAsStatic
+E1207 CannotUseSyntaxAsValue
+```
+
+Example:
+
+```dlm
+let bb = BB(1000);
+print_decimal(bb);
+```
+
+Diagnostic:
+
+```text
+error[E1203]: cannot print decimal representation of noncomputable value
+= bb has cost Uncomputable and lacks PRINT_DECIMAL
+help: ask for lower bounds, proof-based comparison, or use an oracle in research mode
+```
+
+## 15. Trust/provenance/validation errors
+
+```text
+E1301 TrustTaintError
+E1302 UnsafeLeakError
+E1303 AxiomNotAllowed
+E1304 OracleNotAllowed
+E1305 RawExternalInputUse
+E1306 ValidationRequired
+E1307 UntrustedInputInStaticContext
+```
+
+Example:
+
+```dlm
+let raw = io.read(stdin);
+let n : Nat = raw;
+```
+
+Diagnostic:
+
+```text
+error[E1305]: raw external input cannot be used as mathematical value
+help: use parse_nat(raw), then require constraints if needed
+```
+
+## 16. Universe/infinity errors
+
+```text
+E1501 UniverseLevelError
+E1502 SetOfAllSetsRejected
+E1503 InfinityModeRequired
+E1504 InvalidInfinityOperation
+```
+
+Example:
+
+```dlm
+let x = Infinity + 1;
+```
+
+Diagnostic:
+
+```text
+error[E1503]: bare Infinity is not allowed
+help: specify Infinity<cardinal>, Infinity<ordinal>, Infinity<limit>, etc.
+```
+
+## 17. Warning codes
+
+```text
+W2001 AxiomUsed
+W2002 OracleUsed
+W2003 UnsafeUsed
+W2004 LargeFiniteMayBeExpensive
+W2005 ImplicitPassportInferred
+W2006 BridgeChangesEqualityMode
+```
+
+## 18. Diagnostic quality requirements
+
+Every diagnostic should include when applicable:
+
+- primary span;
+- secondary spans for value origin;
+- passport summary;
+- missing capability;
+- current AmbientTheory;
+- suggested safe fix;
+- suggested unsafe fix only if build mode permits.
+
+## 19. Error severity
+
+```text
+Error   — compilation/checking fails.
+Warning — allowed but noteworthy.
+Note    — explanatory message attached to error/warning.
+Help    — suggested fix.
+```
+
+## 20. MVP required diagnostics
+
+MVP must implement at least:
+
+```text
+E0301 ValueOutsideTheory
+E0904 RuntimeStaticMismatch
+E1201 CapabilityMissing
+E1203 CannotPrintNonExpandable
+E1204 CannotCompareWithoutProof
+E1305 RawExternalInputUse
+E1401 TheoryBridgeRequired
+E1405 ProofIsProvabilityNotTruth
+E1503 InfinityModeRequired
+W2001 AxiomUsed
+W2003 UnsafeUsed
+```

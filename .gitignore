@@ -1,0 +1,17 @@
+﻿# Rust build artifacts
+/target/
+
+# Compiled binaries / debug files
+*.exe
+*.dll
+*.pdb
+*.obj
+*.lib
+*.rlib
+*.rmeta
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
