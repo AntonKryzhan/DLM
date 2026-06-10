@@ -518,3 +518,19 @@ closed ProofClosure<Theorem<name:P>> => ProofCertificate<name:P>
 ```
 
 Open goals and open obligations cannot emit certificates. Axiom-admitted closures remain visibly tainted as `AxiomAdmitted` and `trust>=Axiom`.
+
+
+### v0.42.0 — Proof Certificate Audit / Export Foundation
+
+`v0.42.0` adds a deterministic, dependency-free audit/export layer for proof certificates.
+
+New internal API:
+
+- `export_certificate_text(...)`
+- `export_certificate_text_unchecked(...)`
+- `audit_certificate_against_theorem(...)`
+- `render_certificate_audit_report(...)`
+- `CertificateAuditReport`
+- `CertificateAuditStatus`
+
+The layer gives certificates a stable textual representation and a structured audit report, while preserving the existing rule that certificates are audit artifacts rather than proofs.

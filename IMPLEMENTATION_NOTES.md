@@ -478,3 +478,16 @@ cargo test -p dlm_core --test tactic_script
 - No public `.dlm` syntax or checker semantics were changed.
 
 The certificate layer is intentionally not a proof constructor. It is an audit artifact over a closed theorem.
+
+
+## v0.42.0 Proof Certificate Audit / Export Foundation
+
+The proof-certificate layer now has a canonical text export and a structured audit report.
+
+Design constraints:
+
+- no external serialization dependency;
+- stable line-oriented format;
+- fingerprint validation before checked export;
+- separate unchecked export for forensic display only;
+- audit does not create or strengthen proofs.

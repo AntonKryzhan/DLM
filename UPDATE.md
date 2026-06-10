@@ -270,3 +270,15 @@ certificate.fingerprint == fingerprint(certificate contents)
 ```powershell
 cargo test -p dlm_core --test proof_certificate
 ```
+
+
+## v0.42.0 — Proof Certificate Audit / Export Foundation
+
+Added deterministic export and audit reports for proof certificates.
+
+- New module: `certificate_audit.rs`.
+- New tests: `certificate_audit.rs`.
+- New docs: `docs/PROOF_CERTIFICATE_AUDIT.md`.
+- New diagnostic kind: `ProofCertificateAuditError[E0913]`.
+
+No `.dlm` syntax or runtime behavior changes.

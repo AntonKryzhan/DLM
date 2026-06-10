@@ -552,3 +552,10 @@ Important rule:
 ```text
 open obligations cannot produce certificates
 ```
+
+
+## v0.42.0 — Proof certificate audit/export foundation
+
+The certificate audit/export layer is an internal post-checking artifact pass.
+
+It validates certificate stability, renders a canonical text form, and produces an audit report against a theorem passport.

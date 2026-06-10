@@ -463,3 +463,15 @@ a certificate fingerprint no longer matches its contents.
 ```
 
 This keeps certificate emission separate from proof construction: a certificate is an audit artifact over a closed theorem, not new proof evidence.
+
+
+## E0913 ProofCertificateAuditError
+
+`ProofCertificateAuditError` reports invalid proof-certificate export or audit state.
+
+Typical causes:
+
+- certificate trace length does not match the embedded trace;
+- certificate fingerprint no longer matches certificate contents;
+- certificate identity fields are empty;
+- certificate does not verify against the requested theorem.

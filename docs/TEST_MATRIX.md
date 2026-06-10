@@ -633,3 +633,20 @@ Certificate identity must match theorem identity exactly.
 Certificate fingerprints depend on trace order and contents.
 Tampering with certificate contents invalidates the fingerprint.
 ```
+
+
+## v0.42.0 — Certificate audit/export tests
+
+Additional tests:
+
+```powershell
+cargo test -p dlm_core --test certificate_audit
+```
+
+Coverage:
+
+- stable canonical export;
+- successful certificate/theorem audit;
+- rejection of tampered fingerprints;
+- rejection of wrong theorem identity;
+- unchecked forensic rendering remains non-validating.

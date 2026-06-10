@@ -2750,3 +2750,10 @@ Certificate fingerprint depends on trace order and certificate contents.
 ```
 
 This is a foundation layer for later certificate serialization, proof audit reports and proof-kernel boundary hardening.
+
+
+## v0.42.0 completed — Proof Certificate Audit / Export foundation
+
+`v0.42.0` adds deterministic proof-certificate export and audit reporting.
+
+This prepares the future CLI/API surface for emitting proof artifacts without yet adding new language syntax.
