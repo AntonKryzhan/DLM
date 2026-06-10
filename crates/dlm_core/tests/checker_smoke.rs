@@ -68,15 +68,9 @@ theory Core {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected check OK, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected check OK, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
     assert_eq!(run.output, vec!["30".to_string()]);
 }
 
@@ -96,10 +90,7 @@ theory Core {
     assert!(check.ok(), "checker accepts compressed/symbolic values");
 
     let run = dlm_core::Runtime::new().run_module(&module);
-    assert!(
-        run.is_err(),
-        "runtime exact evaluator must reject u128 overflow"
-    );
+    assert!(run.is_err(), "runtime exact evaluator must reject u128 overflow");
 }
 
 #[test]
@@ -115,10 +106,7 @@ theory Core {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected RuntimeStaticMismatch diagnostic");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("RuntimeStaticMismatch")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("RuntimeStaticMismatch")));
 }
 
 #[test]
@@ -150,15 +138,9 @@ theory Core {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected check OK, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected check OK, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::with_stdin("42")
-        .run_module(&module)
-        .expect("runtime");
+    let run = dlm_core::Runtime::with_stdin("42").run_module(&module).expect("runtime");
     assert_eq!(run.output, vec!["42".to_string()]);
 }
 
@@ -175,15 +157,12 @@ theory Core {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected check OK, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected check OK, got: {:?}", check.diagnostics);
 
     let run = dlm_core::Runtime::with_stdin("0").run_module(&module);
     assert!(run.is_err(), "require(n > 0) must fail for stdin 0");
 }
+
 
 #[test]
 fn axiom_trust_passes_in_research_mode() {
@@ -197,11 +176,7 @@ theory Core {
 "#;
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
-    assert!(
-        report.ok(),
-        "research policy permits Axiom trust, got: {:?}",
-        report.diagnostics
-    );
+    assert!(report.ok(), "research policy permits Axiom trust, got: {:?}", report.diagnostics);
 }
 
 #[test]
@@ -217,10 +192,7 @@ theory Core {
     let module = parse_module(source).expect("parse");
     let report = Checker::with_policy(dlm_core::CheckPolicy::trusted_only()).check_module(&module);
     assert!(!report.ok(), "trusted-only policy must reject Axiom trust");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
 }
 
 #[test]
@@ -234,18 +206,10 @@ theory Core {
 "#;
     let module = parse_module(source).expect("parse");
     let default_report = Checker::new().check_module(&module);
-    assert!(
-        !default_report.ok(),
-        "default research policy must reject Unsafe trust"
-    );
+    assert!(!default_report.ok(), "default research policy must reject Unsafe trust");
 
-    let unsafe_report =
-        Checker::with_policy(dlm_core::CheckPolicy::allow_unsafe()).check_module(&module);
-    assert!(
-        unsafe_report.ok(),
-        "allow-unsafe policy should accept Unsafe trust, got: {:?}",
-        unsafe_report.diagnostics
-    );
+    let unsafe_report = Checker::with_policy(dlm_core::CheckPolicy::allow_unsafe()).check_module(&module);
+    assert!(unsafe_report.ok(), "allow-unsafe policy should accept Unsafe trust, got: {:?}", unsafe_report.diagnostics);
 }
 
 #[test]
@@ -268,15 +232,9 @@ bridge PA_to_Meta : PA -> Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected transport bridge to pass, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected transport bridge to pass, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
     assert_eq!(run.output, vec!["7".to_string()]);
 }
 
@@ -296,10 +254,7 @@ theory Meta {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "transport without bridge must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TheoryBridgeError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TheoryBridgeError")));
 }
 
 #[test]
@@ -321,21 +276,11 @@ bridge PA_soundness : PA -> Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let research = Checker::new().check_module(&module);
-    assert!(
-        research.ok(),
-        "research mode should accept soundness as Axiom-tainted, got: {:?}",
-        research.diagnostics
-    );
+    assert!(research.ok(), "research mode should accept soundness as Axiom-tainted, got: {:?}", research.diagnostics);
 
     let strict = Checker::with_policy(dlm_core::CheckPolicy::trusted_only()).check_module(&module);
-    assert!(
-        !strict.ok(),
-        "trusted-only must reject soundness Axiom taint"
-    );
-    assert!(strict
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
+    assert!(!strict.ok(), "trusted-only must reject soundness Axiom taint");
+    assert!(strict.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
 }
 
 #[test]
@@ -354,10 +299,7 @@ theory Meta {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "soundness without explicit bridge must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TheoryBridgeError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TheoryBridgeError")));
 }
 
 #[test]
@@ -381,15 +323,9 @@ theory Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected quote inspect to pass, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected quote inspect to pass, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
     assert_eq!(run.output, vec!["AST<PA.n>".to_string()]);
 }
 
@@ -406,10 +342,7 @@ theory Core {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "inspect_ast on Nat must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -433,10 +366,7 @@ theory Meta {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "Term must not support Nat addition");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -455,22 +385,10 @@ theory Core {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "typed infinity operations should pass, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "typed infinity operations should pass, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "cardinal_succ(ℵ0)".to_string(),
-            "ordinal_succ(ω)".to_string()
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec!["cardinal_succ(ℵ0)".to_string(), "ordinal_succ(ω)".to_string()]);
 }
 
 #[test]
@@ -485,10 +403,7 @@ theory Core {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "ambiguous infinity() must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
 }
 
 #[test]
@@ -504,10 +419,7 @@ theory Core {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "cardinal_succ(omega()) must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
 }
 
 #[test]
@@ -538,19 +450,10 @@ theory Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected check OK, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected check OK, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec!["true".to_string(), "true".to_string(), "false".to_string()]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec!["true".to_string(), "true".to_string(), "false".to_string()]);
 }
 
 #[test]
@@ -567,10 +470,7 @@ theory Core {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected EqualityModeError diagnostic");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("EqualityModeError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("EqualityModeError")));
 }
 
 #[test]
@@ -587,10 +487,7 @@ theory Core {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected EqualityModeError diagnostic");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("EqualityModeError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("EqualityModeError")));
 }
 
 #[test]
@@ -614,10 +511,7 @@ theory Meta {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected AccessError diagnostic");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -647,36 +541,18 @@ theory Meta {
     let report = Checker::new().check_module(&module);
     assert!(report.ok(), "expected OK, got: {:?}", report.diagnostics);
 
-    let code = report
-        .inferred
-        .iter()
+    let code = report.inferred.iter()
         .find(|(name, _)| name == "Meta.code")
         .expect("Meta.code inferred")
-        .1
-        .clone();
-    assert!(
-        code.history.contains_event("bridge:quote"),
-        "quote history missing: {}",
-        code.history.summary()
-    );
+        .1.clone();
+    assert!(code.history.contains_event("bridge:quote"), "quote history missing: {}", code.history.summary());
 
-    let lifted = report
-        .inferred
-        .iter()
+    let lifted = report.inferred.iter()
         .find(|(name, _)| name == "Meta.lifted")
         .expect("Meta.lifted inferred")
-        .1
-        .clone();
-    assert!(
-        lifted.history.contains_event("bridge:soundness"),
-        "soundness history missing: {}",
-        lifted.history.summary()
-    );
-    assert!(
-        lifted.history.contains_event("axiom:soundness_assumption"),
-        "soundness axiom history missing: {}",
-        lifted.history.summary()
-    );
+        .1.clone();
+    assert!(lifted.history.contains_event("bridge:soundness"), "soundness history missing: {}", lifted.history.summary());
+    assert!(lifted.history.contains_event("axiom:soundness_assumption"), "soundness axiom history missing: {}", lifted.history.summary());
 }
 
 #[test]
@@ -700,27 +576,14 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected migration bridge to pass, got: {:?}",
-        check.diagnostics
-    );
-    let remote = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected migration bridge to pass, got: {:?}", check.diagnostics);
+    let remote = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.remote")
         .expect("Cluster.remote inferred")
-        .1
-        .clone();
-    assert!(
-        remote.history.contains_event("migration:"),
-        "migration history missing: {}",
-        remote.history.summary()
-    );
+        .1.clone();
+    assert!(remote.history.contains_event("migration:"), "migration history missing: {}", remote.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
     assert_eq!(run.output, vec!["remote[aarch64](7)".to_string()]);
 }
 
@@ -741,10 +604,7 @@ theory Cluster {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "migration without bridge must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("MigrationBridgeError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("MigrationBridgeError")));
 }
 
 #[test]
@@ -768,13 +628,7 @@ theory Cluster {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "migration target must be a Node");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("MigrationBridgeError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("MigrationBridgeError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -798,14 +652,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "Remote<Nat> must not be decimal-printable without explicit materialization bridge"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
+    assert!(!check.ok(), "Remote<Nat> must not be decimal-printable without explicit materialization bridge");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -826,35 +674,19 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected virtual cluster pool to pass, got: {:?}",
-        check.diagnostics
-    );
-    let pool = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected virtual cluster pool to pass, got: {:?}", check.diagnostics);
+    let pool = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.pool")
         .expect("Cluster.pool inferred")
-        .1
-        .clone();
-    assert!(
-        pool.history.contains_event("cluster:virtual_pool"),
-        "cluster history missing: {}",
-        pool.history.summary()
-    );
+        .1.clone();
+    assert!(pool.history.contains_event("cluster:virtual_pool"), "cluster history missing: {}", pool.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "24".to_string(),
-            "98304".to_string(),
-            "virtual_cluster<nodes=2, cores=24, memory_mib=98304>".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "24".to_string(),
+        "98304".to_string(),
+        "virtual_cluster<nodes=2, cores=24, memory_mib=98304>".to_string(),
+    ]);
 }
 
 #[test]
@@ -870,13 +702,7 @@ theory Cluster {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "virtual_pool must reject non-node values");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -892,13 +718,7 @@ theory Cluster {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "pool_cores must reject plain Node values");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -924,27 +744,14 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected schedule_on to pass, got: {:?}",
-        check.diagnostics
-    );
-    let job = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected schedule_on to pass, got: {:?}", check.diagnostics);
+    let job = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.job")
         .expect("Cluster.job inferred")
-        .1
-        .clone();
-    assert!(
-        job.history.contains_event("cluster:schedule"),
-        "schedule history missing: {}",
-        job.history.summary()
-    );
+        .1.clone();
+    assert!(job.history.contains_event("cluster:schedule"), "schedule history missing: {}", job.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
     assert_eq!(run.output, vec!["remote[aarch64](9)".to_string()]);
 }
 
@@ -965,14 +772,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "schedule_on cross-theory without migration bridge must fail"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("MigrationBridgeError")));
+    assert!(!check.ok(), "schedule_on cross-theory without migration bridge must fail");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("MigrationBridgeError")));
 }
 
 #[test]
@@ -988,17 +789,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "schedule_on must reject non-cluster pool argument"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(!check.ok(), "schedule_on must reject non-cluster pool argument");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1019,10 +811,7 @@ theory Cluster {
     let check = Checker::new().check_module(&module);
     assert!(check.ok(), "static checker only verifies types/capabilities; runtime verifies pool membership, got: {:?}", check.diagnostics);
     let run = dlm_core::Runtime::new().run_module(&module);
-    assert!(
-        run.is_err(),
-        "runtime must reject scheduling to a node outside the virtual pool"
-    );
+    assert!(run.is_err(), "runtime must reject scheduling to a node outside the virtual pool");
 }
 
 #[test]
@@ -1042,34 +831,18 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected distributed memory check to pass, got: {:?}",
-        check.diagnostics
-    );
-    let mem = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected distributed memory check to pass, got: {:?}", check.diagnostics);
+    let mem = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.mem")
         .expect("Cluster.mem inferred")
-        .1
-        .clone();
-    assert!(
-        mem.history.contains_event("memory:distributed_region"),
-        "memory history missing: {}",
-        mem.history.summary()
-    );
+        .1.clone();
+    assert!(mem.history.contains_event("memory:distributed_region"), "memory history missing: {}", mem.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "49152".to_string(),
-            "distributed_memory<memory_mib=49152>".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "49152".to_string(),
+        "distributed_memory<memory_mib=49152>".to_string(),
+    ]);
 }
 
 #[test]
@@ -1084,17 +857,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "distributed_memory must reject non-cluster pool argument"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(!check.ok(), "distributed_memory must reject non-cluster pool argument");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1110,14 +874,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "distributed_memory must reject requests above known pool memory"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError")));
+    assert!(!check.ok(), "distributed_memory must reject requests above known pool memory");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError")));
 }
 
 #[test]
@@ -1139,35 +897,19 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected checkpoint/restore to pass, got: {:?}",
-        check.diagnostics
-    );
-    let snap = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected checkpoint/restore to pass, got: {:?}", check.diagnostics);
+    let snap = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.snap")
         .expect("Cluster.snap inferred")
-        .1
-        .clone();
-    assert!(
-        snap.history.contains_event("checkpoint:memory"),
-        "checkpoint history missing: {}",
-        snap.history.summary()
-    );
+        .1.clone();
+    assert!(snap.history.contains_event("checkpoint:memory"), "checkpoint history missing: {}", snap.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "4096".to_string(),
-            "memory_checkpoint<memory_mib=4096>".to_string(),
-            "distributed_memory<memory_mib=4096>".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "4096".to_string(),
+        "memory_checkpoint<memory_mib=4096>".to_string(),
+        "distributed_memory<memory_mib=4096>".to_string(),
+    ]);
 }
 
 #[test]
@@ -1183,17 +925,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "checkpoint_memory must reject non-memory values"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(!check.ok(), "checkpoint_memory must reject non-memory values");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1210,17 +943,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "restore_checkpoint must reject plain memory regions"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(!check.ok(), "restore_checkpoint must reject plain memory regions");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1249,47 +973,24 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected remote checkpoint/restore to pass, got: {:?}",
-        check.diagnostics
-    );
-    let snap = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected remote checkpoint/restore to pass, got: {:?}", check.diagnostics);
+    let snap = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.snap")
         .expect("Cluster.snap inferred")
-        .1
-        .clone();
-    assert!(
-        snap.history.contains_event("checkpoint:remote"),
-        "remote checkpoint history missing: {}",
-        snap.history.summary()
-    );
+        .1.clone();
+    assert!(snap.history.contains_event("checkpoint:remote"), "remote checkpoint history missing: {}", snap.history.summary());
 
-    let restored = check
-        .inferred
-        .iter()
+    let restored = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.restored")
         .expect("Cluster.restored inferred")
-        .1
-        .clone();
-    assert!(
-        restored.history.contains_event("checkpoint:restore_remote"),
-        "remote restore history missing: {}",
-        restored.history.summary()
-    );
+        .1.clone();
+    assert!(restored.history.contains_event("checkpoint:restore_remote"), "remote restore history missing: {}", restored.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "remote_checkpoint[aarch64](11)".to_string(),
-            "remote[x86_64](11)".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "remote_checkpoint[aarch64](11)".to_string(),
+        "remote[x86_64](11)".to_string(),
+    ]);
 }
 
 #[test]
@@ -1310,34 +1011,18 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected live migration to pass, got: {:?}",
-        check.diagnostics
-    );
-    let moved = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected live migration to pass, got: {:?}", check.diagnostics);
+    let moved = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.moved")
         .expect("Cluster.moved inferred")
-        .1
-        .clone();
-    assert!(
-        moved.history.contains_event("migration:live_remote"),
-        "live migration history missing: {}",
-        moved.history.summary()
-    );
+        .1.clone();
+    assert!(moved.history.contains_event("migration:live_remote"), "live migration history missing: {}", moved.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "remote[x86_64](13)".to_string(),
-            "remote[aarch64](13)".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "remote[x86_64](13)".to_string(),
+        "remote[aarch64](13)".to_string(),
+    ]);
 }
 
 #[test]
@@ -1352,17 +1037,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "checkpoint_remote must reject non-Remote values"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(!check.ok(), "checkpoint_remote must reject non-Remote values");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1379,13 +1055,7 @@ theory Cluster {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "restore_remote must reject plain values");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1419,31 +1089,15 @@ theory Return {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected materialize bridge to pass, got: {:?}",
-        check.diagnostics
-    );
-    let back = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected materialize bridge to pass, got: {:?}", check.diagnostics);
+    let back = check.inferred.iter()
         .find(|(name, _)| name == "Return.back")
         .expect("Return.back inferred")
-        .1
-        .clone();
-    assert!(
-        back.history.contains_event("remote:materialize"),
-        "materialize history missing: {}",
-        back.history.summary()
-    );
+        .1.clone();
+    assert!(back.history.contains_event("remote:materialize"), "materialize history missing: {}", back.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec!["remote[aarch64](21)".to_string(), "21".to_string()]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec!["remote[aarch64](21)".to_string(), "21".to_string()]);
 }
 
 #[test]
@@ -1463,19 +1117,10 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected local materialize to pass, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected local materialize to pass, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec!["remote[x86_64](17)".to_string(), "17".to_string()]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec!["remote[x86_64](17)".to_string(), "17".to_string()]);
 }
 
 #[test]
@@ -1504,10 +1149,7 @@ theory Return {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "materialize without bridge must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TheoryBridgeError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TheoryBridgeError")));
 }
 
 #[test]
@@ -1522,17 +1164,8 @@ theory Core {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "materialize_remote must reject non-Remote values"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(!check.ok(), "materialize_remote must reject non-Remote values");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1553,47 +1186,24 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected portable deploy to pass, got: {:?}",
-        check.diagnostics
-    );
-    let code = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected portable deploy to pass, got: {:?}", check.diagnostics);
+    let code = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.code")
         .expect("Cluster.code inferred")
-        .1
-        .clone();
-    assert!(
-        code.history.contains_event("portable:compile"),
-        "portable compile history missing: {}",
-        code.history.summary()
-    );
+        .1.clone();
+    assert!(code.history.contains_event("portable:compile"), "portable compile history missing: {}", code.history.summary());
 
-    let job = check
-        .inferred
-        .iter()
+    let job = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.job")
         .expect("Cluster.job inferred")
-        .1
-        .clone();
-    assert!(
-        job.history.contains_event("portable:deploy_on"),
-        "portable deploy history missing: {}",
-        job.history.summary()
-    );
+        .1.clone();
+    assert!(job.history.contains_event("portable:deploy_on"), "portable deploy history missing: {}", job.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "portable_code(33)".to_string(),
-            "remote[aarch64](33)".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "portable_code(33)".to_string(),
+        "remote[aarch64](33)".to_string(),
+    ]);
 }
 
 #[test]
@@ -1609,14 +1219,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "compile_portable must reject non-serializable values"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
+    assert!(!check.ok(), "compile_portable must reject non-serializable values");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1632,17 +1236,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "deploy_portable must reject non-PortableCode values"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(
-            |diag| format!("{:?}", diag.kind).contains("DistributedResourceError")
-                || format!("{:?}", diag.kind).contains("AccessError")
-        ));
+    assert!(!check.ok(), "deploy_portable must reject non-PortableCode values");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError") || format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -1663,36 +1258,19 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected GPU memory pool to pass, got: {:?}",
-        check.diagnostics
-    );
-    let vram = check
-        .inferred
-        .iter()
+    assert!(check.ok(), "expected GPU memory pool to pass, got: {:?}", check.diagnostics);
+    let vram = check.inferred.iter()
         .find(|(name, _)| name == "Cluster.vram")
         .expect("Cluster.vram inferred")
-        .1
-        .clone();
-    assert!(
-        vram.history
-            .contains_event("gpu_memory:distributed_region:32768MiB"),
-        "GPU memory history missing: {}",
-        vram.history.summary()
-    );
+        .1.clone();
+    assert!(vram.history.contains_event("gpu_memory:distributed_region:32768MiB"), "GPU memory history missing: {}", vram.history.summary());
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "32768".to_string(),
-            "gpu_pool<devices=2, memory_mib=49152>".to_string(),
-            "distributed_gpu_memory<memory_mib=32768>".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "32768".to_string(),
+        "gpu_pool<devices=2, memory_mib=49152>".to_string(),
+        "distributed_gpu_memory<memory_mib=32768>".to_string(),
+    ]);
 }
 
 #[test]
@@ -1707,15 +1285,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "distributed_gpu_memory must reject non-GpuPool values"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("AccessError")
-            || format!("{:?}", diag.kind).contains("DistributedResourceError")));
+    assert!(!check.ok(), "distributed_gpu_memory must reject non-GpuPool values");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("AccessError") || format!("{:?}", diag.kind).contains("DistributedResourceError")));
 }
 
 #[test]
@@ -1731,14 +1302,8 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "distributed_gpu_memory must reject requests larger than the pool"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError")));
+    assert!(!check.ok(), "distributed_gpu_memory must reject requests larger than the pool");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DistributedResourceError")));
 }
 
 #[test]
@@ -1759,22 +1324,10 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected GPU CPU transfer to pass, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected GPU CPU transfer to pass, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "gpu_value<memory_mib=8192>(55)".to_string(),
-            "55".to_string()
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec!["gpu_value<memory_mib=8192>(55)".to_string(), "55".to_string()]);
 }
 
 #[test]
@@ -1849,23 +1402,14 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected GPU kernel launch to pass, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected GPU kernel launch to pass, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "gpu_kernel(77)".to_string(),
-            "gpu_value<memory_mib=8192>(77)".to_string(),
-            "77".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "gpu_kernel(77)".to_string(),
+        "gpu_value<memory_mib=8192>(77)".to_string(),
+        "77".to_string(),
+    ]);
 }
 
 #[test]
@@ -1900,10 +1444,7 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "launch_kernel must reject CPU DistributedMemory"
-    );
+    assert!(!check.ok(), "launch_kernel must reject CPU DistributedMemory");
 }
 
 #[test]
@@ -1921,10 +1462,7 @@ theory Cluster {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "launch_kernel must reject non-GpuKernel arguments"
-    );
+    assert!(!check.ok(), "launch_kernel must reject non-GpuKernel arguments");
 }
 
 #[test]
@@ -1966,26 +1504,17 @@ theory Foundations {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected universe hierarchy example to pass, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected universe hierarchy example to pass, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "U0".to_string(),
-            "U1".to_string(),
-            "Set<U0->U1>".to_string(),
-            "Class<U0>".to_string(),
-            "1".to_string(),
-            "0".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "U0".to_string(),
+        "U1".to_string(),
+        "Set<U0->U1>".to_string(),
+        "Class<U0>".to_string(),
+        "1".to_string(),
+        "0".to_string(),
+    ]);
 }
 
 #[test]
@@ -2029,10 +1558,7 @@ theory Foundations {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "set_of(Set) must be rejected; only set_of(Universe) is valid"
-    );
+    assert!(!check.ok(), "set_of(Set) must be rejected; only set_of(Universe) is valid");
 }
 
 #[test]
@@ -2047,10 +1573,7 @@ theory Foundations {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "class_level(U0) must be rejected; it requires Class<U n>"
-    );
+    assert!(!check.ok(), "class_level(U0) must be rejected; it requires Class<U n>");
 }
 
 #[test]
@@ -2073,23 +1596,14 @@ theory Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected check OK, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected check OK, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "definable_nat<L0,Godel,Meta,bound=20,M1>".to_string(),
-            "20".to_string(),
-            "1".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "definable_nat<L0,Godel,Meta,bound=20,M1>".to_string(),
+        "20".to_string(),
+        "1".to_string(),
+    ]);
 }
 
 #[test]
@@ -2104,10 +1618,7 @@ theory Meta {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "bare definability must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("DefinabilityError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DefinabilityError")));
 }
 
 #[test]
@@ -2122,10 +1633,7 @@ theory Meta {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "Berry-style construction must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("DefinabilityError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DefinabilityError")));
 }
 
 #[test]
@@ -2141,14 +1649,8 @@ theory Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        !check.ok(),
-        "definable_nat must require Language as first argument"
-    );
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("DefinabilityError")));
+    assert!(!check.ok(), "definable_nat must require Language as first argument");
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("DefinabilityError")));
 }
 
 #[test]
@@ -2158,19 +1660,14 @@ fn big_number_hierarchy_check_and_run() {
     let check = Checker::new().check_module(&module);
     assert!(check.ok(), "expected OK, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "Graham()".to_string(),
-            "TREE(3)".to_string(),
-            "BB(1000)".to_string(),
-            "FGH(5)".to_string(),
-            "3".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "Graham()".to_string(),
+        "TREE(3)".to_string(),
+        "BB(1000)".to_string(),
+        "FGH(5)".to_string(),
+        "3".to_string(),
+    ]);
 }
 
 #[test]
@@ -2187,10 +1684,7 @@ fn bare_big_number_is_rejected() {
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
     assert!(!check.ok(), "bare big_number() must fail");
-    assert!(check
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("BigNumberError")));
+    assert!(check.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("BigNumberError")));
 }
 
 #[test]
@@ -2214,24 +1708,15 @@ fn minimal_proof_kernel_check_and_run() {
     let source = include_str!("../../../examples/valid/minimal_proof_kernel.dlm");
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected check OK, got: {:?}",
-        check.diagnostics
-    );
+    assert!(check.ok(), "expected check OK, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "proof_term<true_intro>".to_string(),
-            "StaticProof<kernel_checked:true_intro>".to_string(),
-            "proof_term<gt_intro>".to_string(),
-            "StaticProof<kernel_checked:gt_intro>".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "proof_term<true_intro>".to_string(),
+        "StaticProof<kernel_checked:true_intro>".to_string(),
+        "proof_term<gt_intro>".to_string(),
+        "StaticProof<kernel_checked:gt_intro>".to_string(),
+    ]);
 }
 
 #[test]
@@ -2240,10 +1725,7 @@ fn check_proof_requires_proof_term() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected ProofKernelError");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("ProofKernelError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("ProofKernelError")));
 }
 
 #[test]
@@ -2252,10 +1734,7 @@ fn fake_proof_is_rejected() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected ProofKernelError");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("ProofKernelError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("ProofKernelError")));
 }
 
 #[test]
@@ -2264,10 +1743,7 @@ fn proof_gt_from_runtime_fails() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected RuntimeStaticMismatch");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("RuntimeStaticMismatch")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("RuntimeStaticMismatch")));
 }
 
 #[test]
@@ -2276,10 +1752,7 @@ fn proof_gt_requires_direct_compare() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected AccessError");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("AccessError")));
 }
 
 #[test]
@@ -2329,10 +1802,7 @@ theory Meta {
     assert_eq!(summary.static_proofs, 2);
     assert_eq!(summary.soundness_bridge_events, 1);
     assert_eq!(summary.axiom_tainted, 1);
-    assert!(
-        !summary.is_clean(),
-        "soundness bridge should be axiom-tainted"
-    );
+    assert!(!summary.is_clean(), "soundness bridge should be axiom-tainted");
 }
 
 #[test]
@@ -2377,11 +1847,7 @@ theory Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
-    assert!(
-        report.ok(),
-        "expected bridge classification program to check, got: {:?}",
-        report.diagnostics
-    );
+    assert!(report.ok(), "expected bridge classification program to check, got: {:?}", report.diagnostics);
 
     let summary = dlm_core::SoundnessSummary::from_report(&report);
     assert_eq!(summary.bridge_declarations, 6);
@@ -2395,18 +1861,9 @@ theory Meta {
     assert_eq!(summary.axiom_tainted, 1);
 
     let rendered = summary.render_human();
-    assert!(
-        rendered.contains("syntax-only bridge"),
-        "missing quote profile: {rendered}"
-    );
-    assert!(
-        rendered.contains("axiom-tainted truth bridge"),
-        "missing soundness profile: {rendered}"
-    );
-    assert!(
-        rendered.contains("reflective bridge"),
-        "missing reflection profile: {rendered}"
-    );
+    assert!(rendered.contains("syntax-only bridge"), "missing quote profile: {rendered}");
+    assert!(rendered.contains("axiom-tainted truth bridge"), "missing soundness profile: {rendered}");
+    assert!(rendered.contains("reflective bridge"), "missing reflection profile: {rendered}");
 }
 
 #[test]
@@ -2428,18 +1885,11 @@ theory Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
-    assert!(
-        report.ok(),
-        "unsafe bridge declarations are explain-level issues, not check errors in MVP: {:?}",
-        report.diagnostics
-    );
+    assert!(report.ok(), "unsafe bridge declarations are explain-level issues, not check errors in MVP: {:?}", report.diagnostics);
 
     let summary = dlm_core::SoundnessSummary::from_report(&report);
     assert_eq!(summary.unsafe_bridge_declarations, 1);
-    assert!(
-        !summary.is_clean(),
-        "unsafe bridge declaration must make explain summary not clean"
-    );
+    assert!(!summary.is_clean(), "unsafe bridge declaration must make explain summary not clean");
     assert!(summary.render_human().contains("no safe preservation law"));
 }
 
@@ -2463,23 +1913,12 @@ theory Meta {
 "#;
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
-    assert!(
-        report.ok(),
-        "expected quote/inspect example to check, got: {:?}",
-        report.diagnostics
-    );
+    assert!(report.ok(), "expected quote/inspect example to check, got: {:?}", report.diagnostics);
 
     let summary = dlm_core::SoundnessSummary::from_report(&report);
     assert_eq!(summary.quote_bridge_events, 2);
-    assert!(
-        summary.issues.is_empty(),
-        "derived Text from inspect_ast must not be treated as quote invariant violation: {:?}",
-        summary.issues
-    );
-    assert!(
-        summary.is_clean(),
-        "quote-only derived values should remain clean: {summary:?}"
-    );
+    assert!(summary.issues.is_empty(), "derived Text from inspect_ast must not be treated as quote invariant violation: {:?}", summary.issues);
+    assert!(summary.is_clean(), "quote-only derived values should remain clean: {summary:?}");
 }
 
 #[test]
@@ -2489,20 +1928,15 @@ fn infinity_arithmetic_extended_check_and_run() {
     let check = Checker::new().check_module(&module);
     assert!(check.ok(), "expected OK, got: {:?}", check.diagnostics);
 
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "cardinal_add(ℵ0, cardinal_succ(ℵ0))".to_string(),
-            "ordinal_add(ω, ordinal_succ(ω))".to_string(),
-            "limit(ω)".to_string(),
-            "potential_step(∞ₚ)".to_string(),
-            "Class∞<U0>".to_string(),
-            "Universe∞<U0>".to_string(),
-        ]
-    );
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "cardinal_add(ℵ0, cardinal_succ(ℵ0))".to_string(),
+        "ordinal_add(ω, ordinal_succ(ω))".to_string(),
+        "limit(ω)".to_string(),
+        "potential_step(∞ₚ)".to_string(),
+        "Class∞<U0>".to_string(),
+        "Universe∞<U0>".to_string(),
+    ]);
 }
 
 #[test]
@@ -2511,10 +1945,7 @@ fn cardinal_add_requires_cardinal_operands() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected InfinityModeError");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
 }
 
 #[test]
@@ -2523,10 +1954,7 @@ fn ordinal_add_requires_ordinal_operands() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected InfinityModeError");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
 }
 
 #[test]
@@ -2535,10 +1963,7 @@ fn class_infinity_requires_class_value() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected InfinityModeError");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
 }
 
 #[test]
@@ -2547,10 +1972,7 @@ fn universe_infinity_requires_universe_value() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected UniverseLevelError");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("UniverseLevelError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("UniverseLevelError")));
 }
 
 #[test]
@@ -2559,10 +1981,7 @@ fn potential_step_requires_potential_infinity() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "expected InfinityModeError");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("InfinityModeError")));
 }
 
 #[test]
@@ -2570,21 +1989,12 @@ fn provability_truth_boundary_check_and_run() {
     let source = include_str!("../../../examples/valid/provability_truth_boundary.dlm");
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected provability boundary example to pass, got: {:?}",
-        check.diagnostics
-    );
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "Provable<Meta.kernel_checked:true_intro>".to_string(),
-            "StaticProof<truth_from_provable:kernel_checked:true_intro>".to_string(),
-        ]
-    );
+    assert!(check.ok(), "expected provability boundary example to pass, got: {:?}", check.diagnostics);
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "Provable<Meta.kernel_checked:true_intro>".to_string(),
+        "StaticProof<truth_from_provable:kernel_checked:true_intro>".to_string(),
+    ]);
 }
 
 #[test]
@@ -2592,34 +2002,18 @@ fn proposition_passport_check_and_run() {
     let source = include_str!("../../../examples/valid/proposition_passport.dlm");
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected proposition example to pass, got: {:?}",
-        check.diagnostics
-    );
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec!["Prop<true>".to_string(), "Prop<gt>".to_string()]
-    );
+    assert!(check.ok(), "expected proposition example to pass, got: {:?}", check.diagnostics);
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec!["Prop<true>".to_string(), "Prop<gt>".to_string()]);
 }
 
 #[test]
 fn truth_from_provable_without_soundness_fails() {
-    let source =
-        include_str!("../../../examples/invalid/truth_from_provable_without_soundness.dlm");
+    let source = include_str!("../../../examples/invalid/truth_from_provable_without_soundness.dlm");
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
-    assert!(
-        !report.ok(),
-        "truth_from_provable without soundness/axiom must fail"
-    );
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TheoryBridgeError")));
+    assert!(!report.ok(), "truth_from_provable without soundness/axiom must fail");
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TheoryBridgeError")));
 }
 
 #[test]
@@ -2628,10 +2022,7 @@ fn provable_requires_static_proof() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "provable_of(non-proof) must fail");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TruthBoundaryError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TruthBoundaryError")));
 }
 
 #[test]
@@ -2640,10 +2031,7 @@ fn prop_gt_from_runtime_fails() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "prop_gt from runtime input must fail");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("RuntimeStaticMismatch")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("RuntimeStaticMismatch")));
 }
 
 #[test]
@@ -2651,14 +2039,8 @@ fn truth_axiom_rejected_by_trusted_only() {
     let source = include_str!("../../../examples/invalid/truth_axiom_rejected_by_trusted_only.dlm");
     let module = parse_module(source).expect("parse");
     let report = Checker::with_policy(dlm_core::CheckPolicy::trusted_only()).check_module(&module);
-    assert!(
-        !report.ok(),
-        "trusted-only must reject truth_from_provable_axiom"
-    );
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
+    assert!(!report.ok(), "trusted-only must reject truth_from_provable_axiom");
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
 }
 
 #[test]
@@ -2666,21 +2048,12 @@ fn consistency_incompleteness_boundary_check_and_run() {
     let source = include_str!("../../../examples/valid/consistency_incompleteness_boundary.dlm");
     let module = parse_module(source).expect("parse");
     let check = Checker::new().check_module(&module);
-    assert!(
-        check.ok(),
-        "expected consistency boundary example to pass, got: {:?}",
-        check.diagnostics
-    );
-    let run = dlm_core::Runtime::new()
-        .run_module(&module)
-        .expect("runtime");
-    assert_eq!(
-        run.output,
-        vec![
-            "Consistency<Meta>".to_string(),
-            "StaticProof<consistency_axiom:Meta>".to_string(),
-        ]
-    );
+    assert!(check.ok(), "expected consistency boundary example to pass, got: {:?}", check.diagnostics);
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "Consistency<Meta>".to_string(),
+        "StaticProof<consistency_axiom:Meta>".to_string(),
+    ]);
 }
 
 #[test]
@@ -2689,10 +2062,7 @@ fn prove_own_consistency_fails() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "prove_consistency should fail in MVP");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("IncompletenessBoundaryError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("IncompletenessBoundaryError")));
 }
 
 #[test]
@@ -2701,23 +2071,16 @@ fn consistency_axiom_requires_claim() {
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
     assert!(!report.ok(), "assume_consistency(non-claim) must fail");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("IncompletenessBoundaryError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("IncompletenessBoundaryError")));
 }
 
 #[test]
 fn consistency_axiom_rejected_by_trusted_only() {
-    let source =
-        include_str!("../../../examples/invalid/consistency_axiom_rejected_by_trusted_only.dlm");
+    let source = include_str!("../../../examples/invalid/consistency_axiom_rejected_by_trusted_only.dlm");
     let module = parse_module(source).expect("parse");
     let report = Checker::with_policy(dlm_core::CheckPolicy::trusted_only()).check_module(&module);
     assert!(!report.ok(), "trusted-only must reject assume_consistency");
-    assert!(report
-        .diagnostics
-        .iter()
-        .any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
 }
 
 #[test]
@@ -2725,16 +2088,109 @@ fn consistency_summary_detects_axiom_assumption() {
     let source = include_str!("../../../examples/valid/consistency_summary_axiom.dlm");
     let module = parse_module(source).expect("parse");
     let report = Checker::new().check_module(&module);
-    assert!(
-        report.ok(),
-        "expected check OK, got: {:?}",
-        report.diagnostics
-    );
+    assert!(report.ok(), "expected check OK, got: {:?}", report.diagnostics);
     let summary = dlm_core::SoundnessSummary::from_report(&report);
     assert_eq!(summary.consistency_claims, 1);
     assert_eq!(summary.consistency_axiom_lifts, 1);
-    assert!(
-        !summary.is_clean(),
-        "consistency axiom must make summary not clean"
-    );
+    assert!(!summary.is_clean(), "consistency axiom must make summary not clean");
+}
+
+#[test]
+fn reflection_self_reference_guard_check_and_run() {
+    let source = include_str!("../../../examples/valid/reflection_self_reference_guard.dlm");
+    let module = parse_module(source).expect("parse");
+    let check = Checker::new().check_module(&module);
+    assert!(check.ok(), "expected reflection/self-reference example to pass, got: {:?}", check.diagnostics);
+
+    let run = dlm_core::Runtime::new().run_module(&module).expect("runtime");
+    assert_eq!(run.output, vec![
+        "Reflection<Meta.kernel_checked:true_intro>".to_string(),
+        "StaticProof<reflection_axiom:Meta:kernel_checked:true_intro>".to_string(),
+        "SelfReference<true>".to_string(),
+        "StaticProof<self_reference_axiom:true>".to_string(),
+        "SelfReference<godel_sentence>".to_string(),
+        "StaticProof<self_reference_axiom:godel_sentence>".to_string(),
+    ]);
+}
+
+#[test]
+fn reflection_summary_detects_axiom_assumptions() {
+    let source = include_str!("../../../examples/valid/reflection_summary_axiom.dlm");
+    let module = parse_module(source).expect("parse");
+    let report = Checker::new().check_module(&module);
+    assert!(report.ok(), "expected check OK, got: {:?}", report.diagnostics);
+
+    let summary = dlm_core::SoundnessSummary::from_report(&report);
+    assert_eq!(summary.reflection_claims, 1);
+    assert_eq!(summary.reflection_axiom_lifts, 1);
+    assert_eq!(summary.self_reference_claims, 1);
+    assert_eq!(summary.self_reference_axiom_lifts, 1);
+    assert!(!summary.is_clean(), "reflection/self-reference axioms must make summary not clean");
+    let rendered = summary.render_human();
+    assert!(rendered.contains("reflection claims: 1"), "missing reflection count: {rendered}");
+    assert!(rendered.contains("axiom self-reference assumptions: 1"), "missing self-reference count: {rendered}");
+}
+
+#[test]
+fn implicit_reflection_and_self_reference_are_rejected() {
+    for source in [
+        include_str!("../../../examples/invalid/reflect_provable_requires_axiom.dlm"),
+        include_str!("../../../examples/invalid/prove_self_reference_fails.dlm"),
+        include_str!("../../../examples/invalid/truth_of_self_reference_fails.dlm"),
+        include_str!("../../../examples/invalid/truth_of_self_rejected.dlm"),
+        include_str!("../../../examples/invalid/says_unprovable_self_rejected.dlm"),
+        include_str!("../../../examples/invalid/liar_sentence_rejected.dlm"),
+        include_str!("../../../examples/invalid/truth_of_own_truth_rejected.dlm"),
+    ] {
+        let module = parse_module(source).expect("parse");
+        let report = Checker::new().check_module(&module);
+        assert!(!report.ok(), "implicit reflection/self-reference must fail for source:\n{source}");
+        assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("ReflectionBoundaryError")));
+    }
+}
+
+
+#[test]
+fn reflection_claim_requires_explicit_reflection_bridge() {
+    let source = include_str!("../../../examples/invalid/reflection_claim_requires_bridge.dlm");
+    let module = parse_module(source).expect("parse");
+    let report = Checker::new().check_module(&module);
+    assert!(!report.ok(), "reflection_claim without explicit reflection bridge must fail");
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("ReflectionBoundaryError")));
+}
+
+#[test]
+fn reflection_axiom_requires_reflection_claim() {
+    let source = include_str!("../../../examples/invalid/reflection_axiom_requires_claim.dlm");
+    let module = parse_module(source).expect("parse");
+    let report = Checker::new().check_module(&module);
+    assert!(!report.ok(), "reflection_axiom(non-claim) must fail");
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("ReflectionBoundaryError")));
+}
+
+#[test]
+fn self_reference_axiom_requires_self_reference_claim() {
+    let source = include_str!("../../../examples/invalid/self_reference_axiom_requires_claim.dlm");
+    let module = parse_module(source).expect("parse");
+    let report = Checker::new().check_module(&module);
+    assert!(!report.ok(), "self_reference_axiom(non-claim) must fail");
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("ReflectionBoundaryError")));
+}
+
+#[test]
+fn reflection_axiom_rejected_by_trusted_only() {
+    let source = include_str!("../../../examples/invalid/reflection_axiom_rejected_by_trusted_only.dlm");
+    let module = parse_module(source).expect("parse");
+    let report = Checker::with_policy(dlm_core::CheckPolicy::trusted_only()).check_module(&module);
+    assert!(!report.ok(), "trusted-only must reject reflection axioms");
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
+}
+
+#[test]
+fn self_reference_axiom_rejected_by_trusted_only() {
+    let source = include_str!("../../../examples/invalid/self_reference_axiom_rejected_by_trusted_only.dlm");
+    let module = parse_module(source).expect("parse");
+    let report = Checker::with_policy(dlm_core::CheckPolicy::trusted_only()).check_module(&module);
+    assert!(!report.ok(), "trusted-only must reject self-reference axioms");
+    assert!(report.diagnostics.iter().any(|diag| format!("{:?}", diag.kind).contains("TrustTaintError")));
 }
