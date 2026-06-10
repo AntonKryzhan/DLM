@@ -611,3 +611,25 @@ AdmitAxiom closes with visible Axiom taint.
 Closing tactics must be final.
 Proof obligation diagnostics are preserved under tactic execution.
 ```
+
+## v0.41.0 — Proof certificate tests
+
+Required tests:
+
+```powershell
+cargo test -p dlm_core --test proof_certificate
+cargo test -p dlm_core --test tactic_script
+cargo test -p dlm_core --test proof_context
+cargo test -p dlm_core --test statements_theorems
+```
+
+Protected invariants:
+
+```text
+Closed static proof closures can emit stable certificates.
+Open tactic reports cannot be certified.
+Axiom admission remains status=AxiomAdmitted and trust>=Axiom.
+Certificate identity must match theorem identity exactly.
+Certificate fingerprints depend on trace order and contents.
+Tampering with certificate contents invalidates the fingerprint.
+```

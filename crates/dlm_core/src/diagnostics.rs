@@ -33,6 +33,7 @@ pub enum DiagnosticKind {
     StatementTheoremError,
     ProofObligationError,
     TacticScriptError,
+    ProofCertificateError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -178,6 +179,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::StatementTheoremError => "E0909 StatementTheoremError",
             DiagnosticKind::ProofObligationError => "E0910 ProofObligationError",
             DiagnosticKind::TacticScriptError => "E0911 TacticScriptError",
+            DiagnosticKind::ProofCertificateError => "E0912 ProofCertificateError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

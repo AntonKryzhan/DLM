@@ -2721,3 +2721,32 @@ A closing tactic must be the final tactic in a script.
 ```
 
 No public `.dlm` syntax was added. This prepares the future ProofIR/TacticIR layer without changing checker/runtime behavior.
+
+## v0.41.0 completed — Proof Certificate foundation
+
+`v0.41.0` adds the first internal proof-certificate model on top of tactic execution and proof closure.
+
+New module:
+
+```text
+crates/dlm_core/src/certificate.rs
+```
+
+New focused tests:
+
+```text
+crates/dlm_core/tests/proof_certificate.rs
+```
+
+Important implementation laws:
+
+```text
+ProofCertificate is an audit artifact, not new proof evidence.
+Only closed ProofClosure values can emit certificates.
+Open tactic reports cannot be certified.
+Axiom-admitted closures remain status=AxiomAdmitted and trust>=Axiom.
+Certificate identity must match the theorem passport exactly.
+Certificate fingerprint depends on trace order and certificate contents.
+```
+
+This is a foundation layer for later certificate serialization, proof audit reports and proof-kernel boundary hardening.

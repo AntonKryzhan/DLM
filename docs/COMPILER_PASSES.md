@@ -532,3 +532,23 @@ Raw AST
 ```
 
 The layer is not wired into `.dlm` parsing yet. It exists to define the future proof orchestration API and to protect tactic-specific invariants before ProofIR is introduced.
+
+## v0.41.0 — Proof certificate foundation
+
+The proof-certificate layer sits after proof closure / tactic execution:
+
+```text
+Goal<P>
+  -> ProofContext
+  -> TacticScript
+  -> ProofClosure<Theorem<name:P>>
+  -> ProofCertificate<name:P>
+```
+
+The legacy checker is not routed through this pass yet. The new code is API-level infrastructure for later ProofIR / certificate serialization work.
+
+Important rule:
+
+```text
+open obligations cannot produce certificates
+```

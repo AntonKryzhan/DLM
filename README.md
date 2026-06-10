@@ -504,3 +504,17 @@ closing tactic must be final
 ```
 
 A script may keep a goal open with obligations, close it with exact `StaticProof`, or close it by explicit axiom admission that remains visibly `TrustLevel::Axiom`.
+
+### v0.41 proof-certificate foundation
+
+`v0.41.0` adds an internal proof-certificate layer above `ProofClosure` and `TacticScriptReport`.
+
+It introduces `ProofCertificate`, `ProofCertificateStatus`, `certificate_from_closure(...)`, `certificate_from_tactic_report(...)` and `verify_certificate_against_theorem(...)`.
+
+The protected invariant is:
+
+```text
+closed ProofClosure<Theorem<name:P>> => ProofCertificate<name:P>
+```
+
+Open goals and open obligations cannot emit certificates. Axiom-admitted closures remain visibly tainted as `AxiomAdmitted` and `trust>=Axiom`.

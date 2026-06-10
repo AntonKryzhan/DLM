@@ -31,8 +31,8 @@
   },
   {
     "file": "COMPILER_PASSES.md",
-    "bytes": 11240,
-    "sha256": "801991a194c630ed7760308c41191200730f2ed0c1c7be566bb5b1d458de8829"
+    "bytes": 11706,
+    "sha256": "4da3d28c86ce4a6e94cd40bd1388a8f5c24663868b804d0ad54c20d648e5768a"
   },
   {
     "file": "CONSISTENCY_INCOMPLETENESS.md",
@@ -46,8 +46,8 @@
   },
   {
     "file": "DIAGNOSTICS.md",
-    "bytes": 9059,
-    "sha256": "4f4de0092243e0b99dcf346d05709f2e5d8d15284a67fc7b4447d856cc298376"
+    "bytes": 9574,
+    "sha256": "338675940a8ba0afd97a4300627241b3dc9515642f90d024e40d05eac1b90c6c"
   },
   {
     "file": "DISTRIBUTED_MEMORY_REGION.md",
@@ -125,6 +125,11 @@
     "sha256": "e642b51d24e296babe4b52f86f031422965f7f6ff609ef0860b5da32f0b41064"
   },
   {
+    "file": "PROOF_CERTIFICATE.md",
+    "bytes": 2614,
+    "sha256": "ed6e88b74d5ab62e034d7adf947d82de3241df0523718fbedcb12275c128f1be"
+  },
+  {
     "file": "PROOF_CONTEXT.md",
     "bytes": 1549,
     "sha256": "4b1914883aa7f953610073a8c2b85ef664f634f6633398bc34a9e27e285d426c"
@@ -191,8 +196,8 @@
   },
   {
     "file": "TEST_MATRIX.md",
-    "bytes": 11760,
-    "sha256": "8190e06afb4e22c080229fd9813294ae64b3c22738da57f88465dec3de1b1ed5"
+    "bytes": 12405,
+    "sha256": "f049823daec581a87b60c170fb0f3f461a67d25d260e767296e56c47aefb9857"
   },
   {
     "file": "UNIVERSE_HIERARCHY.md",

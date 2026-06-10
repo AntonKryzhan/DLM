@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod bridge;
 pub mod checker;
+pub mod certificate;
 pub mod diagnostics;
 pub mod ids;
 pub mod meta_level;
@@ -18,6 +19,7 @@ pub mod tactic;
 
 pub use ast::*;
 pub use bridge::{bridge_law, find_bridge, has_bridge, profile_for_decl, BridgeLaw, BridgeProfile};
+pub use certificate::{certificate_from_closure, certificate_from_tactic_report, compute_certificate_fingerprint, verify_certificate_against_theorem, ProofCertificate, ProofCertificateStatus};
 pub use checker::{CheckReport, Checker};
 pub use diagnostics::{Diagnostic, DiagnosticKind, Severity, SourceSpan};
 pub use ids::{BridgeId, FileId, IdAllocator, ModuleId, ProofId, TheoryId, TypeId, ValueId};

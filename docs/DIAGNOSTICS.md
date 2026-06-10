@@ -447,3 +447,19 @@ closing tactic must be final
 ```
 
 Proof-content mismatches continue to use `ProofObligationError [E0910]`.
+
+## E0912 ProofCertificateError
+
+Added in `v0.41.0` for proof-certificate foundation failures.
+
+Used when:
+
+```text
+an open proof/tactic report is certified;
+a certificate is emitted for a non-Theorem passport;
+a certificate does not match a theorem passport;
+a certificate trace length is inconsistent;
+a certificate fingerprint no longer matches its contents.
+```
+
+This keeps certificate emission separate from proof construction: a certificate is an audit artifact over a closed theorem, not new proof evidence.

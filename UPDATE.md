@@ -227,3 +227,46 @@ closing tactic must be final
 ```powershell
 cargo test -p dlm_core --test tactic_script
 ```
+
+## v0.41.0 — Proof Certificate Foundation
+
+Дата: 2026-06-11
+
+### Цель патча
+
+`v0.41.0` добавляет внутренний слой proof certificates поверх `ProofClosure` и `TacticScriptReport`.
+
+Публичный `.dlm` синтаксис не меняется. Это foundation-слой для будущего ProofIR / certificate serialization / audit report.
+
+### Добавлено
+
+```text
+crates/dlm_core/src/certificate.rs
+crates/dlm_core/tests/proof_certificate.rs
+docs/PROOF_CERTIFICATE.md
+```
+
+### Главный инвариант
+
+```text
+closed ProofClosure<Theorem<name:P>> => ProofCertificate<name:P>
+```
+
+Открытые proof obligations не могут производить certificate.
+
+### Проверка certificate
+
+```text
+certificate.theory == theorem.theory
+certificate.theorem_name == theorem.name
+certificate.proposition == theorem.proposition
+certificate.trust == theorem.trust
+certificate.provenance == theorem.provenance
+certificate.fingerprint == fingerprint(certificate contents)
+```
+
+### Команда проверки
+
+```powershell
+cargo test -p dlm_core --test proof_certificate
+```

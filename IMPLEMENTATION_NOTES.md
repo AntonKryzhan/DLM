@@ -461,3 +461,20 @@ Example:
 ```powershell
 cargo test -p dlm_core --test tactic_script
 ```
+
+# Implementation Notes v0.41
+
+## v0.41.0 Proof Certificate Foundation
+
+- Added `crates/dlm_core/src/certificate.rs`.
+- Added `ProofCertificate` and `ProofCertificateStatus`.
+- Added `certificate_from_closure(...)` for closed `ProofClosure` values.
+- Added `certificate_from_tactic_report(...)` for closed tactic reports.
+- Added `verify_certificate_against_theorem(...)`.
+- Added deterministic local certificate fingerprinting with `dlm-cert-v1-*` prefix.
+- Added `ProofCertificateError [E0912]`.
+- Added tests in `crates/dlm_core/tests/proof_certificate.rs`.
+- Added `docs/PROOF_CERTIFICATE.md`.
+- No public `.dlm` syntax or checker semantics were changed.
+
+The certificate layer is intentionally not a proof constructor. It is an audit artifact over a closed theorem.
