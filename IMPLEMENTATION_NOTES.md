@@ -441,3 +441,23 @@ This is a foundation for later `ProofContext`, `HypothesisSet`, `TacticStep` and
 This patch deliberately keeps proof contexts as an API-level foundation. It does not add tactic syntax to the parser and does not route existing checker behavior through ProofIR yet.
 
 The strict closure helper checks that the open goal, theorem statement and static proof all describe the same proposition. This prevents the statement layer from becoming a loose wrapper around arbitrary `StaticProof` passports.
+
+
+# Implementation Notes v0.40
+
+## v0.40.0 Tactic Script Foundation
+
+- Added `crates/dlm_core/src/tactic.rs`.
+- Added `TacticScript`, `TacticScriptStep`, `TacticStepIndex`, `TacticCommand`, `TacticScriptReport`, and `TacticScriptStatus`.
+- Added `execute_tactic_script(...)` as a typed executor over `ProofContext`.
+- Added `TacticScriptError [E0911]` for tactic-script structural diagnostics.
+- Preserved the existing proof-context closure law: `Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>`.
+- Added tests in `crates/dlm_core/tests/tactic_script.rs`.
+- Added `docs/TACTIC_SCRIPT.md`.
+- No new public `.dlm` syntax or checker semantics were introduced.
+
+Example:
+
+```powershell
+cargo test -p dlm_core --test tactic_script
+```

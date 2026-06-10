@@ -589,3 +589,25 @@ HypothesisSet preserves order and multiplicity
 Goal<P>, Statement<P>, StaticProof<P> must match exactly
 Axiom proof closure remains trust=Axiom
 ```
+
+
+## v0.40.0 — Tactic script tests
+
+Required tests:
+
+```powershell
+cargo test -p dlm_core --test tactic_script
+cargo test -p dlm_core --test proof_context
+cargo test -p dlm_core --test statements_theorems
+```
+
+Protected invariants:
+
+```text
+Empty script keeps an open proof obligation.
+Assume preserves hypothesis order and does not close the goal.
+ExactStaticProof closes only matching Goal/Statement/StaticProof triples.
+AdmitAxiom closes with visible Axiom taint.
+Closing tactics must be final.
+Proof obligation diagnostics are preserved under tactic execution.
+```

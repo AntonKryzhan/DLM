@@ -2697,3 +2697,27 @@ Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>
 ```
 
 This prepares later `ProofIR`, tactic syntax and theorem-checker passes without changing current `.dlm` syntax.
+
+
+## v0.40.0 completed — Tactic Script foundation
+
+`v0.40.0` adds the first internal tactic-script model on top of the proof-context foundation.
+
+Added:
+
+```text
+crates/dlm_core/src/tactic.rs
+crates/dlm_core/tests/tactic_script.rs
+docs/TACTIC_SCRIPT.md
+```
+
+Protected laws:
+
+```text
+Assume<P> keeps the goal open.
+ExactStaticProof closes only through the existing ProofContext rule.
+AdmitAxiom closes with explicit Axiom taint.
+A closing tactic must be the final tactic in a script.
+```
+
+No public `.dlm` syntax was added. This prepares the future ProofIR/TacticIR layer without changing checker/runtime behavior.

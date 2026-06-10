@@ -186,3 +186,44 @@ Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>
 ```
 
 All three propositions must match exactly.
+
+
+## v0.40.0 — Tactic Script Foundation
+
+Дата: 2026-06-11
+
+### Цель патча
+
+`v0.40.0` добавляет первый внутренний слой tactic-script поверх `ProofContext`.
+
+Публичный `.dlm` синтаксис не меняется. Это foundation-слой для будущего proof/tactic checker split.
+
+### Добавлено
+
+```text
+crates/dlm_core/src/tactic.rs
+crates/dlm_core/tests/tactic_script.rs
+docs/TACTIC_SCRIPT.md
+```
+
+### Поддерживаемые команды
+
+```text
+Assume<P>
+ExactStaticProof<TheoremName, Statement<P>, StaticProof<P>>
+AdmitAxiom<TheoremName, Statement<P>, Reason>
+```
+
+### Главный инвариант
+
+```text
+closing tactic must be final
+```
+
+Скрипт может оставлять goal открытым с obligation, либо закрыть его через `StaticProof`, либо явно закрыть через axiom admission. После закрывающей команды дальнейшие tactic-команды запрещены.
+
+### Команда проверки
+
+```powershell
+cargo test -p dlm_core --test tactic_script
+```

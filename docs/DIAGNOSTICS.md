@@ -434,3 +434,16 @@ The intended closing rule is exact:
 ```text
 Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>
 ```
+
+
+## E0911 TacticScriptError
+
+`TacticScriptError` reports structural errors in internal tactic scripts.
+
+Current protected case:
+
+```text
+closing tactic must be final
+```
+
+Proof-content mismatches continue to use `ProofObligationError [E0910]`.

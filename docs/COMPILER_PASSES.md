@@ -514,3 +514,21 @@ Goal<P> + Statement<P> + StaticProof<P> => Theorem<name:P>
 ```
 
 This remains API-level only for now. Parser, CLI syntax and legacy checker behavior are unchanged.
+
+
+## v0.40.0 tactic-script layer
+
+`v0.40.0` adds a Rust-side tactic-script layer above `ProofContext`.
+
+Current shape:
+
+```text
+Raw AST
+  -> name_resolution
+  -> legacy_checker
+  -> statement/theorem model
+  -> proof_context
+  -> tactic_script
+```
+
+The layer is not wired into `.dlm` parsing yet. It exists to define the future proof orchestration API and to protect tactic-specific invariants before ProofIR is introduced.

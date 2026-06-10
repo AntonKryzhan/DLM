@@ -489,3 +489,18 @@ A theorem can be built from `StaticProof` evidence, or admitted explicitly as an
 ### v0.39 proof-context foundation
 
 DLM now includes an internal `ProofContext` foundation for future proof-assistant work. The public `.dlm` syntax is unchanged; the new API models goals, hypotheses, proof obligations and explicit theorem closure.
+
+
+### v0.40 tactic-script foundation
+
+`v0.40.0` adds an internal tactic-script layer above `ProofContext`.
+
+It introduces `TacticScript`, `TacticCommand`, `TacticScriptReport`, and `execute_tactic_script(...)` for typed proof orchestration. The public `.dlm` syntax is unchanged.
+
+The protected invariant is:
+
+```text
+closing tactic must be final
+```
+
+A script may keep a goal open with obligations, close it with exact `StaticProof`, or close it by explicit axiom admission that remains visibly `TrustLevel::Axiom`.
