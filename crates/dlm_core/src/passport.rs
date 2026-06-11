@@ -177,6 +177,17 @@ pub enum TypeKind {
     InductionProof {
         proposition: String,
     },
+    ModuleManifest {
+        module: String,
+    },
+    ImportGraph {
+        root: String,
+    },
+    ModuleExport {
+        module: String,
+        symbol: String,
+        visibility: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -279,6 +290,11 @@ impl fmt::Display for TypeKind {
             TypeKind::InductionBaseCase { proposition } => write!(f, "BaseCase<{proposition}>"),
             TypeKind::InductionStepCase { proposition } => write!(f, "StepCase<{proposition}>"),
             TypeKind::InductionProof { proposition } => write!(f, "InductionProof<{proposition}>"),
+            TypeKind::ModuleManifest { module } => write!(f, "ModuleManifest<{module}>"),
+            TypeKind::ImportGraph { root } => write!(f, "ImportGraph<root={root}>"),
+            TypeKind::ModuleExport { module, symbol, visibility } => {
+                write!(f, "ModuleExport<{module}.{symbol}:{visibility}>")
+            }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),
             TypeKind::Term { of_theory, of_type } => write!(f, "Term<{of_theory}.{of_type}>"),

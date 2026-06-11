@@ -561,3 +561,8 @@ DLM now has a core-level Nat induction foundation. This adds internal proof arti
 This is not yet public `.dlm` proof syntax. It is a checked core layer for future theorem/tactic automation.
 
 The protected boundary is explicit: a runtime witness or raw proof term cannot be used as an induction case, and axiom-tainted base/step cases remain visible in the resulting induction proof.
+
+
+### v0.46 — Module / Import System Foundation
+
+DLM now has a core model for module manifests, import graphs, public/private exports, acyclic dependency validation, and export passports. This is a semantic foundation only: `.dlm` import syntax and project-level CLI wiring are intentionally left for a later patch.

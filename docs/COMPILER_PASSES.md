@@ -590,3 +590,8 @@ The pass is deliberately bounded by `max_steps`; cyclic rewrite systems are reje
 Nat induction is currently a core proof-object layer, not a compiler pass. Future parser/checker work can lower proof-block syntax into these constructors.
 
 The pass boundary is explicit: desugaring must not create `InductionProof` or `Theorem` without the scheme/base/step validation path.
+
+
+## v0.46 module/import pass foundation
+
+A future project checker can insert a module/import validation pass before name resolution. The new core functions already validate acyclic dependency graphs and public/private export visibility without changing the existing single-file checker pipeline.

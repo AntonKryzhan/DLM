@@ -508,3 +508,8 @@ InductionProof { proposition }
 ```
 
 These artifacts prepare a future ProofIR/TacticIR layer. They are not parsed from `.dlm` syntax in v0.45.
+
+
+## v0.46 Module / Import IR foundation
+
+Core-only IR structures now model module manifests, imports, exports, and resolved import graphs. The objects are represented by passports `ModuleManifest`, `ImportGraph`, and `ModuleExport`, but no new `.dlm` syntax is introduced yet.

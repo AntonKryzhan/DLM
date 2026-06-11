@@ -38,6 +38,7 @@ pub enum DiagnosticKind {
     EqualityRewriteError,
     RewriteNormalizationError,
     InductionError,
+    ModuleImportError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -188,6 +189,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::EqualityRewriteError => "E0914 EqualityRewriteError",
             DiagnosticKind::RewriteNormalizationError => "E0915 RewriteNormalizationError",
             DiagnosticKind::InductionError => "E0916 InductionError",
+            DiagnosticKind::ModuleImportError => "E0917 ModuleImportError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

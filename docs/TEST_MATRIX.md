@@ -701,3 +701,12 @@ Covers:
 - theorem construction from matching induction proof;
 - axiom taint preservation;
 - ordered history preservation.
+
+
+## v0.46 module/import tests
+
+- `module_imports.rs`: manifest passport boundaries.
+- duplicate import/alias/export rejection.
+- public/private export checks.
+- missing module and cyclic import graph rejection.
+- export passport trust/capability preservation.

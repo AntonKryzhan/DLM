@@ -516,3 +516,8 @@ ProofTerm must be kernel-checked into StaticProof before induction use
 base case proves `Q(0)`, but scheme requires `P(0)`
 induction proof proves `forall n:Nat. P(n)`, but theorem statement requires `forall n:Nat. Q(n)`
 ```
+
+
+## E0917 ModuleImportError
+
+Raised for invalid module/import/export metadata: duplicate imports, duplicate aliases, duplicate exports, missing import targets, private export leakage, and cyclic import graphs.

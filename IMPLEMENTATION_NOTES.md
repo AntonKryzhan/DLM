@@ -522,3 +522,8 @@ Normalization certificates reuse the existing `RewriteCertificate` passport; the
 - explicit theorem construction from an induction proof and matching statement.
 
 The important safety boundary is that induction cases are static proof obligations. Runtime witnesses, raw proof terms and mismatched proposition families are rejected. Trust and provenance are joined monotonically, so axiom-tainted cases stay visible in the final proof/theorem.
+
+
+## v0.46 implementation notes
+
+The module/import system is deliberately a core semantic layer and not parser syntax. It validates duplicate imports, duplicate aliases, duplicate exports, missing import targets, and cyclic import graphs. Public/private exports are visibility metadata only and do not create theorem/proof/truth claims or reduce trust taint.

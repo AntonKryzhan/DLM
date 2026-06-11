@@ -363,3 +363,12 @@ Protected laws:
 - Axiom taint from base or step cases is preserved.
 
 No `.dlm` syntax, checker behavior or runtime behavior changed.
+
+
+## v0.46.0 — Module / Import System Foundation
+
+- Added `module_system.rs`.
+- Added module manifests, import graph validation, public/private export policy, and export passports.
+- Added `ModuleImportError[E0917]`.
+- Added tests in `module_imports.rs`.
+- Added `docs/MODULE_IMPORTS.md`.
