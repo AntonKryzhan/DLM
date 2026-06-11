@@ -104,3 +104,8 @@ Main law:
 FunctionContract is not theorem/proof/truth.
 It is an audit/control object for future optimization, scheduling and assurance modes.
 ```
+
+
+## v0.59.0 — Product / Sum / Record Type Foundation
+
+Added `docs/STRUCTURAL_TYPES.md` and the core structural type layer: ProductType/ProductTerm, SumType/SumInjection and RecordType/RecordTerm/RecordProjection. This layer preserves trust taint, rejects proof/truth/runtime objects as ordinary structural values, and prepares future layout/ABI-aware records.

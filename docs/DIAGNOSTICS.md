@@ -608,3 +608,8 @@ Raised when function type, lambda or application construction violates the ordin
 ## E0929 FunctionContractError
 
 Raised when a function contract violates purity, effect-boundary, totality-evidence or contract-subject rules. This diagnostic protects the boundary between ordinary function objects and proof/theorem/truth/runtime evidence.
+
+
+## v0.59.0 — Product / Sum / Record Type Foundation
+
+Added `docs/STRUCTURAL_TYPES.md` and the core structural type layer: ProductType/ProductTerm, SumType/SumInjection and RecordType/RecordTerm/RecordProjection. This layer preserves trust taint, rejects proof/truth/runtime objects as ordinary structural values, and prepares future layout/ABI-aware records.

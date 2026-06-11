@@ -268,6 +268,37 @@ pub enum TypeKind {
         name: String,
         status: String,
     },
+    ProductType {
+        lhs: String,
+        rhs: String,
+    },
+    ProductTerm {
+        lhs: String,
+        rhs: String,
+        product_type: String,
+    },
+    SumType {
+        left: String,
+        right: String,
+    },
+    SumInjection {
+        side: String,
+        value: String,
+        sum_type: String,
+    },
+    RecordType {
+        name: String,
+        fields: String,
+    },
+    RecordTerm {
+        name: String,
+        fields: String,
+    },
+    RecordProjection {
+        record: String,
+        field: String,
+        result: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -423,6 +454,19 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::FunctionContract { name, status } => {
                 write!(f, "FunctionContract<{name}:{status}>")
+            }
+            TypeKind::ProductType { lhs, rhs } => write!(f, "ProductType<{lhs}*{rhs}>"),
+            TypeKind::ProductTerm { lhs, rhs, product_type } => {
+                write!(f, "ProductTerm<({lhs},{rhs}):{product_type}>")
+            }
+            TypeKind::SumType { left, right } => write!(f, "SumType<{left}+{right}>"),
+            TypeKind::SumInjection { side, value, sum_type } => {
+                write!(f, "SumInjection<{side}:{value}:{sum_type}>")
+            }
+            TypeKind::RecordType { name, fields } => write!(f, "RecordType<{name}{{{fields}}}>") ,
+            TypeKind::RecordTerm { name, fields } => write!(f, "RecordTerm<{name}{{{fields}}}>") ,
+            TypeKind::RecordProjection { record, field, result } => {
+                write!(f, "RecordProjection<{record}.{field}:{result}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

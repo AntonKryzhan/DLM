@@ -29,6 +29,7 @@ pub mod resolve;
 pub mod rewrite_normalization;
 pub mod soundness;
 pub mod statement;
+pub mod structural;
 pub mod substitution;
 pub mod tactic;
 pub mod theorem_dependency;
@@ -62,6 +63,7 @@ pub use resolve::{resolve_module, ResolvedBridge, ResolvedImport, ResolvedModule
 pub use rewrite_normalization::{audit_rewrite_normalization_report, export_rewrite_normalization_report, export_rewrite_normalization_report_unchecked, normalize_with_rewrite_rules, RewriteNormalizationReport, RewriteNormalizationStatus};
 pub use soundness::{BridgeSoundnessProfile, SoundnessIssue, SoundnessSummary};
 pub use substitution::{alpha_equivalence_passport, alpha_equivalence_report, alpha_rename_quantified_formula, export_alpha_equivalence_report, export_substitution_report, export_variable_scope_report, require_alpha_equivalent, substitution_report, substitution_report_passport, substitution_source_from_passport, variable_scope_passport, variable_scope_report, AlphaEquivalenceReport, AlphaEquivalenceStatus, SubstitutionReport, SubstitutionStatus, VariableOccurrence, VariableOccurrenceKind, VariableScopeReport};
+pub use structural::*;
 pub use statement::{axiom_theorem, goal_decl, goal_passport, hypothesis_decl, hypothesis_passport, proposition_of, require_statement_like, require_static_proof, statement_decl, statement_passport, theorem_decl, theorem_from_static_proof, DeclarationKind, GoalDecl, HypothesisDecl, StatementDecl, TheoremDecl};
 pub use tactic::{execute_tactic_script, TacticCommand, TacticScript, TacticScriptReport, TacticScriptStatus, TacticScriptStep, TacticStepIndex};
 pub use theorem_dependency::{export_global_metatheory_inventory, global_metatheory_inventory, global_metatheory_inventory_passport, render_global_metatheory_inventory, require_verified_global_metatheory_inventory, theorem_dependency_edge, theorem_dependency_node_from_passport, GlobalMetatheoryInventoryReport, MetatheoryInventoryStatus, TheoremDependencyEdge, TheoremDependencyNode, TheoremDependencyNodeKind};
