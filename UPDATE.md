@@ -484,3 +484,41 @@ This model is now part of the roadmap and should be updated after major patches.
 New document:
 
 - `docs/STAGE_READINESS_MODEL.md`
+
+
+## v0.55.0 — Logical Connectives / Quantifier Foundation
+
+- Added `logic.rs`.
+- Added `LogicalFormula` and `QuantifiedFormula` passport types.
+- Added `LogicalConnective::{And, Or, Implies, Iff, Not}`.
+- Added `QuantifierKind::{Forall, Exists}` and explicit `BoundVariable`.
+- Added formula/quantifier passports and stable exports.
+- Added `LogicFormulaError[E0926]`.
+- Added regression tests for arity, binder validation, taint preservation and proof/truth/runtime separation.
+
+Readiness delta:
+
+```text
+Stage 2 — Ordinary mathematics of the language
+Local readiness:         5–10%  -> 12–18%
+Architectural readiness: 30–40% -> 35–45%
+Fundamental readiness:   20–30% -> 22–32%
+```
+
+
+## v0.56.0 — Substitution / Alpha-Equivalence Foundation
+
+- Added `substitution.rs`.
+- Added `VariableScopeReport`, `AlphaEquivalenceReport`, `SubstitutionReport`.
+- Added `SubstitutionError[E0927]`.
+- Added `TypeKind::VariableScopeReport`, `TypeKind::AlphaEquivalenceReport`, `TypeKind::SubstitutionReport`.
+- Added tests for free/bound variables, alpha-equivalence, capture-avoiding substitution, binder shadowing, taint preservation and stable exports.
+
+Readiness delta:
+
+```text
+Stage 2 — Ordinary mathematics of the language
+Local readiness:         12–18% -> 18–24%
+Architectural readiness: 35–45% -> 40–50%
+Fundamental readiness:   22–32% -> 25–35%
+```

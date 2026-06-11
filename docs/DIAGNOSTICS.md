@@ -589,3 +589,13 @@ Raised when a soundness boundary ledger contains hidden, duplicated, malformed, 
 Raised when the final trusted-base closure gate is missing required evidence, receives rejected evidence, detects duplicate evidence ids/fingerprints, or receives a non-foundation passport as trusted-base evidence.
 
 - `E0925 MetatheoryFoundationError` — metatheory foundation exit/checklist readiness violation.
+
+
+## E0926 LogicFormulaError
+
+Raised when logical formula or quantifier construction violates arity, binder, formula-operand or proof/truth/runtime separation rules.
+
+
+## E0927 — SubstitutionError
+
+Raised when variable scope, alpha-equivalence or substitution would violate explicit binder rules: invalid identifiers, malformed quantifier text, theorem/proof/truth/runtime evidence used as a substitution source, shadowed binder substitution, or capture risk.

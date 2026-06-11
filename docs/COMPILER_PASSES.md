@@ -647,3 +647,13 @@ Future audit/check pipelines should collect explicit soundness-boundary entries 
 ### v0.53 Trusted-base closure pass
 
 The trusted-base closure pass is a metatheory-audit pass. It does not change runtime terms. It consumes registry/dependency/closure/inventory/soundness-boundary reports and produces a final `TrustedBaseClosure` audit artifact.
+
+
+## v0.55 Ordinary-math formula pass note
+
+Logical formula construction is currently available as Rust-core API. Later parser/HIR passes should lower surface `and/or/implies/forall/exists` syntax into these formula objects before proof-kernel rules are applied.
+
+
+## v0.56 note — future substitution pass
+
+A future FormulaIR pass must turn the textual substitution MVP into a proper capture-avoiding substitution pass over bound-variable-aware AST nodes. The current `substitution.rs` layer fixes the semantic contract before the full IR exists.

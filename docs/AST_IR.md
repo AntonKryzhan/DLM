@@ -577,3 +577,13 @@ This is an audit/report passport. It is not a theorem, proof term, static proof 
 ## v0.52 Soundness boundary audit artifact
 
 `SoundnessBoundaryLedger<subject:status>` is a passport type for an audit report, not a runtime value, proof, theorem, or truth claim.
+
+
+## v0.55 Logic formula objects
+
+`LogicalFormula` and `QuantifiedFormula` are passport-level formula objects. They are deliberately not theorem/proof/truth nodes. Full AST syntax and binder-aware substitution are future layers.
+
+
+## v0.56 note — variable scope before full term AST
+
+The substitution/alpha-equivalence MVP operates on the current textual formula identity. It is intentionally isolated as `VariableScopeReport`, `AlphaEquivalenceReport` and `SubstitutionReport` so a later real FormulaIR/TermIR can replace the textual layer without changing the soundness boundary: substitution remains an audited transformation, not proof or truth evidence.

@@ -727,3 +727,21 @@ DLM now has a final metatheory-foundation gate: `TrustedBaseClosure`. It combine
 ### v0.54 — Metatheory Foundation Exit Gate
 
 DLM now has a final metatheory-foundation exit report. `MetatheoryFoundationExitReport` collects the required phase-1 criteria and determines whether the project can move from the metamathematical foundation phase into ordinary language mathematics. This is an audit gate, not a theorem or truth claim.
+
+
+## v0.55 — Logical Connectives / Quantifier Foundation
+
+DLM now begins the ordinary mathematics layer with first-class logical formula objects and quantifier objects. `LogicalFormula` and `QuantifiedFormula` are proposition-level objects only: they are not theorems, static proofs, truth claims or runtime witnesses. This preserves the existing proof/truth/runtime boundary while preparing the language for `forall`, `exists`, implication, conjunction, disjunction and negation.
+
+
+## v0.56 — Substitution / Alpha-Equivalence Foundation
+
+DLM now has the first safe variable-scope layer for ordinary mathematics. `VariableScopeReport`, `AlphaEquivalenceReport` and `SubstitutionReport` make bound/free variables, binder renaming and capture-avoiding substitution explicit audit objects instead of implicit string operations.
+
+Main rule:
+
+```text
+substitution is not proof, not theorem, not rewrite certificate, and not truth
+```
+
+This prepares the language for function types, quantifier proof rules and dependent typing without letting variable capture become a hidden soundness hole.

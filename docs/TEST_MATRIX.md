@@ -815,3 +815,33 @@ cargo test -p dlm_core --test metatheory_foundation_exit
 ```
 
 Covers ready/incomplete/rejected exit reports, required criteria, duplicate evidence, taint preservation, trusted-base conversion, export stability, and passport identity.
+
+
+## v0.55 — Logical connectives / quantifiers
+
+```powershell
+cargo test -p dlm_core --test logical_quantifiers
+```
+
+Covers connective arity, binder validation, formula/proof separation, quantifier object passports, taint preservation and stable exports.
+
+
+## v0.56.0 — Substitution / Alpha-Equivalence Foundation
+
+```powershell
+cargo test -p dlm_core --test substitution_alpha
+cargo test -p dlm_core --test logical_quantifiers
+cargo test
+```
+
+Coverage:
+
+- free/bound variable extraction;
+- alpha-equivalence of binder-renamed quantified formulas;
+- non-equivalence when quantifier structure changes;
+- capture-avoiding substitution;
+- shadowing binder block;
+- capture-risk rejection;
+- proof/theorem/truth/runtime evidence rejection;
+- taint preservation;
+- stable exports and order-sensitive fingerprints.

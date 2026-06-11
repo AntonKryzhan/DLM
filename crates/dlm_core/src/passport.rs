@@ -228,6 +228,27 @@ pub enum TypeKind {
         subject: String,
         status: String,
     },
+    LogicalFormula {
+        form: String,
+    },
+    QuantifiedFormula {
+        quantifier: String,
+        variable: String,
+        domain: String,
+        body: String,
+    },
+    VariableScopeReport {
+        subject: String,
+    },
+    AlphaEquivalenceReport {
+        lhs: String,
+        rhs: String,
+        status: String,
+    },
+    SubstitutionReport {
+        variable: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -360,6 +381,17 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::MetatheoryFoundationExit { subject, status } => {
                 write!(f, "MetatheoryFoundationExit<{subject}:{status}>")
+            }
+            TypeKind::LogicalFormula { form } => write!(f, "LogicalFormula<{form}>"),
+            TypeKind::QuantifiedFormula { quantifier, variable, domain, body } => {
+                write!(f, "QuantifiedFormula<{quantifier} {variable}:{domain}. {body}>")
+            }
+            TypeKind::VariableScopeReport { subject } => write!(f, "VariableScopeReport<{subject}>"),
+            TypeKind::AlphaEquivalenceReport { lhs, rhs, status } => {
+                write!(f, "AlphaEquivalenceReport<{lhs}~{rhs}:{status}>")
+            }
+            TypeKind::SubstitutionReport { variable, status } => {
+                write!(f, "SubstitutionReport<{variable}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

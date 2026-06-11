@@ -683,3 +683,33 @@ Stage 1 / Metamathematical foundation:
   architectural readiness strong enough to move into ordinary mathematics;
   fundamental readiness still below finality and expected to be revisited under quantifier/function/dependent-type pressure.
 ```
+
+
+## v0.55.0 — Logic / Quantifier foundation
+
+This patch starts ordinary mathematics after the metatheory foundation gate. It intentionally adds formula objects, not theorem/proof introduction rules.
+
+Important distinction:
+
+```text
+LogicalFormula != Theorem
+LogicalFormula != StaticProof
+QuantifiedFormula != Theorem
+QuantifiedFormula != StaticProof
+```
+
+The implementation keeps the layer conservative: connectives enforce arity; quantifiers require explicit binder/domain; proof/truth/runtime/provability/reflection/consistency objects are rejected as formula operands unless a later explicit extraction/proof rule is added.
+
+
+## v0.56.0 — Substitution / Alpha-Equivalence Foundation
+
+This patch adds the first explicit variable-scope layer for the ordinary mathematics track. It intentionally keeps substitution as an auditable report object rather than a proof-producing operation.
+
+Implementation points:
+
+- `VariableScopeReport` extracts free and bound identifiers from the restricted textual formula identity used by the current logic MVP.
+- `AlphaEquivalenceReport` canonicalizes binders to `$0`, `$1`, ... and compares canonical forms.
+- `SubstitutionReport` rewrites identifier tokens only, blocks substitutions under a same-name binder, and rejects obvious capture risk when replacement free variables collide with source binders.
+- The layer preserves Axiom/Oracle/Unsafe taint and does not turn formula manipulation into theorem/proof/truth evidence.
+
+Known limitation: this is still a textual formula MVP. Full capture-avoiding substitution over a real term AST should replace it after function/lambda/dependent-term syntax lands.

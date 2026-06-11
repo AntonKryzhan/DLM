@@ -47,6 +47,8 @@ pub enum DiagnosticKind {
     SoundnessBoundaryError,
     TrustedBaseError,
     MetatheoryFoundationError,
+    LogicFormulaError,
+    SubstitutionError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -206,6 +208,8 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::SoundnessBoundaryError => "E0923 SoundnessBoundaryError",
             DiagnosticKind::TrustedBaseError => "E0924 TrustedBaseError",
             DiagnosticKind::MetatheoryFoundationError => "E0925 MetatheoryFoundationError",
+            DiagnosticKind::LogicFormulaError => "E0926 LogicFormulaError",
+            DiagnosticKind::SubstitutionError => "E0927 SubstitutionError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

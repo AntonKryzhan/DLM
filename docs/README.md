@@ -71,3 +71,8 @@ See `UNIVERSE_HIERARCHY.md`.
 
 
 - `STAGE_READINESS_MODEL.md` — local/architectural/fundamental readiness model for controlling stage transitions.
+
+- `LOGIC_QUANTIFIERS.md` — logical connectives and quantifier-object MVP for ordinary mathematics.
+
+
+- `SUBSTITUTION_ALPHA.md` — variable scope, alpha-equivalence and capture-avoiding substitution foundation.

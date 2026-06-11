@@ -3082,3 +3082,41 @@ Do not claim 100% fundamental readiness until the layer has survived formal sema
 ```
 
 Detailed model: `docs/STAGE_READINESS_MODEL.md`.
+
+
+### v0.56 — Substitution / Alpha-Equivalence Foundation
+
+Status: planned/active after `v0.55`.
+
+Goal:
+
+```text
+make bound/free variables, alpha-equivalence and capture-avoiding substitution explicit before expanding quantifier and function semantics
+```
+
+Adds:
+
+```text
+VariableScopeReport
+AlphaEquivalenceReport
+SubstitutionReport
+SubstitutionError
+```
+
+Core laws:
+
+```text
+alpha-equivalence may rename binders only
+substitution must not cross a shadowing binder
+substitution must reject capture risk
+substitution is not theorem/proof/truth
+```
+
+Readiness delta:
+
+```text
+Stage 2 — Ordinary mathematics of the language
+Local readiness:         12–18% -> 18–24%
+Architectural readiness: 35–45% -> 40–50%
+Fundamental readiness:   22–32% -> 25–35%
+```
