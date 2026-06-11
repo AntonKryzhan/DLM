@@ -521,3 +521,13 @@ induction proof proves `forall n:Nat. P(n)`, but theorem statement requires `for
 ## E0917 ModuleImportError
 
 Raised for invalid module/import/export metadata: duplicate imports, duplicate aliases, duplicate exports, missing import targets, private export leakage, and cyclic import graphs.
+
+
+## E0918 ModuleInterfaceError
+
+Raised by the module interface / import audit layer when a module interface is stale, mismatched, missing a required public symbol, or when an import audit attempts to use a private symbol or a symbol without an explicit import edge.
+
+
+## E0919 MetatheoryDependencyError
+
+Raised when axiom registries or metatheory dependency audits are malformed: duplicate axioms, undeclared axiom dependencies, empty audit subjects, or rejected closure evidence.

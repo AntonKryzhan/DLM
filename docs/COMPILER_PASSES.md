@@ -595,3 +595,13 @@ The pass boundary is explicit: desugaring must not create `InductionProof` or `T
 ## v0.46 module/import pass foundation
 
 A future project checker can insert a module/import validation pass before name resolution. The new core functions already validate acyclic dependency graphs and public/private export visibility without changing the existing single-file checker pipeline.
+
+
+## v0.47 module interface audit pass foundation
+
+The semantic core can now build deterministic module interface reports and verify imports against resolved import graph edges. This pass is not yet wired into parser/CLI execution.
+
+
+## v0.48.0 metatheory dependency pass concept
+
+A later compiler pipeline may add a dependency-audit pass after theorem/proof/certificate construction. The MVP exposes the core data model and tests without changing parser/checker/runtime behavior.

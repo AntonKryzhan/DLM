@@ -372,3 +372,38 @@ No `.dlm` syntax, checker behavior or runtime behavior changed.
 - Added `ModuleImportError[E0917]`.
 - Added tests in `module_imports.rs`.
 - Added `docs/MODULE_IMPORTS.md`.
+
+
+## v0.47.0 — Module Interface / Import Audit Foundation
+
+Added stable module interface artifacts on top of the v0.46 module/import system.
+
+Changed/added files:
+
+- `crates/dlm_core/src/module_interface.rs`
+- `crates/dlm_core/tests/module_interfaces.rs`
+- `docs/MODULE_INTERFACE_AUDIT.md`
+
+New diagnostic kind:
+
+- `ModuleInterfaceError[E0918]`
+
+Protected laws:
+
+- module interfaces are audit contracts, not theorem/proof/truth evidence;
+- private interface entries cannot satisfy imports;
+- import audits require explicit import edges in the resolved import graph;
+- interface fingerprints are deterministic and change when exported evidence or visibility changes;
+- exported trust taint is preserved in the interface summary.
+
+No `.dlm` syntax, checker behavior or runtime behavior changed.
+
+
+## v0.48.0 — Metatheory Dependency / Axiom Registry Foundation
+
+- Added `axiom_registry.rs`.
+- Added `AxiomDecl`, `AxiomRegistry`, `DependencyEntry`, `MetatheoryDependencyAuditReport`.
+- Added `AxiomRegistry` and `MetatheoryDependencyAudit` passport kinds.
+- Added `MetatheoryDependencyError[E0919]`.
+- Added tests in `metatheory_dependencies.rs`.
+- Added `docs/METATHEORY_DEPENDENCIES.md`.

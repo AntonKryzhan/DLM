@@ -53,3 +53,5 @@ Added the first mathematical universe hierarchy layer:
 - `HistoryChain` events for universe, set and class formation.
 
 See `UNIVERSE_HIERARCHY.md`.
+
+- [Metatheory Dependencies](METATHEORY_DEPENDENCIES.md)

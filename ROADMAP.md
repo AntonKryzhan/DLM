@@ -2804,3 +2804,43 @@ InductionProof<forall n:Nat. P(n)>
 ```
 
 The layer is intentionally core-only: no new `.dlm` syntax and no runtime/checker behavior changes.
+
+
+## v0.47.0 — Module Interface / Import Audit Foundation
+
+Added stable module interface artifacts on top of the v0.46 module/import system.
+
+Changed/added files:
+
+- `crates/dlm_core/src/module_interface.rs`
+- `crates/dlm_core/tests/module_interfaces.rs`
+- `docs/MODULE_INTERFACE_AUDIT.md`
+
+New diagnostic kind:
+
+- `ModuleInterfaceError[E0918]`
+
+Protected laws:
+
+- module interfaces are audit contracts, not theorem/proof/truth evidence;
+- private interface entries cannot satisfy imports;
+- import audits require explicit import edges in the resolved import graph;
+- interface fingerprints are deterministic and change when exported evidence or visibility changes;
+- exported trust taint is preserved in the interface summary.
+
+No `.dlm` syntax, checker behavior or runtime behavior changed.
+
+
+## v0.48.0 — Metatheory Dependency / Axiom Registry Foundation
+
+Status: planned/patch delivered.
+
+This is part of stage 1: Metamathematical Foundation. It introduces explicit axiom registries and ordered dependency audits before moving to ordinary language mathematics.
+
+New follow-up targets for stage 1:
+
+- theorem dependency graph;
+- global metatheory closure report;
+- conservative extension audit;
+- bridge assumption inventory;
+- proof-kernel dependency contract.

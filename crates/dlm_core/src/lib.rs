@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod axiom_registry;
 pub mod bridge;
 pub mod checker;
 pub mod certificate;
@@ -8,6 +9,7 @@ pub mod equality;
 pub mod induction;
 pub mod ids;
 pub mod meta_level;
+pub mod module_interface;
 pub mod module_system;
 pub mod parser;
 pub mod passes;
@@ -23,6 +25,7 @@ pub mod statement;
 pub mod tactic;
 
 pub use ast::*;
+pub use axiom_registry::{audit_metatheory_dependencies, axiom_decl, axiom_registry, axiom_registry_passport, dependency_entry_from_axiom, dependency_entry_from_passport, export_axiom_registry_text, metatheory_dependency_audit_passport, render_metatheory_dependency_audit_report, require_declared_axiom, require_verified_metatheory_dependency_audit, AxiomDecl, AxiomKind, AxiomRegistry, DependencyAuditStatus, DependencyEntry, DependencyUseKind, MetatheoryDependencyAuditReport};
 pub use bridge::{bridge_law, find_bridge, has_bridge, profile_for_decl, BridgeLaw, BridgeProfile};
 pub use certificate::{certificate_from_closure, certificate_from_tactic_report, compute_certificate_fingerprint, verify_certificate_against_theorem, ProofCertificate, ProofCertificateStatus};
 pub use certificate_audit::{audit_certificate_against_theorem, export_certificate_text, export_certificate_text_unchecked, render_certificate_audit_report, CertificateAuditReport, CertificateAuditStatus};
@@ -32,6 +35,7 @@ pub use equality::{apply_rewrite_rule, axiom_eq_proof, eq_proof_decl, eq_proof_f
 pub use ids::{BridgeId, FileId, IdAllocator, ModuleId, ProofId, TheoryId, TypeId, ValueId};
 pub use induction::{induction_base_case, induction_base_case_decl, induction_proof_decl, induction_step_case, induction_step_case_decl, nat_base_case_proposition, nat_induction_conclusion, nat_induction_proof, nat_induction_scheme, nat_induction_scheme_decl, nat_step_case_proposition, require_induction_base_case, require_induction_proof, require_induction_step_case, require_nat_induction_scheme, theorem_from_induction_proof, InductionBaseCaseDecl, InductionProofDecl, InductionStepCaseDecl, NatInductionSchemeDecl};
 pub use meta_level::{meta_level_passport, meta_quote_passport, object_level_passport, required_observer_level, validate_meta_observer, MetaAccess, MetaLevelContext, MetaLevelIndex, MetaStage};
+pub use module_interface::{audit_module_import, export_module_interface_text, module_import_audit_passport, module_interface, module_interface_passport, public_interface_symbols, render_module_import_audit_report, require_interface_symbol, require_verified_module_import_audit, InterfaceSymbol, ModuleImportAuditReport, ModuleImportAuditStatus, ModuleInterface};
 pub use module_system::{build_import_graph, import_decl, import_graph_passport, imported_public_symbols, module_export_passport, module_manifest, module_manifest_passport, private_export, public_export, require_public_export, validate_module_manifest, ExportDecl, ExportVisibility, ImportDecl, ImportEdge, ImportGraph, ModuleManifest};
 pub use parser::{parse_expr, parse_module};
 pub use passes::{run_frontend_passes, FrontendPassOutput, PassId, PassPipelineReport, PassReport, PassStatus};

@@ -188,6 +188,21 @@ pub enum TypeKind {
         symbol: String,
         visibility: String,
     },
+    ModuleInterface {
+        module: String,
+    },
+    ModuleImportAudit {
+        importer: String,
+        provider: String,
+        status: String,
+    },
+    AxiomRegistry {
+        theory: String,
+    },
+    MetatheoryDependencyAudit {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -294,6 +309,14 @@ impl fmt::Display for TypeKind {
             TypeKind::ImportGraph { root } => write!(f, "ImportGraph<root={root}>"),
             TypeKind::ModuleExport { module, symbol, visibility } => {
                 write!(f, "ModuleExport<{module}.{symbol}:{visibility}>")
+            }
+            TypeKind::ModuleInterface { module } => write!(f, "ModuleInterface<{module}>"),
+            TypeKind::ModuleImportAudit { importer, provider, status } => {
+                write!(f, "ModuleImportAudit<{importer}->{provider}:{status}>")
+            }
+            TypeKind::AxiomRegistry { theory } => write!(f, "AxiomRegistry<{theory}>"),
+            TypeKind::MetatheoryDependencyAudit { subject, status } => {
+                write!(f, "MetatheoryDependencyAudit<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

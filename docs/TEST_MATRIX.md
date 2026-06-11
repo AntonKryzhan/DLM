@@ -710,3 +710,24 @@ Covers:
 - public/private export checks.
 - missing module and cyclic import graph rejection.
 - export passport trust/capability preservation.
+
+
+## v0.47 module interface tests
+
+Focused test target: `cargo test -p dlm_core --test module_interfaces`. It checks interface fingerprints, public/private import audit behavior, stale interface rejection, explicit import-edge requirements and textual audit export.
+
+
+## v0.48.0 metatheory dependency tests
+
+```powershell
+cargo test -p dlm_core --test metatheory_dependencies
+```
+
+Coverage:
+
+- duplicate/cross-theory axiom rejection;
+- registry is not theorem/proof;
+- declared axiom requirement;
+- dependency entry trust/history preservation;
+- unsafe taint preservation;
+- order-sensitive audit fingerprints.

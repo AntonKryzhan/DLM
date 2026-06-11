@@ -566,3 +566,39 @@ The protected boundary is explicit: a runtime witness or raw proof term cannot b
 ### v0.46 — Module / Import System Foundation
 
 DLM now has a core model for module manifests, import graphs, public/private exports, acyclic dependency validation, and export passports. This is a semantic foundation only: `.dlm` import syntax and project-level CLI wiring are intentionally left for a later patch.
+
+
+## v0.47.0 — Module Interface / Import Audit Foundation
+
+Added stable module interface artifacts on top of the v0.46 module/import system.
+
+Changed/added files:
+
+- `crates/dlm_core/src/module_interface.rs`
+- `crates/dlm_core/tests/module_interfaces.rs`
+- `docs/MODULE_INTERFACE_AUDIT.md`
+
+New diagnostic kind:
+
+- `ModuleInterfaceError[E0918]`
+
+Protected laws:
+
+- module interfaces are audit contracts, not theorem/proof/truth evidence;
+- private interface entries cannot satisfy imports;
+- import audits require explicit import edges in the resolved import graph;
+- interface fingerprints are deterministic and change when exported evidence or visibility changes;
+- exported trust taint is preserved in the interface summary.
+
+No `.dlm` syntax, checker behavior or runtime behavior changed.
+
+
+## v0.48.0 — Metatheory Dependency / Axiom Registry Foundation
+
+Adds explicit axiom registries and dependency audit reports. The core law is now:
+
+```text
+AxiomRegistry<T> + ordered DependencyEntry[] => MetatheoryDependencyAuditReport
+```
+
+This makes axiom/oracle/unsafe dependencies visible before the later proof-kernel hardening phase.

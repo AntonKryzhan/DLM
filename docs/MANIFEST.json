@@ -1,238 +1,252 @@
 [
   {
-    "file": "ADVANCED_ROADMAP.md",
+    "path": "docs/ADVANCED_ROADMAP.md",
     "bytes": 6227,
     "sha256": "361b4ed76752e541b1d777689d8181c7f5d645e74c045dab1de36dab081b6ef0"
   },
   {
-    "file": "AST_IR.md",
-    "bytes": 9554,
-    "sha256": "32d82f0e4151372d7af5fb4ae7f6f29862459983b61d6cc28fe0ce00f47fe463"
+    "path": "docs/AST_IR.md",
+    "bytes": 10222,
+    "sha256": "97d3fbfe65e840e9a393c87c2570106616bf9531c11edcb14f3e98ca189c3cc1"
   },
   {
-    "file": "BIG_NUMBER_HIERARCHY.md",
+    "path": "docs/BIG_NUMBER_HIERARCHY.md",
     "bytes": 1703,
     "sha256": "a05dfaf9fb36066339e46eb220533d33d5e2a7e0d4915ca13982aff7cfacbf5e"
   },
   {
-    "file": "BRIDGE_SOUNDNESS.md",
+    "path": "docs/BRIDGE_SOUNDNESS.md",
     "bytes": 2909,
     "sha256": "908096124a0741d2997b81c2aff17d7c65ebcd8ae79705de944d0826a8d0264e"
   },
   {
-    "file": "CHECKER_ORCHESTRATION.md",
+    "path": "docs/CHECKER_ORCHESTRATION.md",
     "bytes": 1762,
     "sha256": "8a1d06502d343021cddf4459954e470ee59709ecb9599190c1c8ac1aadb11146"
   },
   {
-    "file": "CHECKPOINT_RESTORE.md",
+    "path": "docs/CHECKPOINT_RESTORE.md",
     "bytes": 1709,
     "sha256": "d6d03724621f20c1ad70876df7874b3e52ec2615dbd150234904e7c215978532"
   },
   {
-    "file": "COMPILER_PASSES.md",
-    "bytes": 13139,
-    "sha256": "62ee7e46ed5b3e815bd8e7d1c823de1fcb4d27098cb4d9c6459110b83705e2e5"
+    "path": "docs/COMPILER_PASSES.md",
+    "bytes": 13917,
+    "sha256": "90c26fd250efed2e34939fadbf8a1962e312a8f98aa063005f7039ff09fa30d1"
   },
   {
-    "file": "CONSISTENCY_INCOMPLETENESS.md",
+    "path": "docs/CONSISTENCY_INCOMPLETENESS.md",
     "bytes": 1550,
     "sha256": "8a8f2049f6a356edfb9b4a8589423da8a56e2faf5572ee0fa52ec176c0e0cb28"
   },
   {
-    "file": "DEFINABILITY_PASSPORT.md",
+    "path": "docs/DEFINABILITY_PASSPORT.md",
     "bytes": 2254,
     "sha256": "b1d5c2d8b682b37b28e350db623949711e66042cc94f97c4dc4cb645ca723c50"
   },
   {
-    "file": "DIAGNOSTICS.md",
-    "bytes": 11401,
-    "sha256": "f65654693d931fef969245cb847a9acb614b798c27fb63601f6886ad4f13ffd5"
+    "path": "docs/DIAGNOSTICS.md",
+    "bytes": 12094,
+    "sha256": "9a6cceea418807ad0875ffab7fe687c196e77de38715f94d81338f7b78e8b2b1"
   },
   {
-    "file": "DISTRIBUTED_MEMORY_REGION.md",
+    "path": "docs/DISTRIBUTED_MEMORY_REGION.md",
     "bytes": 2302,
     "sha256": "8be51748da23283d7d930d34dcf7b24df397e3fca37ac20ea58a2df968f3b09e"
   },
   {
-    "file": "DISTRIBUTED_VIRTUAL_CLUSTER.md",
+    "path": "docs/DISTRIBUTED_VIRTUAL_CLUSTER.md",
     "bytes": 3592,
     "sha256": "2ce2171ec7223db25bde212f23b5f2381b0237b5e80dcb3d9da7f597e1e89a8d"
   },
   {
-    "file": "EQUALITY_REWRITE.md",
+    "path": "docs/EQUALITY_REWRITE.md",
     "bytes": 2398,
     "sha256": "1eac9eea2a272a5ed18070b607e7a5f5efa7991b7dd8a62464c88feeb5b4981d"
   },
   {
-    "file": "FORMAL_METATHEORY.md",
+    "path": "docs/FORMAL_METATHEORY.md",
     "bytes": 3012,
     "sha256": "f8880aed59419ea49602972e9b129d058c4eb532bedfea8c3e5a542ecaa5c353"
   },
   {
-    "file": "GPU_CHECKPOINT_RESTORE.md",
+    "path": "docs/GPU_CHECKPOINT_RESTORE.md",
     "bytes": 1095,
     "sha256": "3e90b12dca2f9393a2b462ebdeaa3203bec469020993a73c6fc2003119f11d53"
   },
   {
-    "file": "GPU_CPU_TRANSFER.md",
+    "path": "docs/GPU_CPU_TRANSFER.md",
     "bytes": 1610,
     "sha256": "0ead54d0a0a43ae1ec22720673fd9a8940bba3d5bc3ade0c4563dd37383cda57"
   },
   {
-    "file": "GPU_KERNELS.md",
+    "path": "docs/GPU_KERNELS.md",
     "bytes": 1282,
     "sha256": "9e181848590703f37719d8629acdd15dc05f14a1c245e5dc5d0a67235857b6f0"
   },
   {
-    "file": "GPU_VIRTUAL_MEMORY.md",
+    "path": "docs/GPU_VIRTUAL_MEMORY.md",
     "bytes": 2456,
     "sha256": "dec90bc189f2a574baf6ae28a549a65e2c52db1fc705221507dcdf9273fb41f0"
   },
   {
-    "file": "GRAMMAR.md",
+    "path": "docs/GRAMMAR.md",
     "bytes": 6245,
     "sha256": "3868cf561c1f493059b5860fb7b7f21c9f9c43bbc0c2ec9dc79659623743e023"
   },
   {
-    "file": "HISTORY_CHAIN.md",
+    "path": "docs/HISTORY_CHAIN.md",
     "bytes": 2056,
     "sha256": "bc6d87de02e825d6700c7adbc0350338b08abc9ae72df9c859d76665594ddf45"
   },
   {
-    "file": "INFINITY_ARITHMETIC.md",
+    "path": "docs/INFINITY_ARITHMETIC.md",
     "bytes": 1576,
     "sha256": "308f5fb6b80b65c60643c1a36f471787449e6018348274d08911d7f2bb9fec85"
   },
   {
-    "file": "META_LEVELS.md",
+    "path": "docs/METATHEORY_DEPENDENCIES.md",
+    "bytes": 1882,
+    "sha256": "b3fb26e5b9725884c3ab0e72c04796f3ff441e48e4c93170ceb4143644ca679f"
+  },
+  {
+    "path": "docs/META_LEVELS.md",
     "bytes": 2269,
     "sha256": "f76b39472d5404e7b795384ff56cf54d411b7a24eb0c277bc078eb7ceca3b932"
   },
   {
-    "file": "MVP_ACCEPTANCE.md",
+    "path": "docs/MODULE_IMPORTS.md",
+    "bytes": 1266,
+    "sha256": "ca80ad88945530dcbcc8b602a0753bd01bead3f73bc20308a2b4915a4853c3a6"
+  },
+  {
+    "path": "docs/MODULE_INTERFACE_AUDIT.md",
+    "bytes": 1353,
+    "sha256": "a0145266ee5a083801abc27027b83e5a9d1bb04c600c47b5ffcf1f84eff79d3f"
+  },
+  {
+    "path": "docs/MVP_ACCEPTANCE.md",
     "bytes": 7062,
     "sha256": "0e27f617df3a8cd7d978ace42cf3902ec82a38bb02efa2c44204eb8d652efa19"
   },
   {
-    "file": "NAT_INDUCTION.md",
+    "path": "docs/NAT_INDUCTION.md",
     "bytes": 1315,
     "sha256": "0c5a32b4eeacb2670677ece4de609d909c0053a67f031f02ca21f8b3f1f45b3b"
   },
   {
-    "file": "PASSPORT_LATTICE.md",
+    "path": "docs/PASSPORT_LATTICE.md",
     "bytes": 15749,
     "sha256": "33a8d7cb79088684378deede667724ff48971d684feb2492e5cd2a6c837ad33e"
   },
   {
-    "file": "PASSPORT_SOUNDNESS.md",
+    "path": "docs/PASSPORT_SOUNDNESS.md",
     "bytes": 3921,
     "sha256": "3d7f4d7fdd7ed5dfa3447cdf1c1e9e7638aec4b9f9fe31b5ebb68f5ec52cd3b9"
   },
   {
-    "file": "PORTABLE_CODE_DEPLOY.md",
+    "path": "docs/PORTABLE_CODE_DEPLOY.md",
     "bytes": 1203,
     "sha256": "e642b51d24e296babe4b52f86f031422965f7f6ff609ef0860b5da32f0b41064"
   },
   {
-    "file": "PROOF_CERTIFICATE.md",
+    "path": "docs/PROOF_CERTIFICATE.md",
     "bytes": 2614,
     "sha256": "ed6e88b74d5ab62e034d7adf947d82de3241df0523718fbedcb12275c128f1be"
   },
   {
-    "file": "PROOF_CERTIFICATE_AUDIT.md",
+    "path": "docs/PROOF_CERTIFICATE_AUDIT.md",
     "bytes": 1437,
     "sha256": "2cd1f859321ab1dff368f25fcd4460082d0b629d3a41554280b038a8196aef2c"
   },
   {
-    "file": "PROOF_CONTEXT.md",
+    "path": "docs/PROOF_CONTEXT.md",
     "bytes": 1549,
     "sha256": "4b1914883aa7f953610073a8c2b85ef664f634f6633398bc34a9e27e285d426c"
   },
   {
-    "file": "PROOF_KERNEL.md",
+    "path": "docs/PROOF_KERNEL.md",
     "bytes": 1910,
     "sha256": "08581f80095f1f26b866b79f9f77c3efd4039f8d94dbaa639e09d2c9b1b1dc12"
   },
   {
-    "file": "PROPERTY_INVARIANTS.md",
+    "path": "docs/PROPERTY_INVARIANTS.md",
     "bytes": 2435,
     "sha256": "b306db62ce31a497bc8ceb913ecdeb835ed5ffb43de2e0e2ad84c96d7e6fea7f"
   },
   {
-    "file": "PROVABILITY_TRUTH_BOUNDARY.md",
+    "path": "docs/PROVABILITY_TRUTH_BOUNDARY.md",
     "bytes": 1495,
     "sha256": "5cb4b8ce7a90012b9e54484a28e0d9ae65c5c6126b8e01a312b279390d1142e1"
   },
   {
-    "file": "README.md",
-    "bytes": 3307,
-    "sha256": "3d9d0261ab46a2f67aaa86d0f2c3a23682c97a48536d1e0f5b07b807a95af6c8"
+    "path": "docs/README.md",
+    "bytes": 3364,
+    "sha256": "7f6258dd6fd59b36877ce5a0596479bd83128910f5cd708de9c7f0d2895ab567"
   },
   {
-    "file": "REMOTE_CHECKPOINT_MIGRATION.md",
+    "path": "docs/REMOTE_CHECKPOINT_MIGRATION.md",
     "bytes": 2515,
     "sha256": "d769b048022670a82940a7745e9f19b97cbcd34570068ab7e5c4c7f7ade9fa86"
   },
   {
-    "file": "REMOTE_MATERIALIZATION.md",
+    "path": "docs/REMOTE_MATERIALIZATION.md",
     "bytes": 1885,
     "sha256": "fd9374724054ba71628e2dc7ceb3e104da1708716ca2baf8721d5ed1bdef3861"
   },
   {
-    "file": "RESOLUTION.md",
+    "path": "docs/RESOLUTION.md",
     "bytes": 3448,
     "sha256": "99d77e18cb4c25641720adfbf0fc628df2ff0d4ae887cf2803cbcf2ad7de4d5f"
   },
   {
-    "file": "REWRITE_NORMALIZATION.md",
+    "path": "docs/REWRITE_NORMALIZATION.md",
     "bytes": 1674,
     "sha256": "3b820b3a2cccd002af7a99efe2dc5cd4e68fa993af3f405db50f5a8eb403df49"
   },
   {
-    "file": "SCHEDULER.md",
+    "path": "docs/SCHEDULER.md",
     "bytes": 2380,
     "sha256": "72a7b088ee9ff1fe2fd49c1d0c85ade2f55c53b849b9118da323328d8864f53d"
   },
   {
-    "file": "SPEC.md",
+    "path": "docs/SPEC.md",
     "bytes": 9935,
     "sha256": "d79631265f9cba9745174cf01789723e9b52a46a04b554d0f3180f69520be103"
   },
   {
-    "file": "STATEMENTS_THEOREMS.md",
+    "path": "docs/STATEMENTS_THEOREMS.md",
     "bytes": 2515,
     "sha256": "a7e28d67d224b737b6b783b2372a9df97b6b31340aa846ef6d99e80456605a3f"
   },
   {
-    "file": "STD_CORE.md",
+    "path": "docs/STD_CORE.md",
     "bytes": 7134,
     "sha256": "4a30dd71fe6afdf281ccb033501d4f89be1ea2373cba1f30e2f93fa8d7fa7348"
   },
   {
-    "file": "TACTIC_SCRIPT.md",
+    "path": "docs/TACTIC_SCRIPT.md",
     "bytes": 1679,
     "sha256": "b35d8cbf081ae1103e52f57802ba24a2ec3edcd1bbdf6f511e8e8bf6744f8fe1"
   },
   {
-    "file": "TEST_MATRIX.md",
-    "bytes": 13940,
-    "sha256": "6dff19f07b67f2de93ad45298c5b93bfa8d05c29d2c3b641db90425dd6fc0d0d"
+    "path": "docs/TEST_MATRIX.md",
+    "bytes": 14812,
+    "sha256": "df3dca3b1aac1d49db0dded82b67f561d172b8f07fd5b5d7b96945942b1aa036"
   },
   {
-    "file": "UNIVERSE_HIERARCHY.md",
+    "path": "docs/UNIVERSE_HIERARCHY.md",
     "bytes": 2125,
     "sha256": "a7268f047c1ed93e47c85cc0939c5f64c19adb10c87411af8875fd60543a9255"
   },
   {
-    "file": "V031_REFLECTION_SELF_REFERENCE_GUARD.md",
+    "path": "docs/V031_REFLECTION_SELF_REFERENCE_GUARD.md",
     "bytes": 2969,
     "sha256": "2adcbc5c457570da5a4717b99529b203ef78116ea3f065c3e0f82967602d396a"
   },
   {
-    "file": "VIRTUAL_RESOURCE_POOL.md",
+    "path": "docs/VIRTUAL_RESOURCE_POOL.md",
     "bytes": 1708,
     "sha256": "c4b658b1c0628112c865e908557d3d4a7070beb4f51aeec3cece235ee93233e8"
-  },
-  "docs/MODULE_IMPORTS.md"
+  }
 ]

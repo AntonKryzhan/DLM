@@ -513,3 +513,20 @@ These artifacts prepare a future ProofIR/TacticIR layer. They are not parsed fro
 ## v0.46 Module / Import IR foundation
 
 Core-only IR structures now model module manifests, imports, exports, and resolved import graphs. The objects are represented by passports `ModuleManifest`, `ImportGraph`, and `ModuleExport`, but no new `.dlm` syntax is introduced yet.
+
+
+## v0.47 module interface IR
+
+`ModuleInterface<module>` and `ModuleImportAudit<importer->provider:status>` are core audit artifacts. They are not theorem, proof, truth, or runtime values.
+
+
+## v0.48.0 metatheory dependency IR
+
+New audit passport kinds:
+
+```text
+AxiomRegistry<T>
+MetatheoryDependencyAudit<subject:status>
+```
+
+They are audit objects, not proofs, theorems or truth claims.

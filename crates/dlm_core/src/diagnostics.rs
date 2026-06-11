@@ -39,6 +39,8 @@ pub enum DiagnosticKind {
     RewriteNormalizationError,
     InductionError,
     ModuleImportError,
+    ModuleInterfaceError,
+    MetatheoryDependencyError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -190,6 +192,8 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::RewriteNormalizationError => "E0915 RewriteNormalizationError",
             DiagnosticKind::InductionError => "E0916 InductionError",
             DiagnosticKind::ModuleImportError => "E0917 ModuleImportError",
+            DiagnosticKind::ModuleInterfaceError => "E0918 ModuleInterfaceError",
+            DiagnosticKind::MetatheoryDependencyError => "E0919 MetatheoryDependencyError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

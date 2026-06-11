@@ -527,3 +527,33 @@ The important safety boundary is that induction cases are static proof obligatio
 ## v0.46 implementation notes
 
 The module/import system is deliberately a core semantic layer and not parser syntax. It validates duplicate imports, duplicate aliases, duplicate exports, missing import targets, and cyclic import graphs. Public/private exports are visibility metadata only and do not create theorem/proof/truth claims or reduce trust taint.
+
+
+## v0.47.0 — Module Interface / Import Audit Foundation
+
+Added stable module interface artifacts on top of the v0.46 module/import system.
+
+Changed/added files:
+
+- `crates/dlm_core/src/module_interface.rs`
+- `crates/dlm_core/tests/module_interfaces.rs`
+- `docs/MODULE_INTERFACE_AUDIT.md`
+
+New diagnostic kind:
+
+- `ModuleInterfaceError[E0918]`
+
+Protected laws:
+
+- module interfaces are audit contracts, not theorem/proof/truth evidence;
+- private interface entries cannot satisfy imports;
+- import audits require explicit import edges in the resolved import graph;
+- interface fingerprints are deterministic and change when exported evidence or visibility changes;
+- exported trust taint is preserved in the interface summary.
+
+No `.dlm` syntax, checker behavior or runtime behavior changed.
+
+
+## v0.48.0 implementation note
+
+Metatheory dependency auditing is intentionally separate from proof checking. A verified dependency audit is closure evidence for later kernel layers, not a theorem. Axiom-tainted and unsafe-tainted dependencies remain visible in the resulting passport.
