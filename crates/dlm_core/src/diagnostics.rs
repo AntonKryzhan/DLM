@@ -50,6 +50,7 @@ pub enum DiagnosticKind {
     LogicFormulaError,
     SubstitutionError,
     FunctionTermError,
+    FunctionContractError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -212,6 +213,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::LogicFormulaError => "E0926 LogicFormulaError",
             DiagnosticKind::SubstitutionError => "E0927 SubstitutionError",
             DiagnosticKind::FunctionTermError => "E0928 FunctionTermError",
+            DiagnosticKind::FunctionContractError => "E0929 FunctionContractError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

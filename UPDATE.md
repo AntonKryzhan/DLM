@@ -563,3 +563,16 @@ Local readiness:         18–24% -> 24–32%
 Architectural readiness: 40–50% -> 44–56%
 Fundamental readiness:   25–35% -> 28–40%
 ```
+
+
+<!-- V0_58_FUNCTION_CONTRACTS_BLOCK -->
+## v0.58.0 — Function Contract / Purity / Totality Boundary
+
+Adds `docs/FUNCTION_CONTRACTS.md` and the first contract layer above ordinary functions. Function contracts record purity, explicit effect boundaries, totality status, static evidence, open obligations and honest downgrade status.
+
+Main law:
+
+```text
+FunctionContract is not theorem/proof/truth.
+It is an audit/control object for future optimization, scheduling and assurance modes.
+```

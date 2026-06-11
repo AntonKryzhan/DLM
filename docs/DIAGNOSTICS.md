@@ -603,3 +603,8 @@ Raised when variable scope, alpha-equivalence or substitution would violate expl
 ## E0928 FunctionTermError
 
 Raised when function type, lambda or application construction violates the ordinary-function boundary: invalid domain/codomain, mismatched lambda parameter domain, shadowed capture, non-function application source, proof/theorem/truth/runtime object used as ordinary function or argument.
+
+
+## E0929 FunctionContractError
+
+Raised when a function contract violates purity, effect-boundary, totality-evidence or contract-subject rules. This diagnostic protects the boundary between ordinary function objects and proof/theorem/truth/runtime evidence.

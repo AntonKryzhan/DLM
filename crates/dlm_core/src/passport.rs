@@ -264,6 +264,10 @@ pub enum TypeKind {
         result: String,
         status: String,
     },
+    FunctionContract {
+        name: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -416,6 +420,9 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::ApplicationTerm { function, argument, result, status } => {
                 write!(f, "ApplicationTerm<{function}({argument})=>{result}:{status}>")
+            }
+            TypeKind::FunctionContract { name, status } => {
+                write!(f, "FunctionContract<{name}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

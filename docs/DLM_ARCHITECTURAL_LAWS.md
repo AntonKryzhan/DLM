@@ -1843,3 +1843,10 @@ structured enough for AI agents to patch safely,
 and honest enough to downgrade status whenever proof is incomplete.
 ```
 
+
+
+---
+
+## v0.58 function contract enforcement note
+
+`v0.58.0` introduces the first code-level enforcement of laws 5, 6, 7, 18, 25, 28 and 29 for ordinary functions. Pure functions cannot carry effect boundaries, total functions require static evidence, effectful/partial/unknown functions are honestly downgraded, and oracle/unsafe effects preserve taint.
