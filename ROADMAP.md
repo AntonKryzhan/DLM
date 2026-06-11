@@ -3032,3 +3032,53 @@ AxiomRegistry + DependencyAudit + MetatheoryClosure + GlobalInventory + Soundnes
 Status target: final gate for item 1 — Metamathematical foundation.
 
 Adds `MetatheoryFoundationExitReport`, a required-criteria checklist that decides whether DLM can move from metamathematical foundation work to ordinary language mathematics. The gate is ready only when meta-level, truth/provability, consistency, reflection, theorem/statement, proof-context, equality/rewrite, induction, module, axiom/dependency, closure, theorem-inventory, soundness-ledger, trusted-base, and regression criteria are explicitly satisfied.
+
+
+---
+
+## 21. Stage Readiness Control Model
+
+Starting from the post-`v0.54` transition, DLM uses three readiness dimensions for every major stage:
+
+```text
+Local readiness
+  implementation works locally: cargo check/test, feature tests, docs, diagnostics, examples, clean git state.
+
+Architectural readiness
+  the stage fits DLM's long-term architecture: passport model, proof/truth/runtime boundaries, trust monotonicity, module/audit integration.
+
+Fundamental readiness
+  the stage is robust as part of the final mathematical foundation: formal semantics, proof-kernel interpretation, substitution/quantifier pressure, stdlib/runtime/compiler pressure, external review.
+```
+
+This distinction prevents false closure. A stage can be ready enough to move forward without being complete in the absolute sense.
+
+Current control map:
+
+| Stage | Local readiness | Architectural readiness | Fundamental readiness | Meaning |
+|---|---:|---:|---:|---|
+| 1. Metamathematical foundation | 90–95% after full `v0.54` hotfix validation | 80–85% | 55–65% | MVP gate can close; not final forever |
+| 2. Ordinary mathematics of the language | 5–10% | 30–40% | 20–30% | next active construction stage |
+| 3. Proof/audit architecture | 60–70% | 70–80% | 45–55% | strong artifacts exist; needs deeper syntax/CLI/project integration |
+| 4. Full proof kernel | 15–25% | 40–50% | 20–30% | minimal proof concepts exist; kernel still future work |
+| 5. Standard library | 10–15% | 25–35% | 15–25% | mostly future work |
+| 6. Runtime / production execution | 15–25% | 30–40% | 20–30% | symbolic/runtime MVP only |
+| 7. High-performance native compilation | 0–5% | 25–35% | 10–20% | strategic track documented; backend not started |
+
+For every future stage, patch notes should include a readiness delta:
+
+```text
+Readiness delta:
+  Local readiness:         old -> new
+  Architectural readiness: old -> new
+  Fundamental readiness:   old -> new
+```
+
+Transition rule:
+
+```text
+Move forward when local and architectural readiness are high enough for the next layer to stress-test the previous layer.
+Do not claim 100% fundamental readiness until the layer has survived formal semantics, proof-kernel, stdlib, runtime, compiler and external-review pressure.
+```
+
+Detailed model: `docs/STAGE_READINESS_MODEL.md`.

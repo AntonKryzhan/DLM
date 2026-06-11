@@ -68,3 +68,6 @@ See `UNIVERSE_HIERARCHY.md`.
 - `TRUSTED_BASE_CLOSURE.md` — final metatheory-foundation gate combining registry, dependency, closure, inventory and soundness-boundary evidence.
 
 - `METATHEORY_FOUNDATION_EXIT.md` — final metatheory foundation exit checklist and phase-2 readiness gate.
+
+
+- `STAGE_READINESS_MODEL.md` — local/architectural/fundamental readiness model for controlling stage transitions.

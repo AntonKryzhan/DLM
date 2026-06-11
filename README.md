@@ -397,6 +397,29 @@ DLM is an experiment in that direction.
 
 ---
 
+
+## Stage readiness model
+
+DLM development now tracks every major stage with three readiness dimensions:
+
+```text
+Local readiness        — does the current implementation compile, test and document correctly?
+Architectural readiness — does it fit the long-term passport/proof/trust/audit design?
+Fundamental readiness   — has it survived deeper mathematical, kernel, stdlib, runtime and compiler pressure?
+```
+
+This is important because `moving to the next stage` does not mean the previous stage is mathematically perfect. It means the previous stage has passed a strong enough MVP gate to be stress-tested by the next layer.
+
+Current interpretation:
+
+```text
+Metamathematical foundation: strong MVP gate, not absolute final theory.
+Ordinary mathematics: next active construction layer.
+Future proof kernel, stdlib, runtime and compiler tracks will feed pressure back into the foundation.
+```
+
+See `docs/STAGE_READINESS_MODEL.md`.
+
 ## License
 
 The license is currently defined by the repository owner.

@@ -201,8 +201,8 @@
   },
   {
     "path": "docs/README.md",
-    "bytes": 4229,
-    "sha256": "6b98c9037f793c39b9c5ccb7fef781ae3006cca733ce9761d80ed0f1ac181ddc"
+    "bytes": 4347,
+    "sha256": "0415e8585f8d9da1709bcd3492d6b0b74015dbc3b905b9e015d1cd6956e7a78a"
   },
   {
     "path": "docs/REMOTE_CHECKPOINT_MIGRATION.md",
@@ -238,6 +238,11 @@
     "path": "docs/SPEC.md",
     "bytes": 9935,
     "sha256": "d79631265f9cba9745174cf01789723e9b52a46a04b554d0f3180f69520be103"
+  },
+  {
+    "path": "docs/STAGE_READINESS_MODEL.md",
+    "bytes": 6895,
+    "sha256": "12152270e4cf3de88f60df18c3c20996225d664079b55307d1b2d1c0a80efe0b"
   },
   {
     "path": "docs/STATEMENTS_THEOREMS.md",

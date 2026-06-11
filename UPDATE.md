@@ -469,3 +469,18 @@ Added the Trusted Base Closure foundation gate. This closes the current metatheo
 ## v0.54.0
 
 Added Metatheory Foundation Exit / Completion Checklist. This is the formal gate for closing phase 1 before starting ordinary mathematics of the language.
+
+
+## Documentation update — Stage Readiness Control Model
+
+Added a formal project-control model for stage maturity:
+
+- local readiness;
+- architectural readiness;
+- fundamental readiness.
+
+This model is now part of the roadmap and should be updated after major patches. It makes explicit that moving forward means passing an MVP gate, not reaching absolute 100% finality.
+
+New document:
+
+- `docs/STAGE_READINESS_MODEL.md`

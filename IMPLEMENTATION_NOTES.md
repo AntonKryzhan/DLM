@@ -657,3 +657,29 @@ Added `trusted_base.rs` as the final gate for the current metatheory-foundation 
 ## v0.54.0 — Metatheory Foundation Exit
 
 Added `metatheory_foundation.rs`, `MetatheoryExitCriterion`, `MetatheoryFoundationExitReport`, and the `MetatheoryFoundationExit` passport type. The report is ready only when all required metatheory exit criteria are satisfied; open/missing criteria keep it incomplete, and failed/duplicate criteria reject it.
+
+
+## Documentation Control Patch — Stage Readiness Model
+
+Added the project-level readiness triad used for all future stage transitions:
+
+```text
+Local readiness
+Architectural readiness
+Fundamental readiness
+```
+
+This clarifies that closing a stage as an MVP gate is not the same as declaring it 100% complete. Future patches should include a readiness delta when they affect a major roadmap stage.
+
+New document:
+
+- `docs/STAGE_READINESS_MODEL.md`
+
+The current interpretation is:
+
+```text
+Stage 1 / Metamathematical foundation:
+  local readiness high after full v0.54 validation;
+  architectural readiness strong enough to move into ordinary mathematics;
+  fundamental readiness still below finality and expected to be revisited under quantifier/function/dependent-type pressure.
+```
