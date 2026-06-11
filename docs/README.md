@@ -81,3 +81,11 @@ See `UNIVERSE_HIERARCHY.md`.
 
 - `RUNTIME_HARDWARE_LAYERING_PRINCIPLE.md` вЂ” global rule for separating mathematical meaning, compiler/audit logic, runtime control metadata, and dense hardware execution.
 
+
+
+<!-- DLM_ARCHITECTURAL_LAWS_BLOCK -->
+
+### `DLM_ARCHITECTURAL_LAWS.md`
+
+The architectural constitution of DLM / РЇР Р”. It defines 25 global laws covering semantic layer separation, passport-governed operations, proof erasure, compact runtime data, bridge preservation contracts, trust monotonicity, checker passes, ID-based resolution, Span preservation, batch-first GPU execution, verified optimization, visible trusted base, explainability, AI-agent-friendly development, minimal proof kernel, and honest status downgrade.
+

@@ -536,3 +536,13 @@ Execution should be dense.
 
 This records that passports/proofs/history guide compiler/runtime decisions, but hardware execution must remain dense and minimal.
 
+
+
+<!-- DLM_ARCHITECTURAL_LAWS_BLOCK -->
+
+## Docs update вЂ” DLM Architectural Laws
+
+Added `docs/DLM_ARCHITECTURAL_LAWS.md`, a detailed architectural law document that defines 25 global laws for DLM development.
+
+This is a docs-only governance patch. It does not change Rust code, but it changes the standard by which future code patches should be reviewed.
+

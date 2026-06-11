@@ -63,3 +63,5 @@
                  "VIRTUAL_RESOURCE_POOL.md"
              ]
 }
+
+<!-- MANIFEST NOTE: docs/DLM_ARCHITECTURAL_LAWS.md added by docs-only architectural law patch. If your manifest is strict JSON, add this document entry according to the existing schema. -->

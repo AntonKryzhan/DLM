@@ -737,3 +737,30 @@ implicit CPU/GPU transfer;
 implicit materialization.
 ```
 
+
+
+<!-- DLM_ARCHITECTURAL_LAWS_BLOCK -->
+
+## DLM Architectural Laws enforcement note
+
+`docs/DLM_ARCHITECTURAL_LAWS.md` is now part of the implementation discipline.
+
+For every future patch, check:
+
+```text
+Does it preserve semantic layer separation?
+Does it use passports/capabilities/trust rather than raw type-only checks?
+Does it avoid carrying full proof/history into hot runtime?
+Does it keep trust monotonic?
+Does it preserve bridge contracts?
+Does it keep effects explicit?
+Does it avoid String references after resolution?
+Does it preserve Span/source origin?
+Does it keep runtime data dense?
+Does it keep GPU execution batch-first?
+Does it make materialization explicit?
+Does it produce audit/explain information?
+Does it remain AI-agent-friendly?
+Does it honestly downgrade status when full proof is absent?
+```
+

@@ -761,3 +761,29 @@ The language keeps full proof/passport/trust/history semantics at the source and
 
 See `docs/RUNTIME_HARDWARE_LAYERING_PRINCIPLE.md`.
 
+
+
+<!-- DLM_ARCHITECTURAL_LAWS_BLOCK -->
+
+## DLM Architectural Laws
+
+The project now has an explicit architectural constitution: `docs/DLM_ARCHITECTURAL_LAWS.md`.
+
+The laws protect DLM from three major failure modes:
+
+```text
+mathematically rich but soundness-unclear;
+semantically beautiful but hardware-heavy;
+AI-agent-developed but architecturally inconsistent.
+```
+
+The core formula is:
+
+```text
+Meaning-rich above.
+Execution-dense below.
+Audit-complete backward.
+```
+
+These laws govern proof erasure, passport-governed operations, bridge preservation contracts, trust monotonicity, dense runtime data, batch-first GPU execution, explicit materialization, visible trusted base, minimal proof kernel, and honest status downgrade.
+
