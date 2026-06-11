@@ -166,7 +166,7 @@ pub fn function_contract(
 
     let mut all_sources = vec![function];
     all_sources.extend_from_slice(evidence);
-    let (mut max_trust, mut max_provenance, mut has_axiom_taint, mut has_oracle_taint, mut has_unsafe_taint) = taint_summary(&all_sources);
+    let (mut max_trust, mut max_provenance, has_axiom_taint, mut has_oracle_taint, mut has_unsafe_taint) = taint_summary(&all_sources);
     for effect in &effects {
         match effect.kind {
             FunctionEffectKind::Oracle => {
