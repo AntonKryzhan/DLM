@@ -430,3 +430,15 @@ verified dependency audit + closed obligations => closed metatheory closure repo
 ```
 
 Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.
+
+## v0.50.0 — Conservative Extension Audit Foundation
+
+- Added `crates/dlm_core/src/conservative_extension.rs`.
+- Added `crates/dlm_core/tests/conservative_extension.rs`.
+- Added `docs/CONSERVATIVE_EXTENSION.md`.
+- Added `TypeKind::ConservativeExtensionAudit`.
+- Added `DiagnosticKind::ConservativeExtensionError` rendered as `E0921 ConservativeExtensionError`.
+- Added preserved-theorem witnesses and conservative-extension audit reports.
+- Added stable text export for conservative-extension reports.
+
+This keeps development inside track 1: metamathematical foundation.

@@ -207,6 +207,11 @@ pub enum TypeKind {
         subject: String,
         status: String,
     },
+    ConservativeExtensionAudit {
+        base: String,
+        extension: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -324,6 +329,9 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::MetatheoryClosureReport { subject, status } => {
                 write!(f, "MetatheoryClosureReport<{subject}:{status}>")
+            }
+            TypeKind::ConservativeExtensionAudit { base, extension, status } => {
+                write!(f, "ConservativeExtensionAudit<{base}->{extension}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

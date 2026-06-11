@@ -580,3 +580,20 @@ verified dependency audit + closed obligations => closed metatheory closure repo
 ```
 
 Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.
+
+## v0.50.0 implementation notes
+
+`conservative_extension.rs` introduces a metatheoretic audit object for checking whether an extension preserves old theorem identities while making new assumptions explicit.
+
+The implementation is intentionally conservative:
+
+- old theorem name must match exactly;
+- old theorem proposition must match exactly;
+- base closure must be closed;
+- rejected extension closure rejects the audit;
+- open extension closure keeps the audit open;
+- empty preservation evidence is rejected;
+- duplicate preserved theorem names are rejected;
+- new assumptions are carried as dependency entries and preserve trust/provenance taint.
+
+No runtime behavior and no `.dlm` syntax are changed.

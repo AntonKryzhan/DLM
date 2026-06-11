@@ -6,8 +6,8 @@
   },
   {
     "path": "docs/AST_IR.md",
-    "bytes": 10964,
-    "sha256": "8c19174f9826b3f6ee01e9660e5777c481a5f4403785d07f3cc4c82b31525f8d"
+    "bytes": 11230,
+    "sha256": "726214ecb5db1624fb3ef728d616a9a4b7c26238f3c1d10f4a39fa6f92624cde"
   },
   {
     "path": "docs/BIG_NUMBER_HIERARCHY.md",
@@ -31,8 +31,13 @@
   },
   {
     "path": "docs/COMPILER_PASSES.md",
-    "bytes": 14659,
-    "sha256": "29867f50689fdb4341feb9f9350ed1fe7f4551eb2d47e3e1758da9a19946e970"
+    "bytes": 15015,
+    "sha256": "682c47034a4b03c9bdcd093f055168825b58c9fcdf028df51c8c73ee008708cc"
+  },
+  {
+    "path": "docs/CONSERVATIVE_EXTENSION.md",
+    "bytes": 2737,
+    "sha256": "5b3fd539e35eaaec73d8d6e4e1f9c282fba706443636e88d2a32d77b00bae4d3"
   },
   {
     "path": "docs/CONSISTENCY_INCOMPLETENESS.md",
@@ -46,8 +51,8 @@
   },
   {
     "path": "docs/DIAGNOSTICS.md",
-    "bytes": 12836,
-    "sha256": "4360d140eb28fba1332061ae87dab7a592e4370c601ddcc5d095bb6bd5db6d73"
+    "bytes": 13207,
+    "sha256": "ee56f395ef364957cef6c7a28fd7c6a4b1849a6b1d3388e1fac386de4474f928"
   },
   {
     "path": "docs/DISTRIBUTED_MEMORY_REGION.md",
@@ -186,8 +191,8 @@
   },
   {
     "path": "docs/README.md",
-    "bytes": 3456,
-    "sha256": "883807e1bfe59f98c11e11db1af5746efc190abf7a3cf789e093d4282f283158"
+    "bytes": 3532,
+    "sha256": "a3bcc3ca8d74f264694399c1a14214b56a454b705970d2a0f128804cce3b7f50"
   },
   {
     "path": "docs/REMOTE_CHECKPOINT_MIGRATION.md",
@@ -236,8 +241,8 @@
   },
   {
     "path": "docs/TEST_MATRIX.md",
-    "bytes": 15554,
-    "sha256": "99432c3b1da166d15c2621b08af511071040a681e460c3f0abb2be73056e959d"
+    "bytes": 16033,
+    "sha256": "1a0557bc64cda7adfbf1439273b93873f07a5a2489ae60c55ebb910e8b7706a6"
   },
   {
     "path": "docs/UNIVERSE_HIERARCHY.md",

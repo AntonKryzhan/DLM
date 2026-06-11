@@ -628,3 +628,9 @@ verified dependency audit + closed obligations => closed metatheory closure repo
 ```
 
 Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.
+
+## v0.50.0 metatheory extension audit layer
+
+The conservative-extension audit layer is currently a core API/tested metatheory layer. It is not yet wired into parser syntax or the default checker pipeline.
+
+Future checker integration should run after dependency/closure audits and before ordinary mathematics is accepted as part of a finalized metatheory.

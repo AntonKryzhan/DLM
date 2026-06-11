@@ -553,3 +553,13 @@ verified dependency audit + closed obligations => closed metatheory closure repo
 ```
 
 Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.
+
+## v0.50.0 conservative extension audit passport
+
+The passport type universe now includes:
+
+```text
+ConservativeExtensionAudit<base->extension:status>
+```
+
+It is an audit artifact for metatheory extension safety, not a theorem, proof, static proof, or truth claim.

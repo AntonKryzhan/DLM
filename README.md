@@ -625,3 +625,26 @@ verified dependency audit + closed obligations => closed metatheory closure repo
 ```
 
 Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.
+
+## v0.50.0 — Conservative Extension Audit Foundation
+
+This release adds the first conservative-extension audit layer for the metamathematical foundation track.
+
+New core objects:
+
+- `ConservativeExtensionAuditReport`;
+- `ConservativeExtensionStatus`;
+- `PreservedTheorem`;
+- `preserved_theorem(...)`;
+- `audit_conservative_extension(...)`;
+- `require_verified_conservative_extension_audit(...)`;
+- `conservative_extension_audit_passport(...)`;
+- `export_conservative_extension_audit_report(...)`.
+
+Main invariant:
+
+```text
+Closed(base) + Closed(extension) + PreservedTheorem[] => ConservativeExtensionAudit<verified>
+```
+
+The audit rejects theorem renaming, proposition mutation, non-closed bases, empty preservation evidence, and duplicate preservation witnesses. New assumptions are allowed only as visible audit entries and preserve axiom/oracle/unsafe taint.

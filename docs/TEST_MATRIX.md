@@ -754,3 +754,21 @@ verified dependency audit + closed obligations => closed metatheory closure repo
 ```
 
 Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.
+
+## v0.50.0 conservative extension tests
+
+New focused test target:
+
+```text
+cargo test -p dlm_core --test conservative_extension
+```
+
+Coverage:
+
+- verified conservative extension over closed base/extension closures;
+- theorem name/proposition mutation rejection;
+- open extension status propagation;
+- rejected base / empty preservation rejection;
+- new assumption taint visibility;
+- duplicate preserved theorem rejection;
+- stable, order-sensitive export/fingerprint behavior.

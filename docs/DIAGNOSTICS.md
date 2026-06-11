@@ -554,3 +554,14 @@ verified dependency audit + closed obligations => closed metatheory closure repo
 ```
 
 Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.
+
+## E0921 ConservativeExtensionError
+
+Raised when a conservative-extension audit is malformed or rejected. Typical causes:
+
+- base metatheory closure is not closed;
+- extension closure is rejected;
+- no preserved theorem evidence is supplied;
+- theorem name changed across extension;
+- theorem proposition changed across extension;
+- duplicate preserved theorem witness.

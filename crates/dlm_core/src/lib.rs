@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod axiom_registry;
 pub mod bridge;
+pub mod conservative_extension;
 pub mod checker;
 pub mod certificate;
 pub mod certificate_audit;
@@ -30,6 +31,7 @@ pub use axiom_registry::{audit_metatheory_dependencies, axiom_decl, axiom_regist
 pub use bridge::{bridge_law, find_bridge, has_bridge, profile_for_decl, BridgeLaw, BridgeProfile};
 pub use certificate::{certificate_from_closure, certificate_from_tactic_report, compute_certificate_fingerprint, verify_certificate_against_theorem, ProofCertificate, ProofCertificateStatus};
 pub use certificate_audit::{audit_certificate_against_theorem, export_certificate_text, export_certificate_text_unchecked, render_certificate_audit_report, CertificateAuditReport, CertificateAuditStatus};
+pub use conservative_extension::{audit_conservative_extension, conservative_extension_audit_passport, export_conservative_extension_audit_report, preserved_theorem, render_conservative_extension_audit_report, require_verified_conservative_extension_audit, ConservativeExtensionAuditReport, ConservativeExtensionStatus, PreservedTheorem};
 pub use checker::{CheckReport, Checker};
 pub use diagnostics::{Diagnostic, DiagnosticKind, Severity, SourceSpan};
 pub use equality::{apply_rewrite_rule, axiom_eq_proof, eq_proof_decl, eq_proof_from_static_proof, equality_proposition, reflexive_eq_proof, require_eq_proof, require_rewrite_rule, rewrite_certificate_passport, rewrite_rule_decl, rewrite_rule_from_eq_proof, rewrite_trace, EqProofDecl, RewriteDirection, RewriteRuleDecl, RewriteStep, RewriteTrace};

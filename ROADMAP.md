@@ -2867,3 +2867,22 @@ verified dependency audit + closed obligations => closed metatheory closure repo
 ```
 
 Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.
+
+## v0.50.0 — Conservative Extension Audit Foundation
+
+Track: **1) Metamathematical foundation**.
+
+This step adds conservative-extension audit reports. The goal is to make language/metatheory extension safety explicit before moving to ordinary mathematics.
+
+A future proof kernel can feed this layer with complete theorem dependency graphs. For now the patch defines the audit surface and verifies strict theorem identity preservation:
+
+```text
+Theorem<name:P> in base == Theorem<name:P> in extension
+```
+
+Next metatheory steps before track 2:
+
+- theorem dependency graph;
+- bridge assumption inventory;
+- global metatheory finalization report;
+- proof/truth/reflection boundary consolidation.
