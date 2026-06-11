@@ -644,7 +644,10 @@ fn structural_value_type(passport: &Passport, line: usize) -> Result<String, Dia
         | TypeKind::RecordTerm { .. }
         | TypeKind::RecordProjection { .. }
         | TypeKind::OptionValue { .. }
-        | TypeKind::ResultValue { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::ResultValue { .. }
+        | TypeKind::ListValue { .. }
+        | TypeKind::SequenceValue { .. }
+        | TypeKind::SequenceIndex { .. } => Ok(passport.ty.to_string()),
         TypeKind::FunctionType { .. }
         | TypeKind::LambdaTerm { .. }
         | TypeKind::ApplicationTerm { .. }
@@ -653,7 +656,7 @@ fn structural_value_type(passport: &Passport, line: usize) -> Result<String, Dia
         | TypeKind::SumType { .. }
         | TypeKind::RecordType { .. }
         | TypeKind::OptionType { .. }
-        | TypeKind::ResultTypeValue { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::ResultType { .. } => Ok(passport.ty.to_string()),
         TypeKind::Theorem { .. }
         | TypeKind::StaticProof(_)
         | TypeKind::ProofTerm { .. }

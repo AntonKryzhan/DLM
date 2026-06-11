@@ -54,6 +54,7 @@ pub enum DiagnosticKind {
     StructuralTypeError,
     StructuralEliminationError,
     PartialityTypeError,
+    SequenceTypeError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -220,6 +221,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::StructuralTypeError => "E0930 StructuralTypeError",
             DiagnosticKind::StructuralEliminationError => "E0931 StructuralEliminationError",
             DiagnosticKind::PartialityTypeError => "E0932 PartialityTypeError",
+            DiagnosticKind::SequenceTypeError => "E0933 SequenceTypeError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

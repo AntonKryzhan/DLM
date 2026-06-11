@@ -270,7 +270,7 @@ pub fn option_value_passport(theory: &str, report: &OptionValueReport, sources: 
 
 pub fn result_type_passport(theory: &str, report: &ResultTypeReport, sources: &[&Passport]) -> Passport {
     Passport {
-        ty: TypeKind::ResultTypeValue { ok: report.ok_type.clone(), err: report.err_type.clone() },
+        ty: TypeKind::ResultType { ok: report.ok_type.clone(), err: report.err_type.clone() },
         construction: ConstructionMode::Definable,
         capabilities: partiality_caps(),
         cost: CostClass::SmallFinite,
@@ -411,7 +411,10 @@ fn ordinary_partiality_value_type(passport: &Passport, line: usize) -> Result<St
         | TypeKind::SumElimination { .. }
         | TypeKind::RecordPattern { .. }
         | TypeKind::OptionValue { .. }
-        | TypeKind::ResultValue { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::ResultValue { .. }
+        | TypeKind::ListValue { .. }
+        | TypeKind::SequenceValue { .. }
+        | TypeKind::SequenceIndex { .. } => Ok(passport.ty.to_string()),
         TypeKind::Theorem { .. }
         | TypeKind::StaticProof(_)
         | TypeKind::ProofTerm { .. }

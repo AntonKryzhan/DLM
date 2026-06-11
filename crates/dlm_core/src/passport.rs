@@ -320,7 +320,7 @@ pub enum TypeKind {
         kind: String,
         item: String,
     },
-    ResultTypeValue {
+    ResultType {
         ok: String,
         err: String,
     },
@@ -331,6 +331,25 @@ pub enum TypeKind {
     },
     PartialityReport {
         subject: String,
+        status: String,
+    },
+    ListType {
+        item: String,
+    },
+    ListValue {
+        item: String,
+        len: usize,
+    },
+    SequenceType {
+        item: String,
+    },
+    SequenceValue {
+        item: String,
+        len: usize,
+    },
+    SequenceIndex {
+        sequence: String,
+        index: usize,
         status: String,
     },
     ConsistencyClaim {
@@ -513,12 +532,19 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::OptionType { item } => write!(f, "OptionType<{item}>") ,
             TypeKind::OptionValue { kind, item } => write!(f, "OptionValue<{kind}:{item}>") ,
-            TypeKind::ResultTypeValue { ok, err } => write!(f, "ResultType<{ok},{err}>") ,
+            TypeKind::ResultType { ok, err } => write!(f, "ResultType<{ok},{err}>") ,
             TypeKind::ResultValue { kind, value, result_type } => {
                 write!(f, "ResultValue<{kind}:{value}:{result_type}>")
             }
             TypeKind::PartialityReport { subject, status } => {
                 write!(f, "PartialityReport<{subject}:{status}>")
+            }
+            TypeKind::ListType { item } => write!(f, "ListType<{item}>") ,
+            TypeKind::ListValue { item, len } => write!(f, "ListValue<{item};len={len}>") ,
+            TypeKind::SequenceType { item } => write!(f, "SequenceType<{item}>") ,
+            TypeKind::SequenceValue { item, len } => write!(f, "SequenceValue<{item};len={len}>") ,
+            TypeKind::SequenceIndex { sequence, index, status } => {
+                write!(f, "SequenceIndex<{sequence}[{index}]:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

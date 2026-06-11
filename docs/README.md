@@ -119,3 +119,5 @@ Adds explicit product elimination, sum case elimination and record pattern repor
 ## v0.61.0 — Option / Result / Partiality Type Foundation
 
 Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordinary mathematical partiality. Partial functions now have a typed target representation instead of hidden null/exception semantics. Readiness delta: Local 42–50% -> 48–56%, Architectural 60–72% -> 64–76%, Fundamental 42–54% -> 46–58%.
+
+- `SEQUENCE_TYPES.md` — finite List/Sequence foundation, explicit indexing boundary, no hidden null/exception/infinite stream.

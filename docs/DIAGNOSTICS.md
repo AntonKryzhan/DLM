@@ -620,3 +620,5 @@ Added `docs/STRUCTURAL_TYPES.md` and the core structural type layer: ProductType
 Raised when product/sum/record elimination or pattern matching is attempted on an invalid subject, mismatched sum branches, missing record fields, duplicate pattern bindings, or proof/truth/theorem/runtime objects.
 
 - `E0932 PartialityTypeError`: invalid Option/Result/Partiality construction, branch mismatch, or proof/truth/runtime object used as ordinary partiality value.
+
+- `E0933 SequenceTypeError` — finite List/Sequence construction, item typing, and explicit index boundary errors.
