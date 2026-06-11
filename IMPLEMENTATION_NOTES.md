@@ -557,3 +557,26 @@ No `.dlm` syntax, checker behavior or runtime behavior changed.
 ## v0.48.0 implementation note
 
 Metatheory dependency auditing is intentionally separate from proof checking. A verified dependency audit is closure evidence for later kernel layers, not a theorem. Axiom-tainted and unsafe-tainted dependencies remain visible in the resulting passport.
+
+## v0.49.0 — Metatheory Closure Report Foundation
+
+This patch continues track **1) Metamathematical foundation** by adding a global closure report layer over verified dependency audits.
+
+New core concepts:
+
+- `MetatheoryClosureReport`;
+- `MetatheoryClosureStatus::{Closed, Open, Rejected}`;
+- `ClosureObligation`;
+- `ClosureObligationKind`;
+- `metatheory_closure_report(...)`;
+- `require_closed_metatheory_closure(...)`;
+- `metatheory_closure_report_passport(...)`;
+- `export_metatheory_closure_report(...)`.
+
+Main law:
+
+```text
+verified dependency audit + closed obligations => closed metatheory closure report
+```
+
+Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.

@@ -2844,3 +2844,26 @@ New follow-up targets for stage 1:
 - conservative extension audit;
 - bridge assumption inventory;
 - proof-kernel dependency contract.
+
+## v0.49.0 — Metatheory Closure Report Foundation
+
+This patch continues track **1) Metamathematical foundation** by adding a global closure report layer over verified dependency audits.
+
+New core concepts:
+
+- `MetatheoryClosureReport`;
+- `MetatheoryClosureStatus::{Closed, Open, Rejected}`;
+- `ClosureObligation`;
+- `ClosureObligationKind`;
+- `metatheory_closure_report(...)`;
+- `require_closed_metatheory_closure(...)`;
+- `metatheory_closure_report_passport(...)`;
+- `export_metatheory_closure_report(...)`.
+
+Main law:
+
+```text
+verified dependency audit + closed obligations => closed metatheory closure report
+```
+
+Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.

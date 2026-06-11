@@ -41,6 +41,7 @@ pub enum DiagnosticKind {
     ModuleImportError,
     ModuleInterfaceError,
     MetatheoryDependencyError,
+    MetatheoryClosureError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -194,6 +195,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::ModuleImportError => "E0917 ModuleImportError",
             DiagnosticKind::ModuleInterfaceError => "E0918 ModuleInterfaceError",
             DiagnosticKind::MetatheoryDependencyError => "E0919 MetatheoryDependencyError",
+            DiagnosticKind::MetatheoryClosureError => "E0920 MetatheoryClosureError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

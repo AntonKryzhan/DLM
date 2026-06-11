@@ -6,8 +6,8 @@
   },
   {
     "path": "docs/AST_IR.md",
-    "bytes": 10222,
-    "sha256": "97d3fbfe65e840e9a393c87c2570106616bf9531c11edcb14f3e98ca189c3cc1"
+    "bytes": 10964,
+    "sha256": "8c19174f9826b3f6ee01e9660e5777c481a5f4403785d07f3cc4c82b31525f8d"
   },
   {
     "path": "docs/BIG_NUMBER_HIERARCHY.md",
@@ -31,8 +31,8 @@
   },
   {
     "path": "docs/COMPILER_PASSES.md",
-    "bytes": 13917,
-    "sha256": "90c26fd250efed2e34939fadbf8a1962e312a8f98aa063005f7039ff09fa30d1"
+    "bytes": 14659,
+    "sha256": "29867f50689fdb4341feb9f9350ed1fe7f4551eb2d47e3e1758da9a19946e970"
   },
   {
     "path": "docs/CONSISTENCY_INCOMPLETENESS.md",
@@ -46,8 +46,8 @@
   },
   {
     "path": "docs/DIAGNOSTICS.md",
-    "bytes": 12094,
-    "sha256": "9a6cceea418807ad0875ffab7fe687c196e77de38715f94d81338f7b78e8b2b1"
+    "bytes": 12836,
+    "sha256": "4360d140eb28fba1332061ae87dab7a592e4370c601ddcc5d095bb6bd5db6d73"
   },
   {
     "path": "docs/DISTRIBUTED_MEMORY_REGION.md",
@@ -103,6 +103,11 @@
     "path": "docs/INFINITY_ARITHMETIC.md",
     "bytes": 1576,
     "sha256": "308f5fb6b80b65c60643c1a36f471787449e6018348274d08911d7f2bb9fec85"
+  },
+  {
+    "path": "docs/METATHEORY_CLOSURE.md",
+    "bytes": 1416,
+    "sha256": "f6c4c7d6150fd31070e0f062d7d550c69db26ab082922845dc6084e8ceca9572"
   },
   {
     "path": "docs/METATHEORY_DEPENDENCIES.md",
@@ -181,8 +186,8 @@
   },
   {
     "path": "docs/README.md",
-    "bytes": 3364,
-    "sha256": "7f6258dd6fd59b36877ce5a0596479bd83128910f5cd708de9c7f0d2895ab567"
+    "bytes": 3456,
+    "sha256": "883807e1bfe59f98c11e11db1af5746efc190abf7a3cf789e093d4282f283158"
   },
   {
     "path": "docs/REMOTE_CHECKPOINT_MIGRATION.md",
@@ -231,8 +236,8 @@
   },
   {
     "path": "docs/TEST_MATRIX.md",
-    "bytes": 14812,
-    "sha256": "df3dca3b1aac1d49db0dded82b67f561d172b8f07fd5b5d7b96945942b1aa036"
+    "bytes": 15554,
+    "sha256": "99432c3b1da166d15c2621b08af511071040a681e460c3f0abb2be73056e959d"
   },
   {
     "path": "docs/UNIVERSE_HIERARCHY.md",

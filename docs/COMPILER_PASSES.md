@@ -605,3 +605,26 @@ The semantic core can now build deterministic module interface reports and verif
 ## v0.48.0 metatheory dependency pass concept
 
 A later compiler pipeline may add a dependency-audit pass after theorem/proof/certificate construction. The MVP exposes the core data model and tests without changing parser/checker/runtime behavior.
+
+## v0.49.0 — Metatheory Closure Report Foundation
+
+This patch continues track **1) Metamathematical foundation** by adding a global closure report layer over verified dependency audits.
+
+New core concepts:
+
+- `MetatheoryClosureReport`;
+- `MetatheoryClosureStatus::{Closed, Open, Rejected}`;
+- `ClosureObligation`;
+- `ClosureObligationKind`;
+- `metatheory_closure_report(...)`;
+- `require_closed_metatheory_closure(...)`;
+- `metatheory_closure_report_passport(...)`;
+- `export_metatheory_closure_report(...)`.
+
+Main law:
+
+```text
+verified dependency audit + closed obligations => closed metatheory closure report
+```
+
+Open obligations keep closure open. Rejected dependency audits reject closure. Axiom/oracle/unsafe taint remains visible.

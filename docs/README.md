@@ -55,3 +55,5 @@ Added the first mathematical universe hierarchy layer:
 See `UNIVERSE_HIERARCHY.md`.
 
 - [Metatheory Dependencies](METATHEORY_DEPENDENCIES.md)
+
+- [METATHEORY_CLOSURE.md](METATHEORY_CLOSURE.md) — metatheory closure report foundation.

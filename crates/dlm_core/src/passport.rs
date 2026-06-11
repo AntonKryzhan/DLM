@@ -203,6 +203,10 @@ pub enum TypeKind {
         subject: String,
         status: String,
     },
+    MetatheoryClosureReport {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -317,6 +321,9 @@ impl fmt::Display for TypeKind {
             TypeKind::AxiomRegistry { theory } => write!(f, "AxiomRegistry<{theory}>"),
             TypeKind::MetatheoryDependencyAudit { subject, status } => {
                 write!(f, "MetatheoryDependencyAudit<{subject}:{status}>")
+            }
+            TypeKind::MetatheoryClosureReport { subject, status } => {
+                write!(f, "MetatheoryClosureReport<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),
