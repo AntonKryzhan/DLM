@@ -578,3 +578,7 @@ Typical causes:
 - edge source or target not present in the inventory;
 - self-edge;
 - rejected conservative-extension evidence.
+
+### E0923 SoundnessBoundaryError
+
+Raised when a soundness boundary ledger contains hidden, duplicated, malformed, or insufficiently tainted boundary assumptions.

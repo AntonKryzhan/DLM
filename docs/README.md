@@ -61,3 +61,5 @@ See `UNIVERSE_HIERARCHY.md`.
 - `CONSERVATIVE_EXTENSION.md` — conservative extension audit foundation.
 
 - `THEOREM_DEPENDENCY_GRAPH.md` — global metatheory inventory and theorem dependency graph foundation.
+
+- [SOUNDNESS_BOUNDARY_LEDGER.md](SOUNDNESS_BOUNDARY_LEDGER.md) — explicit ledger for soundness/reflection/consistency/oracle/unsafe boundaries.

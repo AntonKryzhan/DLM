@@ -790,3 +790,11 @@ Coverage:
 - conservative-extension audit integration;
 - axiom/oracle/unsafe taint preservation;
 - stable and order-sensitive export/fingerprint behavior.
+
+## v0.52 Soundness Boundary Ledger
+
+```powershell
+cargo test -p dlm_core --test soundness_boundary_ledger
+```
+
+Covers soundness/reflection/consistency/truth-lift boundary entries, duplicate rejection, safe bridge rejection, export stability, and ledger passport taint preservation.

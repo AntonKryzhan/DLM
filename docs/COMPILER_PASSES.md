@@ -638,3 +638,7 @@ Future checker integration should run after dependency/closure audits and before
 ## v0.51 metatheory inventory pass candidate
 
 The global metatheory inventory is currently exposed as a core API. It is a future candidate for a project-level audit pass that runs after theorem/dependency/closure/conservative-extension evidence has been collected.
+
+## v0.52 Soundness Boundary Ledger pass direction
+
+Future audit/check pipelines should collect explicit soundness-boundary entries after theorem dependency inventory construction and before final trusted-base closure.

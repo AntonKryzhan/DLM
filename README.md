@@ -661,3 +661,7 @@ TheoremDependencyNode[] + TheoremDependencyEdge[] + ConservativeExtensionAudit[]
 ```
 
 The inventory is an audit object, not a theorem or proof. It preserves axiom/oracle/unsafe taint and rejects hidden graph dependencies.
+
+## v0.52 — Soundness Boundary Ledger
+
+DLM now has a dedicated soundness boundary ledger for explicit soundness/reflection/consistency/truth-lift/oracle/unsafe assumptions. The ledger is an audit artifact and does not become a theorem or static proof.

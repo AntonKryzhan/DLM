@@ -2909,3 +2909,7 @@ TheoremDependencyError[E0922]
 ```
 
 This layer prepares the project for closing the remaining metatheory foundation before starting the ordinary mathematics track.
+
+## v0.52.0 — Soundness Boundary Ledger / Bridge Assumption Inventory
+
+Continues stage 1, metamathematical foundation. Adds explicit accounting for soundness, reflection, consistency, truth-lift, oracle, and unsafe assumptions before moving toward ordinary mathematics or production runtime work.

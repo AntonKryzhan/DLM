@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod axiom_registry;
 pub mod bridge;
+pub mod bridge_assumption;
 pub mod conservative_extension;
 pub mod checker;
 pub mod certificate;
@@ -30,6 +31,7 @@ pub mod theorem_dependency;
 pub use ast::*;
 pub use axiom_registry::{audit_metatheory_dependencies, axiom_decl, axiom_registry, axiom_registry_passport, dependency_entry_from_axiom, dependency_entry_from_passport, export_axiom_registry_text, metatheory_dependency_audit_passport, render_metatheory_dependency_audit_report, require_declared_axiom, require_verified_metatheory_dependency_audit, AxiomDecl, AxiomKind, AxiomRegistry, DependencyAuditStatus, DependencyEntry, DependencyUseKind, MetatheoryDependencyAuditReport};
 pub use bridge::{bridge_law, find_bridge, has_bridge, profile_for_decl, BridgeLaw, BridgeProfile};
+pub use bridge_assumption::{boundary_assumption_from_bridge_profile, boundary_assumption_from_passport, export_soundness_boundary_ledger, render_soundness_boundary_ledger, require_verified_soundness_boundary_ledger, soundness_boundary_ledger, soundness_boundary_ledger_passport, BoundaryAssumptionEntry, BoundaryAssumptionKind, SoundnessBoundaryLedgerReport, SoundnessBoundaryStatus};
 pub use certificate::{certificate_from_closure, certificate_from_tactic_report, compute_certificate_fingerprint, verify_certificate_against_theorem, ProofCertificate, ProofCertificateStatus};
 pub use certificate_audit::{audit_certificate_against_theorem, export_certificate_text, export_certificate_text_unchecked, render_certificate_audit_report, CertificateAuditReport, CertificateAuditStatus};
 pub use conservative_extension::{audit_conservative_extension, conservative_extension_audit_passport, export_conservative_extension_audit_report, preserved_theorem, render_conservative_extension_audit_report, require_verified_conservative_extension_audit, ConservativeExtensionAuditReport, ConservativeExtensionStatus, PreservedTheorem};

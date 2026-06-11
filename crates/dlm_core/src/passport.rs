@@ -216,6 +216,10 @@ pub enum TypeKind {
         subject: String,
         status: String,
     },
+    SoundnessBoundaryLedger {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -339,6 +343,9 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::GlobalMetatheoryInventory { subject, status } => {
                 write!(f, "GlobalMetatheoryInventory<{subject}:{status}>")
+            }
+            TypeKind::SoundnessBoundaryLedger { subject, status } => {
+                write!(f, "SoundnessBoundaryLedger<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

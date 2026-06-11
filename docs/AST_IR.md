@@ -573,3 +573,7 @@ GlobalMetatheoryInventory<subject:status>
 ```
 
 This is an audit/report passport. It is not a theorem, proof term, static proof or truth claim.
+
+## v0.52 Soundness boundary audit artifact
+
+`SoundnessBoundaryLedger<subject:status>` is a passport type for an audit report, not a runtime value, proof, theorem, or truth claim.

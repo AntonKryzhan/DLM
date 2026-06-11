@@ -448,3 +448,7 @@ This keeps development inside track 1: metamathematical foundation.
 This release adds a global inventory layer for theorem foundations. It can assemble theorem nodes, dependency audits, metatheory closure reports and conservative-extension evidence into a single ordered, fingerprinted inventory report.
 
 The release remains inside the first strategic development phase: metamathematical foundation.
+
+## v0.52.0
+
+Added Soundness Boundary Ledger / Bridge Assumption Inventory foundation.

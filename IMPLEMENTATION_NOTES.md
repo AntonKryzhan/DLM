@@ -619,3 +619,7 @@ New diagnostic:
 - `TheoremDependencyError[E0922]`
 
 The implementation rejects mislabeled nodes, duplicate nodes, duplicate fingerprints, unknown edge endpoints and self-edges. It preserves max trust and axiom/oracle/unsafe taint across all inventory evidence.
+
+## v0.52 — Soundness Boundary Ledger
+
+Added `bridge_assumption.rs` with `BoundaryAssumptionEntry`, `SoundnessBoundaryLedgerReport`, `SoundnessBoundaryStatus`, passport construction, rendering/export helpers, and regression tests.

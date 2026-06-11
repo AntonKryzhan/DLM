@@ -18,6 +18,7 @@ pub enum TheoremDependencyNodeKind {
     ModuleImportAudit,
     ProofCertificate,
     RewriteCertificate,
+    SoundnessBoundaryLedger,
     Unknown,
 }
 
@@ -32,6 +33,7 @@ impl fmt::Display for TheoremDependencyNodeKind {
             TheoremDependencyNodeKind::ModuleImportAudit => write!(f, "module_import_audit"),
             TheoremDependencyNodeKind::ProofCertificate => write!(f, "proof_certificate"),
             TheoremDependencyNodeKind::RewriteCertificate => write!(f, "rewrite_certificate"),
+            TheoremDependencyNodeKind::SoundnessBoundaryLedger => write!(f, "soundness_boundary_ledger"),
             TheoremDependencyNodeKind::Unknown => write!(f, "unknown"),
         }
     }
@@ -436,6 +438,7 @@ fn validate_node_kind(
             | (TheoremDependencyNodeKind::ModuleInterface, TypeKind::ModuleInterface { .. })
             | (TheoremDependencyNodeKind::ModuleImportAudit, TypeKind::ModuleImportAudit { .. })
             | (TheoremDependencyNodeKind::RewriteCertificate, TypeKind::RewriteCertificate { .. })
+            | (TheoremDependencyNodeKind::SoundnessBoundaryLedger, TypeKind::SoundnessBoundaryLedger { .. })
             | (TheoremDependencyNodeKind::Unknown, _)
     );
     if ok {
