@@ -4,11 +4,11 @@ version = 4
 
 [[package]]
 name = "dlm_cli"
-version = "0.50.0"
+version = "0.51.0"
 dependencies = [
  "dlm_core",
 ]
 
 [[package]]
 name = "dlm_core"
-version = "0.50.0"
+version = "0.51.0"

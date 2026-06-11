@@ -563,3 +563,13 @@ ConservativeExtensionAudit<base->extension:status>
 ```
 
 It is an audit artifact for metatheory extension safety, not a theorem, proof, static proof, or truth claim.
+
+## v0.51 global metatheory inventory passport
+
+`TypeKind` now includes:
+
+```text
+GlobalMetatheoryInventory<subject:status>
+```
+
+This is an audit/report passport. It is not a theorem, proof term, static proof or truth claim.

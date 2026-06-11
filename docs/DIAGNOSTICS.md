@@ -565,3 +565,16 @@ Raised when a conservative-extension audit is malformed or rejected. Typical cau
 - theorem name changed across extension;
 - theorem proposition changed across extension;
 - duplicate preserved theorem witness.
+
+## E0922 TheoremDependencyError
+
+Raised by the global theorem dependency graph / metatheory inventory layer.
+
+Typical causes:
+
+- mislabeled graph node;
+- duplicate node id;
+- duplicate evidence fingerprint;
+- edge source or target not present in the inventory;
+- self-edge;
+- rejected conservative-extension evidence.

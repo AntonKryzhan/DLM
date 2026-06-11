@@ -648,3 +648,16 @@ Closed(base) + Closed(extension) + PreservedTheorem[] => ConservativeExtensionAu
 ```
 
 The audit rejects theorem renaming, proposition mutation, non-closed bases, empty preservation evidence, and duplicate preservation witnesses. New assumptions are allowed only as visible audit entries and preserve axiom/oracle/unsafe taint.
+
+## v0.51 — Theorem Dependency Graph / Global Metatheory Inventory
+
+DLM now has a global metatheory inventory layer. It collects theorem nodes, dependency-audit nodes, closure-report nodes, conservative-extension audit evidence and graph edges into a single fingerprinted report.
+
+The new layer makes theorem foundations explicit:
+
+```text
+TheoremDependencyNode[] + TheoremDependencyEdge[] + ConservativeExtensionAudit[]
+=> GlobalMetatheoryInventoryReport
+```
+
+The inventory is an audit object, not a theorem or proof. It preserves axiom/oracle/unsafe taint and rejects hidden graph dependencies.

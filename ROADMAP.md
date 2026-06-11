@@ -2886,3 +2886,26 @@ Next metatheory steps before track 2:
 - bridge assumption inventory;
 - global metatheory finalization report;
 - proof/truth/reflection boundary consolidation.
+
+## v0.51.0 — Theorem Dependency Graph / Global Metatheory Inventory
+
+Status: implemented as part of the metamathematical foundation track.
+
+Purpose:
+
+```text
+collect theorem/dependency/closure/conservative-extension evidence into one global graph
+```
+
+Added:
+
+```text
+TheoremDependencyNode
+TheoremDependencyEdge
+GlobalMetatheoryInventoryReport
+MetatheoryInventoryStatus
+GlobalMetatheoryInventory passport
+TheoremDependencyError[E0922]
+```
+
+This layer prepares the project for closing the remaining metatheory foundation before starting the ordinary mathematics track.

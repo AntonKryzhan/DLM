@@ -442,3 +442,9 @@ Open obligations keep closure open. Rejected dependency audits reject closure. A
 - Added stable text export for conservative-extension reports.
 
 This keeps development inside track 1: metamathematical foundation.
+
+## v0.51.0 — Theorem Dependency Graph / Global Metatheory Inventory
+
+This release adds a global inventory layer for theorem foundations. It can assemble theorem nodes, dependency audits, metatheory closure reports and conservative-extension evidence into a single ordered, fingerprinted inventory report.
+
+The release remains inside the first strategic development phase: metamathematical foundation.

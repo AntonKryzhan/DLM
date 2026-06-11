@@ -772,3 +772,21 @@ Coverage:
 - new assumption taint visibility;
 - duplicate preserved theorem rejection;
 - stable, order-sensitive export/fingerprint behavior.
+
+## v0.51 theorem dependency graph tests
+
+Focused test target:
+
+```powershell
+cargo test -p dlm_core --test theorem_dependency_graph
+```
+
+Coverage:
+
+- verified global inventory;
+- mislabeled node rejection;
+- unknown edge endpoint rejection;
+- open closure propagation;
+- conservative-extension audit integration;
+- axiom/oracle/unsafe taint preservation;
+- stable and order-sensitive export/fingerprint behavior.

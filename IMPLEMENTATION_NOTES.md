@@ -597,3 +597,25 @@ The implementation is intentionally conservative:
 - new assumptions are carried as dependency entries and preserve trust/provenance taint.
 
 No runtime behavior and no `.dlm` syntax are changed.
+
+## v0.51.0 — Theorem Dependency Graph / Global Metatheory Inventory
+
+Added `theorem_dependency.rs` as the global metatheory inventory layer above dependency audits, closure reports, module-interface audits and conservative-extension audits.
+
+New objects:
+
+- `TheoremDependencyNodeKind`
+- `TheoremDependencyNode`
+- `TheoremDependencyEdge`
+- `GlobalMetatheoryInventoryReport`
+- `MetatheoryInventoryStatus`
+
+New passport type:
+
+- `TypeKind::GlobalMetatheoryInventory { subject, status }`
+
+New diagnostic:
+
+- `TheoremDependencyError[E0922]`
+
+The implementation rejects mislabeled nodes, duplicate nodes, duplicate fingerprints, unknown edge endpoints and self-edges. It preserves max trust and axiom/oracle/unsafe taint across all inventory evidence.

@@ -59,3 +59,5 @@ See `UNIVERSE_HIERARCHY.md`.
 - [METATHEORY_CLOSURE.md](METATHEORY_CLOSURE.md) — metatheory closure report foundation.
 
 - `CONSERVATIVE_EXTENSION.md` — conservative extension audit foundation.
+
+- `THEOREM_DEPENDENCY_GRAPH.md` — global metatheory inventory and theorem dependency graph foundation.

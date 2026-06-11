@@ -634,3 +634,7 @@ Open obligations keep closure open. Rejected dependency audits reject closure. A
 The conservative-extension audit layer is currently a core API/tested metatheory layer. It is not yet wired into parser syntax or the default checker pipeline.
 
 Future checker integration should run after dependency/closure audits and before ordinary mathematics is accepted as part of a finalized metatheory.
+
+## v0.51 metatheory inventory pass candidate
+
+The global metatheory inventory is currently exposed as a core API. It is a future candidate for a project-level audit pass that runs after theorem/dependency/closure/conservative-extension evidence has been collected.

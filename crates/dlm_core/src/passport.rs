@@ -212,6 +212,10 @@ pub enum TypeKind {
         extension: String,
         status: String,
     },
+    GlobalMetatheoryInventory {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -332,6 +336,9 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::ConservativeExtensionAudit { base, extension, status } => {
                 write!(f, "ConservativeExtensionAudit<{base}->{extension}:{status}>")
+            }
+            TypeKind::GlobalMetatheoryInventory { subject, status } => {
+                write!(f, "GlobalMetatheoryInventory<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

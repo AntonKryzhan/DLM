@@ -43,6 +43,7 @@ pub enum DiagnosticKind {
     MetatheoryDependencyError,
     MetatheoryClosureError,
     ConservativeExtensionError,
+    TheoremDependencyError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -198,6 +199,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::MetatheoryDependencyError => "E0919 MetatheoryDependencyError",
             DiagnosticKind::MetatheoryClosureError => "E0920 MetatheoryClosureError",
             DiagnosticKind::ConservativeExtensionError => "E0921 ConservativeExtensionError",
+            DiagnosticKind::TheoremDependencyError => "E0922 TheoremDependencyError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

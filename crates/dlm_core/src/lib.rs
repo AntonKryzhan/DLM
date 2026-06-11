@@ -25,6 +25,7 @@ pub mod rewrite_normalization;
 pub mod soundness;
 pub mod statement;
 pub mod tactic;
+pub mod theorem_dependency;
 
 pub use ast::*;
 pub use axiom_registry::{audit_metatheory_dependencies, axiom_decl, axiom_registry, axiom_registry_passport, dependency_entry_from_axiom, dependency_entry_from_passport, export_axiom_registry_text, metatheory_dependency_audit_passport, render_metatheory_dependency_audit_report, require_declared_axiom, require_verified_metatheory_dependency_audit, AxiomDecl, AxiomKind, AxiomRegistry, DependencyAuditStatus, DependencyEntry, DependencyUseKind, MetatheoryDependencyAuditReport};
@@ -52,3 +53,4 @@ pub use rewrite_normalization::{audit_rewrite_normalization_report, export_rewri
 pub use soundness::{BridgeSoundnessProfile, SoundnessIssue, SoundnessSummary};
 pub use statement::{axiom_theorem, goal_decl, goal_passport, hypothesis_decl, hypothesis_passport, proposition_of, require_statement_like, require_static_proof, statement_decl, statement_passport, theorem_decl, theorem_from_static_proof, DeclarationKind, GoalDecl, HypothesisDecl, StatementDecl, TheoremDecl};
 pub use tactic::{execute_tactic_script, TacticCommand, TacticScript, TacticScriptReport, TacticScriptStatus, TacticScriptStep, TacticStepIndex};
+pub use theorem_dependency::{export_global_metatheory_inventory, global_metatheory_inventory, global_metatheory_inventory_passport, render_global_metatheory_inventory, require_verified_global_metatheory_inventory, theorem_dependency_edge, theorem_dependency_node_from_passport, GlobalMetatheoryInventoryReport, MetatheoryInventoryStatus, TheoremDependencyEdge, TheoremDependencyNode, TheoremDependencyNodeKind};
