@@ -51,8 +51,8 @@
   },
   {
     "path": "docs/DIAGNOSTICS.md",
-    "bytes": 13934,
-    "sha256": "4a0d9f790e2ac8544f317745107d56532f7720c14a85f8eda1b85d8c176c0aa5"
+    "bytes": 14033,
+    "sha256": "d7c70a36c4ad3acf5255d244556e16cd9e33e34ffd8c55a0317f781a82532245"
   },
   {
     "path": "docs/DISTRIBUTED_MEMORY_REGION.md",
@@ -123,6 +123,11 @@
     "path": "docs/METATHEORY_DEPENDENCIES.md",
     "bytes": 1882,
     "sha256": "b3fb26e5b9725884c3ab0e72c04796f3ff441e48e4c93170ceb4143644ca679f"
+  },
+  {
+    "path": "docs/METATHEORY_FOUNDATION_EXIT.md",
+    "bytes": 2736,
+    "sha256": "de4ae72264dcc197d745d0b1cfd28daabaf7a418d651559d6da2cfdfc9bfae65"
   },
   {
     "path": "docs/META_LEVELS.md",
@@ -196,8 +201,8 @@
   },
   {
     "path": "docs/README.md",
-    "bytes": 4119,
-    "sha256": "ad07fb8f7a68783d6d4629639fca9b8fa3193e813e9fc81b90eca777cb71f86b"
+    "bytes": 4229,
+    "sha256": "6b98c9037f793c39b9c5ccb7fef781ae3006cca733ce9761d80ed0f1ac181ddc"
   },
   {
     "path": "docs/REMOTE_CHECKPOINT_MIGRATION.md",
@@ -251,8 +256,8 @@
   },
   {
     "path": "docs/TEST_MATRIX.md",
-    "bytes": 16980,
-    "sha256": "e0377b8b6465687ce7732b79743e46269608d305c9c1fff38069fe71550e37a6"
+    "bytes": 17267,
+    "sha256": "f9827e3d0022a8d7f680322f16ade25f74fb10d2e07db1ff071b39e08bb3049c"
   },
   {
     "path": "docs/THEOREM_DEPENDENCY_GRAPH.md",

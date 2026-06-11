@@ -12,6 +12,7 @@ pub mod induction;
 pub mod ids;
 pub mod meta_level;
 pub mod metatheory_closure;
+pub mod metatheory_foundation;
 pub mod module_interface;
 pub mod module_system;
 pub mod parser;
@@ -43,6 +44,7 @@ pub use ids::{BridgeId, FileId, IdAllocator, ModuleId, ProofId, TheoryId, TypeId
 pub use induction::{induction_base_case, induction_base_case_decl, induction_proof_decl, induction_step_case, induction_step_case_decl, nat_base_case_proposition, nat_induction_conclusion, nat_induction_proof, nat_induction_scheme, nat_induction_scheme_decl, nat_step_case_proposition, require_induction_base_case, require_induction_proof, require_induction_step_case, require_nat_induction_scheme, theorem_from_induction_proof, InductionBaseCaseDecl, InductionProofDecl, InductionStepCaseDecl, NatInductionSchemeDecl};
 pub use meta_level::{meta_level_passport, meta_quote_passport, object_level_passport, required_observer_level, validate_meta_observer, MetaAccess, MetaLevelContext, MetaLevelIndex, MetaStage};
 pub use metatheory_closure::{closed_closure_obligation, closure_obligation, export_metatheory_closure_report, metatheory_closure_report, metatheory_closure_report_passport, open_closure_obligation, render_metatheory_closure_report, require_closed_metatheory_closure, ClosureObligation, ClosureObligationKind, MetatheoryClosureReport, MetatheoryClosureStatus};
+pub use metatheory_foundation::{export_metatheory_foundation_exit_report, metatheory_exit_criterion, metatheory_exit_criterion_from_passport, metatheory_exit_criterion_from_trusted_base_report, metatheory_foundation_exit_passport, metatheory_foundation_exit_report, render_metatheory_foundation_exit_report, require_metatheory_foundation_ready, required_metatheory_exit_criteria, MetatheoryExitCriterion, MetatheoryExitCriterionKind, MetatheoryExitCriterionStatus, MetatheoryFoundationExitReport, MetatheoryFoundationStatus};
 pub use module_interface::{audit_module_import, export_module_interface_text, module_import_audit_passport, module_interface, module_interface_passport, public_interface_symbols, render_module_import_audit_report, require_interface_symbol, require_verified_module_import_audit, InterfaceSymbol, ModuleImportAuditReport, ModuleImportAuditStatus, ModuleInterface};
 pub use module_system::{build_import_graph, import_decl, import_graph_passport, imported_public_symbols, module_export_passport, module_manifest, module_manifest_passport, private_export, public_export, require_public_export, validate_module_manifest, ExportDecl, ExportVisibility, ImportDecl, ImportEdge, ImportGraph, ModuleManifest};
 pub use parser::{parse_expr, parse_module};

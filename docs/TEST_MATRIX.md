@@ -807,3 +807,11 @@ cargo test -p dlm_core --test trusted_base_closure
 ```
 
 Covers closed/open/rejected trusted-base reports, required evidence kinds, duplicate evidence rejection, export stability and taint preservation.
+
+### v0.54 Metatheory Foundation Exit
+
+```powershell
+cargo test -p dlm_core --test metatheory_foundation_exit
+```
+
+Covers ready/incomplete/rejected exit reports, required criteria, duplicate evidence, taint preservation, trusted-base conversion, export stability, and passport identity.

@@ -46,6 +46,7 @@ pub enum DiagnosticKind {
     TheoremDependencyError,
     SoundnessBoundaryError,
     TrustedBaseError,
+    MetatheoryFoundationError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -204,6 +205,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::TheoremDependencyError => "E0922 TheoremDependencyError",
             DiagnosticKind::SoundnessBoundaryError => "E0923 SoundnessBoundaryError",
             DiagnosticKind::TrustedBaseError => "E0924 TrustedBaseError",
+            DiagnosticKind::MetatheoryFoundationError => "E0925 MetatheoryFoundationError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

@@ -653,3 +653,7 @@ A future release-fast path may erase runtime metadata only after the correspondi
 ## v0.53.0 — Trusted Base Closure / Final Metatheory Foundation Gate
 
 Added `trusted_base.rs` as the final gate for the current metatheory-foundation track. The new report aggregates axiom registry, dependency audit, closure report, global inventory and soundness-boundary ledger evidence. It preserves max trust and axiom/oracle/unsafe taint, rejects duplicate or missing required evidence, and emits `TrustedBaseClosure<subject:status>` passports.
+
+## v0.54.0 — Metatheory Foundation Exit
+
+Added `metatheory_foundation.rs`, `MetatheoryExitCriterion`, `MetatheoryFoundationExitReport`, and the `MetatheoryFoundationExit` passport type. The report is ready only when all required metatheory exit criteria are satisfied; open/missing criteria keep it incomplete, and failed/duplicate criteria reject it.

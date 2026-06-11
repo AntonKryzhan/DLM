@@ -224,6 +224,10 @@ pub enum TypeKind {
         subject: String,
         status: String,
     },
+    MetatheoryFoundationExit {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -353,6 +357,9 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::TrustedBaseClosure { subject, status } => {
                 write!(f, "TrustedBaseClosure<{subject}:{status}>")
+            }
+            TypeKind::MetatheoryFoundationExit { subject, status } => {
+                write!(f, "MetatheoryFoundationExit<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

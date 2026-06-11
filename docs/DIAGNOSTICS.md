@@ -587,3 +587,5 @@ Raised when a soundness boundary ledger contains hidden, duplicated, malformed, 
 ### E0924 TrustedBaseError
 
 Raised when the final trusted-base closure gate is missing required evidence, receives rejected evidence, detects duplicate evidence ids/fingerprints, or receives a non-foundation passport as trusted-base evidence.
+
+- `E0925 MetatheoryFoundationError` — metatheory foundation exit/checklist readiness violation.
