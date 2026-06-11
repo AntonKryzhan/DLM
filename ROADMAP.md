@@ -3246,3 +3246,7 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 ### v0.62 — List / Sequence Type Foundation
 
 Stage 2 gains finite collection objects: ListType/ListValue, SequenceType/SequenceValue and SequenceIndex reports. This is a core-only semantic layer; parser/runtime/backend integration remains future work.
+
+### v0.63 — Fold / Map / Traversal Boundary
+
+Adds audited finite traversal objects over explicit finite collections: `MapTraversal`, `FoldTraversal`, and `TraversalReport`. This closes the first safe bridge from finite collections to reusable computation patterns without hidden recursion, exceptions, or unbounded normalization.

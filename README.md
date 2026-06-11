@@ -833,3 +833,7 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 ### v0.62 — List / Sequence Type Foundation
 
 Adds explicit finite `List<T>` and `Sequence<T>` semantic reports with typed elements, explicit length, Option-style indexing boundary, taint preservation, and proof/truth/runtime rejection.
+
+### v0.63 — Fold / Map / Traversal Boundary
+
+`v0.63` adds explicit finite traversal reports for `map` and `fold` over `List`/`Sequence` values. Traversals are bounded by collection length and explicit fuel, consume `FunctionContract` evidence, preserve taint, and never become proofs, theorems, truth claims, runtime witnesses or hidden normalization loops.

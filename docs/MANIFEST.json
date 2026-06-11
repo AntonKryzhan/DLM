@@ -67,6 +67,7 @@
     "VIRTUAL_RESOURCE_POOL.md",
     "docs/STRUCTURAL_ELIMINATION.md",
     "docs/PARTIALITY_TYPES.md",
-    "docs/SEQUENCE_TYPES.md"
+    "docs/SEQUENCE_TYPES.md",
+    "docs/TRAVERSAL_BOUNDARY.md"
   ]
 }

@@ -792,3 +792,7 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 ## v0.62 — Sequence/List foundation
 
 Introduces `sequence.rs`, `sequence_types` tests, `TypeKind::{ListType,ListValue,SequenceType,SequenceValue,SequenceIndex}` and `E0933 SequenceTypeError`. Indexing reports `Option<T>` boundary instead of throwing runtime exceptions.
+
+## v0.63 — Traversal boundary
+
+Implemented finite `map`/`fold` traversal reports over `ListValue` and `SequenceValue`. Traversals require exact function-contract domain/codomain matching, explicit fuel, and preserve Axiom/Oracle/Unsafe taint. `VerifiedBounded` is only produced for pure, total, verified, clean contracts with enough fuel.

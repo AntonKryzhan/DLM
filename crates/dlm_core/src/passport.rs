@@ -352,6 +352,21 @@ pub enum TypeKind {
         index: usize,
         status: String,
     },
+    MapTraversal {
+        source: String,
+        function: String,
+        result: String,
+    },
+    FoldTraversal {
+        source: String,
+        step: String,
+        result: String,
+        fuel: usize,
+    },
+    TraversalReport {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -545,6 +560,15 @@ impl fmt::Display for TypeKind {
             TypeKind::SequenceValue { item, len } => write!(f, "SequenceValue<{item};len={len}>") ,
             TypeKind::SequenceIndex { sequence, index, status } => {
                 write!(f, "SequenceIndex<{sequence}[{index}]:{status}>")
+            }
+            TypeKind::MapTraversal { source, function, result } => {
+                write!(f, "MapTraversal<{source}:{function}=>{result}>")
+            }
+            TypeKind::FoldTraversal { source, step, result, fuel } => {
+                write!(f, "FoldTraversal<{source}:{step}=>{result};fuel={fuel}>")
+            }
+            TypeKind::TraversalReport { subject, status } => {
+                write!(f, "TraversalReport<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

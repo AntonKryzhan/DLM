@@ -595,3 +595,11 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 ## v0.62.0
 
 Added finite List/Sequence foundation with explicit item typing, explicit finite length, in-bounds/out-of-bounds index reports, stable exports and taint preservation.
+
+## v0.63.0
+
+- Added `traversal` module.
+- Added `MapTraversalReport`, `FoldTraversalReport`, `TraversalStatus`.
+- Added `TypeKind::MapTraversal`, `TypeKind::FoldTraversal`, `TypeKind::TraversalReport`.
+- Added `DiagnosticKind::TraversalError` / `E0934`.
+- Added tests for bounded map/fold traversal, fuel rejection, contract mismatch, taint preservation and stable exports.

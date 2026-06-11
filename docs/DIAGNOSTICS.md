@@ -622,3 +622,7 @@ Raised when product/sum/record elimination or pattern matching is attempted on a
 - `E0932 PartialityTypeError`: invalid Option/Result/Partiality construction, branch mismatch, or proof/truth/runtime object used as ordinary partiality value.
 
 - `E0933 SequenceTypeError` — finite List/Sequence construction, item typing, and explicit index boundary errors.
+
+## E0934 TraversalError
+
+Raised when a finite traversal violates the traversal boundary: wrong function contract domain/codomain, invalid accumulator, rejected fuel, or an attempt to consume proof/theorem/truth/runtime evidence as an ordinary traversal value.
