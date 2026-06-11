@@ -172,7 +172,7 @@ fn trusted_base_evidence_from_passport_accepts_only_foundation_artifacts() {
     let err = trusted_base_evidence_from_passport("final_gate", &passport, 1).unwrap_err();
     assert_eq!(err.kind, DiagnosticKind::TrustedBaseError);
 
-    let raw_nat = Passport::literal_nat("Core", 1);
+    let raw_nat = Passport::literal_nat("Core");
     let err = trusted_base_evidence_from_passport("not_foundation", &raw_nat, 1).unwrap_err();
     assert_eq!(err.kind, DiagnosticKind::TrustedBaseError);
 }
