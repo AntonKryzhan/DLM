@@ -665,3 +665,34 @@ The inventory is an audit object, not a theorem or proof. It preserves axiom/ora
 ## v0.52 — Soundness Boundary Ledger
 
 DLM now has a dedicated soundness boundary ledger for explicit soundness/reflection/consistency/truth-lift/oracle/unsafe assumptions. The ledger is an audit artifact and does not become a theorem or static proof.
+
+## Strategic direction — high-performance native compilation
+
+DLM also has a long-term performance direction: a restricted `DLM-Fast` subset should eventually compile to native code at C/C++/Rust level.
+
+The strategy is not to carry proof/passport/audit metadata through every hot runtime instruction. The strategy is:
+
+```text
+proof-carrying compile time;
+proof-erased runtime.
+```
+
+DLM should use passports, proofs, capabilities, and invariants before code generation, then erase verified evidence and emit minimal machine-level representations for hot paths.
+
+Future components:
+
+```text
+CoreIR / FastIR
+OptimizationContractIR
+ProofErasure
+PassportErasure
+Effect/capability inference
+Ownership/region memory model
+LLVM / MLIR / Cranelift backend
+SIMD / PGO / LTO / ASM inspection
+```
+
+The potential advantage is proof-guided optimization: if DLM can prove bounds, noalias, no allocation, fixed shapes, sortedness, nonzero values, or static loop bounds, then a backend can remove checks and specialize code more aggressively than a normal compiler can from syntax alone.
+
+This is a late-stage direction and does not replace the current priority: finishing the metamathematical foundation first.
+

@@ -6,8 +6,8 @@
   },
   {
     "path": "docs/AST_IR.md",
-    "bytes": 11455,
-    "sha256": "62c22ef21b821601b19c88d661488a8ec4397b541567716995d1b2bb8519cfeb"
+    "bytes": 11635,
+    "sha256": "8bc798647e5e6416aa9b85f02a1752a03c20b60ab4b6d50e2c112e4dad727515"
   },
   {
     "path": "docs/BIG_NUMBER_HIERARCHY.md",
@@ -31,8 +31,8 @@
   },
   {
     "path": "docs/COMPILER_PASSES.md",
-    "bytes": 15281,
-    "sha256": "5b417d56da58942d2fd9e0671e9ccca756fa03675e877f3994b7a431e4fd5966"
+    "bytes": 15500,
+    "sha256": "fe932c3fb3202207cea9c83add8a2ec1bedbe6f1bfe1e65f6252ec7a10be8ca9"
   },
   {
     "path": "docs/CONSERVATIVE_EXTENSION.md",
@@ -51,8 +51,8 @@
   },
   {
     "path": "docs/DIAGNOSTICS.md",
-    "bytes": 13526,
-    "sha256": "9f2aaa7395b825c5f2480c7244777588ac2c19dbcc60459ddfa124b25c65ef86"
+    "bytes": 13689,
+    "sha256": "1d57b6da57b53cfeac5d94f3000f7557b0715f5d22dd2b467528b0b3f98ebcbf"
   },
   {
     "path": "docs/DISTRIBUTED_MEMORY_REGION.md",
@@ -98,6 +98,11 @@
     "path": "docs/GRAMMAR.md",
     "bytes": 6245,
     "sha256": "3868cf561c1f493059b5860fb7b7f21c9f9c43bbc0c2ec9dc79659623743e023"
+  },
+  {
+    "path": "docs/HIGH_PERFORMANCE_COMPILATION.md",
+    "bytes": 11225,
+    "sha256": "6bad6010b287923341f23e0dc012967fbc2710bf60c0e1f5ccfd80bcb2b1700a"
   },
   {
     "path": "docs/HISTORY_CHAIN.md",
@@ -191,8 +196,8 @@
   },
   {
     "path": "docs/README.md",
-    "bytes": 3638,
-    "sha256": "56e33dc34aa3fb33eed334e9f1ef76aca718ce7eaee9aeb51455a87213272cb7"
+    "bytes": 3969,
+    "sha256": "3d13c30c6198344e43c0d2e1c3ca6884073468f430050784011c34c47a290671"
   },
   {
     "path": "docs/REMOTE_CHECKPOINT_MIGRATION.md",
@@ -220,6 +225,11 @@
     "sha256": "72a7b088ee9ff1fe2fd49c1d0c85ade2f55c53b849b9118da323328d8864f53d"
   },
   {
+    "path": "docs/SOUNDNESS_BOUNDARY_LEDGER.md",
+    "bytes": 2360,
+    "sha256": "a83ef01da8f2e5faf42bbdcf25172d1335c881b6eb49c522a280cc726651de7d"
+  },
+  {
     "path": "docs/SPEC.md",
     "bytes": 9935,
     "sha256": "d79631265f9cba9745174cf01789723e9b52a46a04b554d0f3180f69520be103"
@@ -241,8 +251,8 @@
   },
   {
     "path": "docs/TEST_MATRIX.md",
-    "bytes": 16447,
-    "sha256": "032c8df382ca025744f12e737f058490bf8d70c1cf5da9b25e1405cfeb2177dd"
+    "bytes": 16730,
+    "sha256": "6ebc73da6cd6b078582ff5cbb397e36f9a5189bc6bd39934e2ca9b84867844e5"
   },
   {
     "path": "docs/THEOREM_DEPENDENCY_GRAPH.md",
@@ -263,5 +273,10 @@
     "path": "docs/VIRTUAL_RESOURCE_POOL.md",
     "bytes": 1708,
     "sha256": "c4b658b1c0628112c865e908557d3d4a7070beb4f51aeec3cece235ee93233e8"
+  },
+  {
+    "path": "docs/MANIFEST.json",
+    "bytes": 8126,
+    "sha256": "3d470c7f0c9c5c01d4859c7c3cbd1f4ad2c3bd1c35622642fd6c1f5fbceea29f"
   }
 ]

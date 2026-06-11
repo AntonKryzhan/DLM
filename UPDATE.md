@@ -452,3 +452,12 @@ The release remains inside the first strategic development phase: metamathematic
 ## v0.52.0
 
 Added Soundness Boundary Ledger / Bridge Assumption Inventory foundation.
+
+## Documentation update — High-Performance Compilation Track
+
+Added a strategic roadmap document for future native high-performance compilation:
+
+- `docs/HIGH_PERFORMANCE_COMPILATION.md`
+
+This does not alter the current implementation order. It records the future path for `DLM-Fast`, proof/passport erasure, optimization contracts, LLVM/MLIR/Cranelift backends, SIMD/PGO/LTO modes, and benchmark gates against C++/Rust/C/Zig/Fortran.
+

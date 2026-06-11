@@ -623,3 +623,29 @@ The implementation rejects mislabeled nodes, duplicate nodes, duplicate fingerpr
 ## v0.52 — Soundness Boundary Ledger
 
 Added `bridge_assumption.rs` with `BoundaryAssumptionEntry`, `SoundnessBoundaryLedgerReport`, `SoundnessBoundaryStatus`, passport construction, rendering/export helpers, and regression tests.
+
+## Strategic note — High-performance compilation track
+
+This notes file now records a future high-performance compilation track.
+
+No Rust code is changed by this documentation patch. The track is intentionally placed after the current staged plan, because performance compilation depends on stable IR, proof erasure, passport erasure, effect inference, and a trustworthy proof/audit foundation.
+
+Key future compiler concepts:
+
+```text
+OptimizationContractIR
+FastIR
+ProofErasure
+PassportErasure
+Effect/capability inference
+Region/ownership memory model
+LLVM/MLIR/Cranelift backend ladder
+PGO/LTO/SIMD build modes
+```
+
+Main implementation constraint:
+
+```text
+A future release-fast path may erase runtime metadata only after the corresponding proof/passport evidence has been validated and recorded in an erasure report.
+```
+

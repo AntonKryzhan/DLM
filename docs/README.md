@@ -63,3 +63,4 @@ See `UNIVERSE_HIERARCHY.md`.
 - `THEOREM_DEPENDENCY_GRAPH.md` — global metatheory inventory and theorem dependency graph foundation.
 
 - [SOUNDNESS_BOUNDARY_LEDGER.md](SOUNDNESS_BOUNDARY_LEDGER.md) — explicit ledger for soundness/reflection/consistency/oracle/unsafe boundaries.
+- [HIGH_PERFORMANCE_COMPILATION.md](HIGH_PERFORMANCE_COMPILATION.md) — future DLM-Fast/native compilation, proof-erasure, passport-erasure, LLVM/MLIR backend and benchmark strategy.

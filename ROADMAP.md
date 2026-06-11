@@ -2913,3 +2913,97 @@ This layer prepares the project for closing the remaining metatheory foundation 
 ## v0.52.0 — Soundness Boundary Ledger / Bridge Assumption Inventory
 
 Continues stage 1, metamathematical foundation. Adds explicit accounting for soundness, reflection, consistency, truth-lift, oracle, and unsafe assumptions before moving toward ordinary mathematics or production runtime work.
+
+---
+
+## 20. Strategic Track — High-Performance Native Compilation
+
+This track is a strategic future direction, not the current implementation focus. It must not interrupt the fixed development order:
+
+```text
+1) Metamathematical foundation
+2) Ordinary language mathematics
+3) Proof/audit architecture
+4) Full proof kernel
+5) Standard library
+6) Runtime/production execution
+7) High-performance native compilation
+```
+
+The goal is not to claim that DLM is magically faster than every language in every workload. The realistic target is:
+
+```text
+DLM-Fast compiles a restricted, proof-erased subset to native code at C/C++/Rust level,
+and can outperform ordinary implementations in domains where proof/passport facts enable stronger optimization.
+```
+
+Required future layers:
+
+```text
+CoreIR / FastIR
+OptimizationContractIR
+ProofErasure
+PassportErasure
+Effect/capability inference
+Ownership/region memory model
+NoAlloc / NoAlias / BoundsProof
+LLVM backend
+MLIR dialects
+Cranelift/JIT backend
+SIMD/vectorization contracts
+PGO/LTO build modes
+ASM emission and inspection
+Benchmark suite against C++/Rust/C/Zig/Fortran
+Differential testing against reference runtime
+```
+
+Main performance law:
+
+```text
+proof/passport/audit evidence is used before code generation;
+hot runtime code receives erased, minimal machine-level representations only after verified erasure.
+```
+
+Examples of proof-guided optimization facts:
+
+```text
+index is in bounds;
+integer overflow is impossible;
+array is sorted;
+arguments do not alias;
+loop bound is static;
+function is pure;
+function allocates no memory;
+matrix shape is fixed;
+value is aligned for SIMD;
+graph is acyclic;
+query predicate is monotonic.
+```
+
+These facts can justify:
+
+```text
+bounds-check removal;
+overflow-check removal;
+loop unrolling;
+SIMD vectorization;
+branchless lowering;
+allocation removal;
+layout specialization;
+parallel reductions;
+query-plan specialization;
+cache-friendly data layout.
+```
+
+Safety constraints:
+
+```text
+Fast mode must not hide axiom/oracle/unsafe taint.
+Fast mode must not turn RuntimeWitness into StaticProof.
+Fast mode must not erase proof/passport evidence without an erasure certificate.
+Fast mode must not compile reflection-heavy proof construction into hot loops.
+Fast mode must remain explainable through build/audit artifacts.
+```
+
+See `docs/HIGH_PERFORMANCE_COMPILATION.md`.
+
