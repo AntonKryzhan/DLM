@@ -237,6 +237,12 @@ pub fn unify_termination_budget(
 
     for report in map_reports {
         status = status.max(status_from_traversal(report.status));
+        for obligation in &report.open_obligations {
+            obligations.push(format!(
+                "map traversal `{}` obligation: {obligation}",
+                report.function_contract
+            ));
+        }
         if report.fuel < report.len {
             status = TerminationBudgetStatus::RejectedBudgetExceeded;
             obligations.push(format!(
@@ -247,6 +253,12 @@ pub fn unify_termination_budget(
     }
     for report in fold_reports {
         status = status.max(status_from_traversal(report.status));
+        for obligation in &report.open_obligations {
+            obligations.push(format!(
+                "fold traversal `{}` obligation: {obligation}",
+                report.step_contract
+            ));
+        }
         if report.fuel < report.len {
             status = TerminationBudgetStatus::RejectedBudgetExceeded;
             obligations.push(format!(
@@ -258,6 +270,12 @@ pub fn unify_termination_budget(
 
     for scheme in recursion_schemes {
         status = status.max(status_from_recursion(scheme.status));
+        for obligation in &scheme.open_obligations {
+            obligations.push(format!(
+                "recursion scheme `{}` obligation: {obligation}",
+                scheme.name
+            ));
+        }
         if scheme.initial_fuel == 0 {
             status = TerminationBudgetStatus::RejectedBudgetExceeded;
             obligations.push(format!("recursion scheme `{}` has zero initial fuel", scheme.name));
@@ -265,6 +283,12 @@ pub fn unify_termination_budget(
     }
     for call in recursive_calls {
         status = status.max(status_from_recursion(call.status));
+        for obligation in &call.open_obligations {
+            obligations.push(format!(
+                "recursive call `{}` obligation: {obligation}",
+                call.scheme
+            ));
+        }
         if call.fuel_before == 0 || call.fuel_after >= call.fuel_before {
             status = TerminationBudgetStatus::RejectedBudgetExceeded;
             obligations.push(format!(
