@@ -582,3 +582,8 @@ Typical causes:
 ### E0923 SoundnessBoundaryError
 
 Raised when a soundness boundary ledger contains hidden, duplicated, malformed, or insufficiently tainted boundary assumptions.
+
+
+### E0924 TrustedBaseError
+
+Raised when the final trusted-base closure gate is missing required evidence, receives rejected evidence, detects duplicate evidence ids/fingerprints, or receives a non-foundation passport as trusted-base evidence.

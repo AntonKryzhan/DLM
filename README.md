@@ -696,3 +696,7 @@ The potential advantage is proof-guided optimization: if DLM can prove bounds, n
 
 This is a late-stage direction and does not replace the current priority: finishing the metamathematical foundation first.
 
+
+### v0.53 — Trusted Base Closure / Final Metatheory Foundation Gate
+
+DLM now has a final metatheory-foundation gate: `TrustedBaseClosure`. It combines the axiom registry, dependency audit, metatheory closure report, global theorem inventory, and soundness boundary ledger into one auditable trusted-base closure artifact. This does not create a theorem or proof; it records whether the metamathematical foundation is closed, open, or rejected under explicit evidence.

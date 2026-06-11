@@ -220,6 +220,10 @@ pub enum TypeKind {
         subject: String,
         status: String,
     },
+    TrustedBaseClosure {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -346,6 +350,9 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::SoundnessBoundaryLedger { subject, status } => {
                 write!(f, "SoundnessBoundaryLedger<{subject}:{status}>")
+            }
+            TypeKind::TrustedBaseClosure { subject, status } => {
+                write!(f, "TrustedBaseClosure<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

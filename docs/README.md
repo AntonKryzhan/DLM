@@ -64,3 +64,5 @@ See `UNIVERSE_HIERARCHY.md`.
 
 - [SOUNDNESS_BOUNDARY_LEDGER.md](SOUNDNESS_BOUNDARY_LEDGER.md) — explicit ledger for soundness/reflection/consistency/oracle/unsafe boundaries.
 - [HIGH_PERFORMANCE_COMPILATION.md](HIGH_PERFORMANCE_COMPILATION.md) — future DLM-Fast/native compilation, proof-erasure, passport-erasure, LLVM/MLIR backend and benchmark strategy.
+
+- `TRUSTED_BASE_CLOSURE.md` — final metatheory-foundation gate combining registry, dependency, closure, inventory and soundness-boundary evidence.

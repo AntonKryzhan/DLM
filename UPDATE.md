@@ -461,3 +461,7 @@ Added a strategic roadmap document for future native high-performance compilatio
 
 This does not alter the current implementation order. It records the future path for `DLM-Fast`, proof/passport erasure, optimization contracts, LLVM/MLIR/Cranelift backends, SIMD/PGO/LTO modes, and benchmark gates against C++/Rust/C/Zig/Fortran.
 
+
+## v0.53.0
+
+Added the Trusted Base Closure foundation gate. This closes the current metatheory-foundation audit chain by combining registry, dependency, closure, inventory, and soundness-boundary evidence into one final report.

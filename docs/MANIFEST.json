@@ -31,8 +31,8 @@
   },
   {
     "path": "docs/COMPILER_PASSES.md",
-    "bytes": 15500,
-    "sha256": "fe932c3fb3202207cea9c83add8a2ec1bedbe6f1bfe1e65f6252ec7a10be8ca9"
+    "bytes": 15766,
+    "sha256": "4a447223325125ab7cd2d731ff59e5a148a4c3a9f6cf39caf7a9a486dd8022a0"
   },
   {
     "path": "docs/CONSERVATIVE_EXTENSION.md",
@@ -51,8 +51,8 @@
   },
   {
     "path": "docs/DIAGNOSTICS.md",
-    "bytes": 13689,
-    "sha256": "1d57b6da57b53cfeac5d94f3000f7557b0715f5d22dd2b467528b0b3f98ebcbf"
+    "bytes": 13934,
+    "sha256": "4a0d9f790e2ac8544f317745107d56532f7720c14a85f8eda1b85d8c176c0aa5"
   },
   {
     "path": "docs/DISTRIBUTED_MEMORY_REGION.md",
@@ -196,8 +196,8 @@
   },
   {
     "path": "docs/README.md",
-    "bytes": 3969,
-    "sha256": "3d13c30c6198344e43c0d2e1c3ca6884073468f430050784011c34c47a290671"
+    "bytes": 4119,
+    "sha256": "ad07fb8f7a68783d6d4629639fca9b8fa3193e813e9fc81b90eca777cb71f86b"
   },
   {
     "path": "docs/REMOTE_CHECKPOINT_MIGRATION.md",
@@ -251,13 +251,18 @@
   },
   {
     "path": "docs/TEST_MATRIX.md",
-    "bytes": 16730,
-    "sha256": "6ebc73da6cd6b078582ff5cbb397e36f9a5189bc6bd39934e2ca9b84867844e5"
+    "bytes": 16980,
+    "sha256": "e0377b8b6465687ce7732b79743e46269608d305c9c1fff38069fe71550e37a6"
   },
   {
     "path": "docs/THEOREM_DEPENDENCY_GRAPH.md",
     "bytes": 2587,
     "sha256": "bd8108207b0fcf9c4d3f6eea940e97f8004283c73e79d2ea8247d7c5249e97b2"
+  },
+  {
+    "path": "docs/TRUSTED_BASE_CLOSURE.md",
+    "bytes": 2275,
+    "sha256": "2a85054d1321adea2a3cca0c152385ef4ac76d46892834d3ab3e1d07d6f0fe7f"
   },
   {
     "path": "docs/UNIVERSE_HIERARCHY.md",
@@ -273,10 +278,5 @@
     "path": "docs/VIRTUAL_RESOURCE_POOL.md",
     "bytes": 1708,
     "sha256": "c4b658b1c0628112c865e908557d3d4a7070beb4f51aeec3cece235ee93233e8"
-  },
-  {
-    "path": "docs/MANIFEST.json",
-    "bytes": 8126,
-    "sha256": "3d470c7f0c9c5c01d4859c7c3cbd1f4ad2c3bd1c35622642fd6c1f5fbceea29f"
   }
 ]

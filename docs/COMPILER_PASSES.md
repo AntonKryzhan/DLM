@@ -642,3 +642,8 @@ The global metatheory inventory is currently exposed as a core API. It is a futu
 ## v0.52 Soundness Boundary Ledger pass direction
 
 Future audit/check pipelines should collect explicit soundness-boundary entries after theorem dependency inventory construction and before final trusted-base closure.
+
+
+### v0.53 Trusted-base closure pass
+
+The trusted-base closure pass is a metatheory-audit pass. It does not change runtime terms. It consumes registry/dependency/closure/inventory/soundness-boundary reports and produces a final `TrustedBaseClosure` audit artifact.

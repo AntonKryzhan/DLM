@@ -649,3 +649,7 @@ Main implementation constraint:
 A future release-fast path may erase runtime metadata only after the corresponding proof/passport evidence has been validated and recorded in an erasure report.
 ```
 
+
+## v0.53.0 — Trusted Base Closure / Final Metatheory Foundation Gate
+
+Added `trusted_base.rs` as the final gate for the current metatheory-foundation track. The new report aggregates axiom registry, dependency audit, closure report, global inventory and soundness-boundary ledger evidence. It preserves max trust and axiom/oracle/unsafe taint, rejects duplicate or missing required evidence, and emits `TrustedBaseClosure<subject:status>` passports.

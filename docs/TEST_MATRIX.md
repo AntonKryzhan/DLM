@@ -798,3 +798,12 @@ cargo test -p dlm_core --test soundness_boundary_ledger
 ```
 
 Covers soundness/reflection/consistency/truth-lift boundary entries, duplicate rejection, safe bridge rejection, export stability, and ledger passport taint preservation.
+
+
+### v0.53 Trusted Base Closure
+
+```powershell
+cargo test -p dlm_core --test trusted_base_closure
+```
+
+Covers closed/open/rejected trusted-base reports, required evidence kinds, duplicate evidence rejection, export stability and taint preservation.
