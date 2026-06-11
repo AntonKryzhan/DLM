@@ -642,14 +642,18 @@ fn structural_value_type(passport: &Passport, line: usize) -> Result<String, Dia
         | TypeKind::ProductTerm { .. }
         | TypeKind::SumInjection { .. }
         | TypeKind::RecordTerm { .. }
-        | TypeKind::RecordProjection { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::RecordProjection { .. }
+        | TypeKind::OptionValue { .. }
+        | TypeKind::ResultValue { .. } => Ok(passport.ty.to_string()),
         TypeKind::FunctionType { .. }
         | TypeKind::LambdaTerm { .. }
         | TypeKind::ApplicationTerm { .. }
         | TypeKind::FunctionContract { .. }
         | TypeKind::ProductType { .. }
         | TypeKind::SumType { .. }
-        | TypeKind::RecordType { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::RecordType { .. }
+        | TypeKind::OptionType { .. }
+        | TypeKind::ResultTypeValue { .. } => Ok(passport.ty.to_string()),
         TypeKind::Theorem { .. }
         | TypeKind::StaticProof(_)
         | TypeKind::ProofTerm { .. }

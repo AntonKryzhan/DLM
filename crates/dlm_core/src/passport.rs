@@ -313,6 +313,26 @@ pub enum TypeKind {
         record: String,
         fields: String,
     },
+    OptionType {
+        item: String,
+    },
+    OptionValue {
+        kind: String,
+        item: String,
+    },
+    ResultTypeValue {
+        ok: String,
+        err: String,
+    },
+    ResultValue {
+        kind: String,
+        value: String,
+        result_type: String,
+    },
+    PartialityReport {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -490,6 +510,15 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::RecordPattern { record, fields } => {
                 write!(f, "RecordPattern<{record}{{{fields}}}>")
+            }
+            TypeKind::OptionType { item } => write!(f, "OptionType<{item}>") ,
+            TypeKind::OptionValue { kind, item } => write!(f, "OptionValue<{kind}:{item}>") ,
+            TypeKind::ResultTypeValue { ok, err } => write!(f, "ResultType<{ok},{err}>") ,
+            TypeKind::ResultValue { kind, value, result_type } => {
+                write!(f, "ResultValue<{kind}:{value}:{result_type}>")
+            }
+            TypeKind::PartialityReport { subject, status } => {
+                write!(f, "PartialityReport<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

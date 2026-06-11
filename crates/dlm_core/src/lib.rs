@@ -19,6 +19,7 @@ pub mod metatheory_foundation;
 pub mod module_interface;
 pub mod module_system;
 pub mod parser;
+pub mod partiality;
 pub mod passes;
 pub mod passport;
 pub mod passport_rules;
@@ -55,6 +56,7 @@ pub use metatheory_foundation::{export_metatheory_foundation_exit_report, metath
 pub use module_interface::{audit_module_import, export_module_interface_text, module_import_audit_passport, module_interface, module_interface_passport, public_interface_symbols, render_module_import_audit_report, require_interface_symbol, require_verified_module_import_audit, InterfaceSymbol, ModuleImportAuditReport, ModuleImportAuditStatus, ModuleInterface};
 pub use module_system::{build_import_graph, import_decl, import_graph_passport, imported_public_symbols, module_export_passport, module_manifest, module_manifest_passport, private_export, public_export, require_public_export, validate_module_manifest, ExportDecl, ExportVisibility, ImportDecl, ImportEdge, ImportGraph, ModuleManifest};
 pub use parser::{parse_expr, parse_module};
+pub use partiality::*;
 pub use passes::{run_frontend_passes, FrontendPassOutput, PassId, PassPipelineReport, PassReport, PassStatus};
 pub use passport::*;
 pub use policy::CheckPolicy;
