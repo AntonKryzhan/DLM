@@ -123,3 +123,5 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 - `SEQUENCE_TYPES.md` — finite List/Sequence foundation, explicit indexing boundary, no hidden null/exception/infinite stream.
 
 - `TRAVERSAL_BOUNDARY.md` — finite map/fold traversal boundary with explicit fuel and FunctionContract requirements.
+
+- `RECURSION_BOUNDARY.md` — explicit recursion schemes, well-founded measures and fuel boundaries.

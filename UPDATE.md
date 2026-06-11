@@ -603,3 +603,9 @@ Added finite List/Sequence foundation with explicit item typing, explicit finite
 - Added `TypeKind::MapTraversal`, `TypeKind::FoldTraversal`, `TypeKind::TraversalReport`.
 - Added `DiagnosticKind::TraversalError` / `E0934`.
 - Added tests for bounded map/fold traversal, fuel rejection, contract mismatch, taint preservation and stable exports.
+
+## v0.64.0
+
+- Added recursion schemes and recursive-call audit reports.
+- Added well-founded/fuel recursion statuses.
+- Added `E0935 RecursionBoundaryError`.

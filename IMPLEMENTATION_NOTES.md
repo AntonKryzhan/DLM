@@ -796,3 +796,7 @@ Introduces `sequence.rs`, `sequence_types` tests, `TypeKind::{ListType,ListValue
 ## v0.63 — Traversal boundary
 
 Implemented finite `map`/`fold` traversal reports over `ListValue` and `SequenceValue`. Traversals require exact function-contract domain/codomain matching, explicit fuel, and preserve Axiom/Oracle/Unsafe taint. `VerifiedBounded` is only produced for pure, total, verified, clean contracts with enough fuel.
+
+## v0.64 — Recursion / Well-Founded Fuel Boundary
+
+Introduced `recursion.rs` with `RecursionSchemeReport`, `RecursiveCallReport`, explicit measure kinds, fuel checks, taint preservation, and `E0935 RecursionBoundaryError`.

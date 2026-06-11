@@ -3250,3 +3250,7 @@ Stage 2 gains finite collection objects: ListType/ListValue, SequenceType/Sequen
 ### v0.63 — Fold / Map / Traversal Boundary
 
 Adds audited finite traversal objects over explicit finite collections: `MapTraversal`, `FoldTraversal`, and `TraversalReport`. This closes the first safe bridge from finite collections to reusable computation patterns without hidden recursion, exceptions, or unbounded normalization.
+
+### v0.64 — Recursion / Well-Founded Fuel Boundary
+
+Stage 2 gains explicit bounded recursion with well-founded evidence requirements and fuel-only open status.

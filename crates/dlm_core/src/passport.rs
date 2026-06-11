@@ -367,6 +367,20 @@ pub enum TypeKind {
         subject: String,
         status: String,
     },
+    RecursionScheme {
+        name: String,
+        measure: String,
+        status: String,
+    },
+    RecursiveCall {
+        scheme: String,
+        status: String,
+        fuel_after: usize,
+    },
+    RecursionReport {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -569,6 +583,15 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::TraversalReport { subject, status } => {
                 write!(f, "TraversalReport<{subject}:{status}>")
+            }
+            TypeKind::RecursionScheme { name, measure, status } => {
+                write!(f, "RecursionScheme<{name}:{measure}:{status}>")
+            }
+            TypeKind::RecursiveCall { scheme, status, fuel_after } => {
+                write!(f, "RecursiveCall<{scheme}:{status};fuel_after={fuel_after}>")
+            }
+            TypeKind::RecursionReport { subject, status } => {
+                write!(f, "RecursionReport<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

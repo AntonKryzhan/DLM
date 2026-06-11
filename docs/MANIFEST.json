@@ -68,6 +68,7 @@
     "docs/STRUCTURAL_ELIMINATION.md",
     "docs/PARTIALITY_TYPES.md",
     "docs/SEQUENCE_TYPES.md",
-    "docs/TRAVERSAL_BOUNDARY.md"
+    "docs/TRAVERSAL_BOUNDARY.md",
+    "RECURSION_BOUNDARY.md"
   ]
 }

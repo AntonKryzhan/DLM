@@ -887,3 +887,5 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 ### v0.63 traversal boundary
 
 - `traversal_boundary.rs` verifies bounded map/fold traversal over finite collections, fuel rejection, exact contract domain/codomain matching, taint preservation, and proof/truth/runtime exclusion.
+
+- `recursion_boundary.rs` — recursion schemes, recursive calls, measure decrease, fuel exhaustion, taint preservation.

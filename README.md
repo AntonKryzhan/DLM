@@ -837,3 +837,7 @@ Adds explicit finite `List<T>` and `Sequence<T>` semantic reports with typed ele
 ### v0.63 — Fold / Map / Traversal Boundary
 
 `v0.63` adds explicit finite traversal reports for `map` and `fold` over `List`/`Sequence` values. Traversals are bounded by collection length and explicit fuel, consume `FunctionContract` evidence, preserve taint, and never become proofs, theorems, truth claims, runtime witnesses or hidden normalization loops.
+
+### v0.64 — Recursion / Well-Founded Fuel Boundary
+
+Adds explicit recursion schemes, recursive-call reports, well-founded measure classes and fuel boundaries. Recursion is not proof, theorem, truth, runtime witness, or hidden unbounded normalization.

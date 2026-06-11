@@ -28,6 +28,7 @@ pub mod proof_context;
 pub mod runtime;
 pub mod sequence;
 pub mod traversal;
+pub mod recursion;
 pub mod resolve;
 pub mod rewrite_normalization;
 pub mod soundness;
@@ -66,6 +67,7 @@ pub use proof_context::{assume_hypothesis, close_proof_by_axiom, close_proof_wit
 pub use runtime::{RunReport, Runtime, RuntimeValue};
 pub use sequence::*;
 pub use traversal::*;
+pub use recursion::*;
 pub use resolve::{resolve_module, ResolvedBridge, ResolvedImport, ResolvedModule, ResolvedTheory, ResolvedValue, Resolver, SymbolTable};
 pub use rewrite_normalization::{audit_rewrite_normalization_report, export_rewrite_normalization_report, export_rewrite_normalization_report_unchecked, normalize_with_rewrite_rules, RewriteNormalizationReport, RewriteNormalizationStatus};
 pub use soundness::{BridgeSoundnessProfile, SoundnessIssue, SoundnessSummary};
