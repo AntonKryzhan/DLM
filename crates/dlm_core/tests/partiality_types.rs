@@ -82,7 +82,7 @@ fn proof_truth_theorem_and_runtime_objects_are_not_option_or_result_values() {
     let term = Passport::proof_term("Meta", "intro", None);
     let proof = Passport::static_proof("Meta", "P", &term);
     let prop = Passport::proposition("Meta", "P", Some(&proof), "test:prop");
-    let theorem = theorem_from_static_proof("Meta", "thm", "P", &proof, 1).unwrap();
+    let theorem = theorem_from_static_proof("Meta", "thm", &prop, &proof, 1).unwrap();
     let runtime = Passport::runtime_witness("Meta", "P", &proof);
     let provable = Passport::provable_claim("Meta", "Meta", "P", &proof);
     let truth = Passport::axiom_truth_from_provable("Meta", "P", &provable);
