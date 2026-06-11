@@ -613,3 +613,8 @@ Raised when a function contract violates purity, effect-boundary, totality-evide
 ## v0.59.0 — Product / Sum / Record Type Foundation
 
 Added `docs/STRUCTURAL_TYPES.md` and the core structural type layer: ProductType/ProductTerm, SumType/SumInjection and RecordType/RecordTerm/RecordProjection. This layer preserves trust taint, rejects proof/truth/runtime objects as ordinary structural values, and prepares future layout/ABI-aware records.
+
+
+## E0931 StructuralEliminationError
+
+Raised when product/sum/record elimination or pattern matching is attempted on an invalid subject, mismatched sum branches, missing record fields, duplicate pattern bindings, or proof/truth/theorem/runtime objects.

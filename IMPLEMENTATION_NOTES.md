@@ -778,3 +778,8 @@ It is an audit/control object for future optimization, scheduling and assurance 
 ## v0.59.0 — Product / Sum / Record Type Foundation
 
 Added `docs/STRUCTURAL_TYPES.md` and the core structural type layer: ProductType/ProductTerm, SumType/SumInjection and RecordType/RecordTerm/RecordProjection. This layer preserves trust taint, rejects proof/truth/runtime objects as ordinary structural values, and prepares future layout/ABI-aware records.
+
+
+## v0.60.0 — Structural Elimination / Pattern Boundary
+
+Adds explicit product elimination, sum case elimination and record pattern reports. Structural elimination is value-level and does not become proof, theorem or truth. Taint is preserved; proof/truth/theorem/runtime smuggling is rejected. See `docs/STRUCTURAL_ELIMINATION.md`.

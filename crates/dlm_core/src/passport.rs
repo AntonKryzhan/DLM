@@ -299,6 +299,20 @@ pub enum TypeKind {
         field: String,
         result: String,
     },
+    ProductElimination {
+        product_type: String,
+        lhs: String,
+        rhs: String,
+    },
+    SumElimination {
+        sum_type: String,
+        side: String,
+        result: String,
+    },
+    RecordPattern {
+        record: String,
+        fields: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -467,6 +481,15 @@ impl fmt::Display for TypeKind {
             TypeKind::RecordTerm { name, fields } => write!(f, "RecordTerm<{name}{{{fields}}}>") ,
             TypeKind::RecordProjection { record, field, result } => {
                 write!(f, "RecordProjection<{record}.{field}:{result}>")
+            }
+            TypeKind::ProductElimination { product_type, lhs, rhs } => {
+                write!(f, "ProductElimination<{product_type}=>({lhs},{rhs})>")
+            }
+            TypeKind::SumElimination { sum_type, side, result } => {
+                write!(f, "SumElimination<{sum_type}:{side}=>{result}>")
+            }
+            TypeKind::RecordPattern { record, fields } => {
+                write!(f, "RecordPattern<{record}{{{fields}}}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

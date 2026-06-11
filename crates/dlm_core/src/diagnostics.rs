@@ -52,6 +52,7 @@ pub enum DiagnosticKind {
     FunctionTermError,
     FunctionContractError,
     StructuralTypeError,
+    StructuralEliminationError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -216,6 +217,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::FunctionTermError => "E0928 FunctionTermError",
             DiagnosticKind::FunctionContractError => "E0929 FunctionContractError",
             DiagnosticKind::StructuralTypeError => "E0930 StructuralTypeError",
+            DiagnosticKind::StructuralEliminationError => "E0931 StructuralEliminationError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,
