@@ -118,7 +118,8 @@ fn import_graph_rejects_missing_modules_and_cycles() {
 
 #[test]
 fn exported_passport_preserves_source_trust_and_capabilities() {
-    let source = Passport::static_proof("P");
+    let proof_term = Passport::proof_term("Meta", "p_intro", None);
+    let source = Passport::static_proof("Meta", "P", &proof_term);
     let export = public_export("p_proof");
     let exported = module_export_passport("Meta", "Math.Proofs", &export, &source);
 
