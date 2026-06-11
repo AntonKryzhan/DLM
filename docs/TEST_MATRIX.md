@@ -889,3 +889,8 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 - `traversal_boundary.rs` verifies bounded map/fold traversal over finite collections, fuel rejection, exact contract domain/codomain matching, taint preservation, and proof/truth/runtime exclusion.
 
 - `recursion_boundary.rs` — recursion schemes, recursive calls, measure decrease, fuel exhaustion, taint preservation.
+
+
+## v0.65 — Termination / Normalization Budget Unification
+
+Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.

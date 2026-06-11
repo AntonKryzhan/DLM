@@ -628,3 +628,8 @@ Raised when product/sum/record elimination or pattern matching is attempted on a
 Raised when a finite traversal violates the traversal boundary: wrong function contract domain/codomain, invalid accumulator, rejected fuel, or an attempt to consume proof/theorem/truth/runtime evidence as an ordinary traversal value.
 
 - `E0935 RecursionBoundaryError` — invalid recursion scheme, fuel boundary, measure decrease, or recursion contract.
+
+
+## v0.65 — Termination / Normalization Budget Unification
+
+Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.

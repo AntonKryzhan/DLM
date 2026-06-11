@@ -381,6 +381,14 @@ pub enum TypeKind {
         subject: String,
         status: String,
     },
+    ComputationBudget {
+        name: String,
+        status: String,
+    },
+    TerminationBudgetReport {
+        subject: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -592,6 +600,12 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::RecursionReport { subject, status } => {
                 write!(f, "RecursionReport<{subject}:{status}>")
+            }
+            TypeKind::ComputationBudget { name, status } => {
+                write!(f, "ComputationBudget<{name}:{status}>")
+            }
+            TypeKind::TerminationBudgetReport { subject, status } => {
+                write!(f, "TerminationBudgetReport<{subject}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

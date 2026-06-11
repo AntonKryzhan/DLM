@@ -609,3 +609,8 @@ Added finite List/Sequence foundation with explicit item typing, explicit finite
 - Added recursion schemes and recursive-call audit reports.
 - Added well-founded/fuel recursion statuses.
 - Added `E0935 RecursionBoundaryError`.
+
+
+## v0.65 — Termination / Normalization Budget Unification
+
+Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.

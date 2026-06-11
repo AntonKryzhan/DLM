@@ -841,3 +841,8 @@ Adds explicit finite `List<T>` and `Sequence<T>` semantic reports with typed ele
 ### v0.64 — Recursion / Well-Founded Fuel Boundary
 
 Adds explicit recursion schemes, recursive-call reports, well-founded measure classes and fuel boundaries. Recursion is not proof, theorem, truth, runtime witness, or hidden unbounded normalization.
+
+
+## v0.65 — Termination / Normalization Budget Unification
+
+Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.

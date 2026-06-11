@@ -125,3 +125,8 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 - `TRAVERSAL_BOUNDARY.md` — finite map/fold traversal boundary with explicit fuel and FunctionContract requirements.
 
 - `RECURSION_BOUNDARY.md` — explicit recursion schemes, well-founded measures and fuel boundaries.
+
+
+## v0.65 — Termination / Normalization Budget Unification
+
+Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.
