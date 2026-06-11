@@ -713,3 +713,27 @@ Implementation points:
 - The layer preserves Axiom/Oracle/Unsafe taint and does not turn formula manipulation into theorem/proof/truth evidence.
 
 Known limitation: this is still a textual formula MVP. Full capture-avoiding substitution over a real term AST should replace it after function/lambda/dependent-term syntax lands.
+
+<!-- DLM_RUNTIME_HARDWARE_LAYERING_IMPLEMENTATION_NOTES -->
+
+## Runtime / Hardware Layering Principle
+
+Future compiler/runtime/GPU work must preserve the four-layer separation:
+
+```text
+Source / mathematical layer -> IR / compiler layer -> Runtime control layer -> Hardware execution layer
+```
+
+Proof, passport, trust and history are full semantic objects at the high level. Hot runtime paths must use proof-erased code, compact passport descriptors, dense buffers, explicit location capabilities, and batch scheduling.
+
+Forbidden direction:
+
+```text
+full passport per scalar;
+proof checking inside GPU kernel;
+history chain per array element;
+trust-level branching inside SIMD/SIMT;
+implicit CPU/GPU transfer;
+implicit materialization.
+```
+

@@ -522,3 +522,17 @@ Local readiness:         12–18% -> 18–24%
 Architectural readiness: 35–45% -> 40–50%
 Fundamental readiness:   22–32% -> 25–35%
 ```
+
+<!-- DLM_RUNTIME_HARDWARE_LAYERING_UPDATE -->
+
+## Runtime / Hardware Layering Principle
+
+Added global roadmap principle:
+
+```text
+Meaning should be holographic.
+Execution should be dense.
+```
+
+This records that passports/proofs/history guide compiler/runtime decisions, but hardware execution must remain dense and minimal.
+

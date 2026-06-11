@@ -3120,3 +3120,56 @@ Local readiness:         12–18% -> 18–24%
 Architectural readiness: 35–45% -> 40–50%
 Fundamental readiness:   22–32% -> 25–35%
 ```
+
+<!-- DLM_RUNTIME_HARDWARE_LAYERING_PRINCIPLE -->
+
+## Global Architecture Principle вЂ” Runtime / Hardware Layering
+
+DLM must separate four layers:
+
+```text
+1. Source / mathematical layer
+   full meaning, proof, passport, theory, trust, provenance, history, audit.
+
+2. IR / compiler layer
+   verification, optimization, bridge policy, proof/passport erasure, audit.
+
+3. Runtime control layer
+   compact passport descriptors, capabilities, location, scheduling, runtime witnesses.
+
+4. Hardware execution layer
+   raw memory, dense buffers, kernels, SIMD/SIMT, minimal metadata.
+```
+
+Main rule:
+
+```text
+Meaning should be holographic.
+Execution should be dense.
+```
+
+DLM must not move full mathematical meaning into every low-level hardware operation. In particular, future runtime/GPU/compiler patches must avoid:
+
+```text
+proof checking inside GPU kernels;
+history chain per array element;
+full passports across PCIe;
+dynamic dispatch inside every GPU thread;
+branching by trust-level inside SIMD/SIMT lanes;
+small GPU tasks instead of batch kernels;
+frequent CPU <-> GPU round trips.
+```
+
+The strength of DLM is the opposite: passports guide the compiler/runtime scheduler before execution.
+
+```text
+Passport is not a GPU burden.
+Passport is a CPU/compiler instruction for safe hardware use.
+```
+
+This principle is specified in:
+
+```text
+docs/RUNTIME_HARDWARE_LAYERING_PRINCIPLE.md
+```
+

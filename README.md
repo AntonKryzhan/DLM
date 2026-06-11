@@ -745,3 +745,19 @@ substitution is not proof, not theorem, not rewrite certificate, and not truth
 ```
 
 This prepares the language for function types, quantifier proof rules and dependent typing without letting variable capture become a hidden soundness hole.
+
+<!-- DLM_RUNTIME_HARDWARE_LAYERING_README -->
+
+## Runtime / Hardware Layering Principle
+
+DLM follows a global performance/soundness rule:
+
+```text
+Meaning should be holographic.
+Execution should be dense.
+```
+
+The language keeps full proof/passport/trust/history semantics at the source and compiler/audit layers, but low-level runtime and hardware execution must use compact descriptors, dense buffers, deterministic kernels, and minimal metadata.
+
+See `docs/RUNTIME_HARDWARE_LAYERING_PRINCIPLE.md`.
+

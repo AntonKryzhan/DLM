@@ -76,3 +76,8 @@ See `UNIVERSE_HIERARCHY.md`.
 
 
 - `SUBSTITUTION_ALPHA.md` — variable scope, alpha-equivalence and capture-avoiding substitution foundation.
+
+<!-- DLM_RUNTIME_HARDWARE_LAYERING_DOCS_README -->
+
+- `RUNTIME_HARDWARE_LAYERING_PRINCIPLE.md` вЂ” global rule for separating mathematical meaning, compiler/audit logic, runtime control metadata, and dense hardware execution.
+
