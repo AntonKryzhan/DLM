@@ -88,7 +88,7 @@ fn theorem_proof_truth_and_runtime_evidence_are_not_substitution_sources() {
     let theorem = theorem_from_static_proof("Logic", "T", &statement_passport("Logic", "P"), &static_proof, 1).unwrap();
     let witness = Passport::runtime_witness("Logic", "P", &Passport::runtime_nat_from_input("Logic"));
     let provable = Passport::provable_claim("Logic", "Logic", "P", &static_proof);
-    let truth = Passport::axiom_truth_from_provable("Logic", &provable);
+    let truth = Passport::axiom_truth_from_provable("Logic", "P", &provable);
 
     for bad in [&proof_term, &static_proof, &theorem, &witness, &provable, &truth] {
         let err = substitution_source_from_passport(bad, 9).unwrap_err();

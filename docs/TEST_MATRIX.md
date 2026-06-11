@@ -845,3 +845,11 @@ Coverage:
 - proof/theorem/truth/runtime evidence rejection;
 - taint preservation;
 - stable exports and order-sensitive fingerprints.
+
+## v0.57 Function / Lambda / Application tests
+
+```text
+cargo test -p dlm_core --test function_lambda_application
+```
+
+Coverage: function type construction, lambda construction, application domain checking, proof/theorem/runtime rejection, axiom taint preservation, stable exports and order-sensitive fingerprints.

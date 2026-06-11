@@ -746,36 +746,22 @@ substitution is not proof, not theorem, not rewrite certificate, and not truth
 
 This prepares the language for function types, quantifier proof rules and dependent typing without letting variable capture become a hidden soundness hole.
 
-<!-- DLM_RUNTIME_HARDWARE_LAYERING_README -->
-
+<!-- RUNTIME_HARDWARE_LAYERING_PRINCIPLE_BLOCK -->
 ## Runtime / Hardware Layering Principle
 
-DLM follows a global performance/soundness rule:
+DLM keeps rich proof/passport/trust semantics at the source and compiler layers, while runtime and hardware execution must remain compact and dense.
 
 ```text
-Meaning should be holographic.
-Execution should be dense.
+Meaning-rich above.
+Execution-dense below.
 ```
 
-The language keeps full proof/passport/trust/history semantics at the source and compiler/audit layers, but low-level runtime and hardware execution must use compact descriptors, dense buffers, deterministic kernels, and minimal metadata.
-
-See `docs/RUNTIME_HARDWARE_LAYERING_PRINCIPLE.md`.
-
-
+This principle prevents full proof objects, full history chains, and full passports from being carried into GPU kernels, SIMD lanes, dense buffers, or hot runtime loops.
 
 <!-- DLM_ARCHITECTURAL_LAWS_BLOCK -->
-
 ## DLM Architectural Laws
 
-The project now has an explicit architectural constitution: `docs/DLM_ARCHITECTURAL_LAWS.md`.
-
-The laws protect DLM from three major failure modes:
-
-```text
-mathematically rich but soundness-unclear;
-semantically beautiful but hardware-heavy;
-AI-agent-developed but architecturally inconsistent.
-```
+The project has an explicit architectural constitution: `docs/DLM_ARCHITECTURAL_LAWS.md`.
 
 The core formula is:
 
@@ -785,5 +771,33 @@ Execution-dense below.
 Audit-complete backward.
 ```
 
-These laws govern proof erasure, passport-governed operations, bridge preservation contracts, trust monotonicity, dense runtime data, batch-first GPU execution, explicit materialization, visible trusted base, minimal proof kernel, and honest status downgrade.
+<!-- V0_57_FUNCTION_LAMBDA_APPLICATION_BLOCK -->
+## v0.57.0 — Function Type / Lambda / Application Foundation
 
+DLM now has an ordinary function foundation for Stage 2 — ordinary mathematics of the language.
+
+Added:
+
+```text
+FunctionType
+LambdaTerm
+ApplicationTerm
+ApplicationStatus
+```
+
+Main law:
+
+```text
+Function application is not theorem proving.
+LambdaTerm is not StaticProof.
+ApplicationTerm is not TruthClaim.
+```
+
+Readiness delta:
+
+```text
+Stage 2 — Ordinary mathematics of the language
+Local readiness:         18–24% -> 24–32%
+Architectural readiness: 40–50% -> 44–56%
+Fundamental readiness:   25–35% -> 28–40%
+```

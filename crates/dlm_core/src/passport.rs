@@ -249,6 +249,21 @@ pub enum TypeKind {
         variable: String,
         status: String,
     },
+    FunctionType {
+        domain: String,
+        codomain: String,
+    },
+    LambdaTerm {
+        parameter: String,
+        domain: String,
+        body: String,
+    },
+    ApplicationTerm {
+        function: String,
+        argument: String,
+        result: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -392,6 +407,15 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::SubstitutionReport { variable, status } => {
                 write!(f, "SubstitutionReport<{variable}:{status}>")
+            }
+            TypeKind::FunctionType { domain, codomain } => {
+                write!(f, "FunctionType<{domain}->{codomain}>")
+            }
+            TypeKind::LambdaTerm { parameter, domain, body } => {
+                write!(f, "LambdaTerm<{parameter}:{domain}. {body}>")
+            }
+            TypeKind::ApplicationTerm { function, argument, result, status } => {
+                write!(f, "ApplicationTerm<{function}({argument})=>{result}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

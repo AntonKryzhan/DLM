@@ -599,3 +599,7 @@ Raised when logical formula or quantifier construction violates arity, binder, f
 ## E0927 — SubstitutionError
 
 Raised when variable scope, alpha-equivalence or substitution would violate explicit binder rules: invalid identifiers, malformed quantifier text, theorem/proof/truth/runtime evidence used as a substitution source, shadowed binder substitution, or capture risk.
+
+## E0928 FunctionTermError
+
+Raised when function type, lambda or application construction violates the ordinary-function boundary: invalid domain/codomain, mismatched lambda parameter domain, shadowed capture, non-function application source, proof/theorem/truth/runtime object used as ordinary function or argument.

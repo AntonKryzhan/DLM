@@ -3121,103 +3121,96 @@ Architectural readiness: 35–45% -> 40–50%
 Fundamental readiness:   22–32% -> 25–35%
 ```
 
-<!-- DLM_RUNTIME_HARDWARE_LAYERING_PRINCIPLE -->
+<!-- RUNTIME_HARDWARE_LAYERING_PRINCIPLE_BLOCK -->
+## Runtime / Hardware Layering Principle
 
-## Global Architecture Principle вЂ” Runtime / Hardware Layering
-
-DLM must separate four layers:
+DLM separates rich mathematical meaning from dense hardware execution.
 
 ```text
 1. Source / mathematical layer
-   full meaning, proof, passport, theory, trust, provenance, history, audit.
+   full meaning, proof, passport, theory, trust, history, audit.
 
 2. IR / compiler layer
-   verification, optimization, bridge policy, proof/passport erasure, audit.
+   checking, optimization, bridge policy, proof/passport erasure, audit.
 
 3. Runtime control layer
-   compact passport descriptors, capabilities, location, scheduling, runtime witnesses.
+   compact descriptors, capabilities, location, scheduling.
 
 4. Hardware execution layer
-   raw memory, dense buffers, kernels, SIMD/SIMT, minimal metadata.
+   raw memory, dense buffers, kernels, minimal metadata.
 ```
 
-Main rule:
+The core rule:
 
 ```text
-Meaning should be holographic.
-Execution should be dense.
+Смысл должен быть голографическим.
+Исполнение должно быть плотным.
 ```
 
-DLM must not move full mathematical meaning into every low-level hardware operation. In particular, future runtime/GPU/compiler patches must avoid:
-
-```text
-proof checking inside GPU kernels;
-history chain per array element;
-full passports across PCIe;
-dynamic dispatch inside every GPU thread;
-branching by trust-level inside SIMD/SIMT lanes;
-small GPU tasks instead of batch kernels;
-frequent CPU <-> GPU round trips.
-```
-
-The strength of DLM is the opposite: passports guide the compiler/runtime scheduler before execution.
-
-```text
-Passport is not a GPU burden.
-Passport is a CPU/compiler instruction for safe hardware use.
-```
-
-This principle is specified in:
-
-```text
-docs/RUNTIME_HARDWARE_LAYERING_PRINCIPLE.md
-```
-
-
+A passport is not GPU payload. A passport is compiler/runtime guidance for safe scheduling, materialization, batching and proof erasure.
 
 <!-- DLM_ARCHITECTURAL_LAWS_BLOCK -->
+## DLM Architectural Laws / Конституция архитектуры ЯРД
 
-## DLM Architectural Laws / РљРѕРЅСЃС‚РёС‚СѓС†РёСЏ Р°СЂС…РёС‚РµРєС‚СѓСЂС‹ РЇР Р”
-
-DLM С‚РµРїРµСЂСЊ С„РёРєСЃРёСЂСѓРµС‚ РѕС‚РґРµР»СЊРЅС‹Р№ РЅР°Р±РѕСЂ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹С… Р°СЂС…РёС‚РµРєС‚СѓСЂРЅС‹С… Р·Р°РєРѕРЅРѕРІ РІ `docs/DLM_ARCHITECTURAL_LAWS.md`.
-
-Р­С‚Рё Р·Р°РєРѕРЅС‹ Р·Р°РґР°СЋС‚ РіР»РѕР±Р°Р»СЊРЅСѓСЋ РґРёСЃС†РёРїР»РёРЅСѓ РїСЂРѕРµРєС‚Р°:
+DLM fixes a global architectural law set in `docs/DLM_ARCHITECTURAL_LAWS.md`.
 
 ```text
-1. Р Р°Р·РґРµР»СЏР№ СЃРјС‹СЃР»РѕРІС‹Рµ СЃР»РѕРё.
-2. РЈРїСЂР°РІР»СЏР№ РѕРїРµСЂР°С†РёСЏРјРё С‡РµСЂРµР· РїР°СЃРїРѕСЂС‚.
-3. РџСЂРѕРІРµСЂСЏР№ proof РЅР°РІРµСЂС…Сѓ, СЃС‚РёСЂР°Р№ proof РІРЅРёР·Сѓ.
-4. Р”РµСЂР¶Рё РїР°СЃРїРѕСЂС‚Р° РЅР° СЂРµРіРёРѕРЅР°С…, Р° РЅРµ РЅР° РєР°Р¶РґРѕРј Р±Р°Р№С‚Рµ.
-5. Р”РµР»Р°Р№ pure core РґРµС‚РµСЂРјРёРЅРёСЂРѕРІР°РЅРЅС‹Рј.
-6. Р’СЃРµ СЌС„С„РµРєС‚С‹ РІРІРѕРґРё С‡РµСЂРµР· СЏРІРЅСѓСЋ РіСЂР°РЅРёС†Сѓ.
-7. Capabilities РёСЃРїРѕР»СЊР·СѓР№ РєР°Рє РјР°СЂС€СЂСѓС‚РёР·Р°С‚РѕСЂ РІС‹С‡РёСЃР»РµРЅРёР№.
-8. Bridge РґРѕР»Р¶РµРЅ РёРјРµС‚СЊ РєРѕРЅС‚СЂР°РєС‚ СЃРѕС…СЂР°РЅРµРЅРёСЏ.
-9. Trust С‚РѕР»СЊРєРѕ СѓС…СѓРґС€Р°РµС‚СЃСЏ РёР»Рё СЏРІРЅРѕ РґРѕРєР°Р·С‹РІР°РµС‚СЃСЏ.
-10. History РїРѕР»РЅР°СЏ РІ audit, РєРѕРјРїР°РєС‚РЅР°СЏ РІ runtime.
-11. Checker СЂР°Р·Р±РёС‚ РЅР° passes.
-12. РџРѕСЃР»Рµ resolution С‚РѕР»СЊРєРѕ ID, РЅРµ String.
-13. РљР°Р¶РґС‹Р№ СЃРјС‹СЃР»РѕРІРѕР№ РѕР±СЉРµРєС‚ РёРјРµРµС‚ Span.
-14. Runtime РґР°РЅРЅС‹Рµ РїР»РѕС‚РЅС‹Рµ.
-15. GPU С‚РѕР»СЊРєРѕ batch-first.
-16. Location вЂ” С‡Р°СЃС‚СЊ РїР°СЃРїРѕСЂС‚Р°.
-17. Materialization вЂ” СЏРІРЅС‹Р№ bridge.
-18. Cost-class вЂ” С‡Р°СЃС‚СЊ РјРѕРґРµР»Рё.
-19. РћРїС‚РёРјРёР·Р°С†РёСЏ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ verified.
-20. РљСЌС€РёСЂРѕРІР°С‚СЊ РЅСѓР¶РЅРѕ checked СЃРјС‹СЃР».
-21. Trusted base РІСЃРµРіРґР° РІРёРґРЅР°.
-22. Р›СЋР±РѕР№ СЂРµР·СѓР»СЊС‚Р°С‚ РѕР±СЉСЏСЃРЅРёРј РЅР°Р·Р°Рґ.
-23. РђСЂС…РёС‚РµРєС‚СѓСЂР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ AI-agent-friendly.
-24. Proof kernel РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РјРёРЅРёРјР°Р»СЊРЅС‹Рј.
-25. Р•СЃР»Рё РјР°РєСЃРёРјСѓРј РЅРµРІРѕР·РјРѕР¶РµРЅ вЂ” С‡РµСЃС‚РЅРѕРµ РїРѕРЅРёР¶РµРЅРёРµ СЃС‚Р°С‚СѓСЃР°.
+1. Разделяй смысловые слои.
+2. Управляй операциями через паспорт.
+3. Проверяй proof наверху, стирай proof внизу.
+4. Держи паспорта на регионах, а не на каждом байте.
+5. Делай pure core детерминированным.
+6. Все эффекты вводи через явную границу.
+7. Capabilities используй как маршрутизатор вычислений.
+8. Bridge должен иметь контракт сохранения.
+9. Trust только ухудшается или явно доказывается.
+10. History полная в audit, компактная в runtime.
+11. Checker разбит на passes.
+12. После resolution только ID, не String.
+13. Каждый смысловой объект имеет Span.
+14. Runtime данные плотные.
+15. GPU только batch-first.
+16. Location — часть паспорта.
+17. Materialization — явный bridge.
+18. Cost-class — часть модели.
+19. Оптимизация должна быть verified.
+20. Кэшировать нужно checked смысл.
+21. Trusted base всегда видна.
+22. Любой результат объясним назад.
+23. Архитектура должна быть AI-agent-friendly.
+24. Proof kernel должен быть минимальным.
+25. Если максимум невозможен — честное понижение статуса.
 ```
 
-Р“Р»Р°РІРЅР°СЏ С„РѕСЂРјСѓР»Р°:
+Any future patch must preserve these laws or explicitly record an open obligation.
+
+<!-- V0_57_FUNCTION_LAMBDA_APPLICATION_BLOCK -->
+## v0.57.0 — Function Type / Lambda / Application Foundation
+
+Stage 2 continues with ordinary function objects:
 
 ```text
-РЎРјС‹СЃР» РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РіРѕР»РѕРіСЂР°С„РёС‡РµСЃРєРёРј.
-РСЃРїРѕР»РЅРµРЅРёРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїР»РѕС‚РЅС‹Рј.
-РђСѓРґРёС‚ РґРѕР»Р¶РµРЅ РѕР±СЉСЏСЃРЅСЏС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚ РЅР°Р·Р°Рґ.
+FunctionType<Domain -> Codomain>
+LambdaTerm<parameter:Domain. body>
+ApplicationTerm<function(argument) => result:status>
 ```
 
-Р›СЋР±РѕР№ Р±СѓРґСѓС‰РёР№ РїР°С‚С‡ РґРѕР»Р¶РµРЅ СЃРѕС…СЂР°РЅСЏС‚СЊ СЌС‚Рё Р·Р°РєРѕРЅС‹. Р•СЃР»Рё MVP РІСЂРµРјРµРЅРЅРѕ РЅРµ РјРѕР¶РµС‚ РїРѕР»РЅРѕСЃС‚СЊСЋ СЂРµР°Р»РёР·РѕРІР°С‚СЊ РѕРґРёРЅ РёР· Р·Р°РєРѕРЅРѕРІ, СЌС‚Рѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ СЏРІРЅРѕ Р·Р°РїРёСЃР°РЅРѕ РєР°Рє `Technical Debt`, `Open Obligation` РёР»Рё `Known Incomplete Law Enforcement`.
+Architectural constraints:
 
+```text
+FunctionType != Theorem
+LambdaTerm != StaticProof
+ApplicationTerm != TruthClaim
+ApplicationTerm != ProofCertificate
+```
+
+This layer depends on v0.56 substitution / alpha-equivalence because lambda terms require binder discipline.
+
+Readiness delta:
+
+```text
+Stage 2 — Ordinary mathematics of the language
+Local readiness:         18–24% -> 24–32%
+Architectural readiness: 40–50% -> 44–56%
+Fundamental readiness:   25–35% -> 28–40%
+```

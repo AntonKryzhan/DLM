@@ -4,12 +4,16 @@
 
 Этот документ фиксирует обязательные архитектурные законы DLM / ЯРД.
 
-Это не список пожеланий и не набор красивых принципов. Это набор ограничений, которые должны удерживать язык от трёх опасных деградаций:
+Это не список пожеланий и не набор красивых принципов. Это набор ограничений, которые должны удерживать язык от семи опасных деградаций:
 
 ```text
 1. Математически красиво, но soundness-размыто.
 2. Формально богато, но аппаратно медленно.
 3. Быстро патчится AI-агентами, но архитектурно расползается.
+4. Быстро исполняется, но небезопасно по владению, aliasing and lifetime.
+5. Компилируется в native/backend, но не имеет стабильного layout/ABI-контракта.
+6. Запускается в разных режимах, но не объявляет реальный уровень гарантий.
+7. Проверяется формально, но может зависнуть на normalization/proof-search без бюджета.
 ```
 
 Главная формула DLM:
@@ -17,6 +21,10 @@
 ```text
 Смысл должен быть голографическим.
 Исполнение должно быть плотным.
+Память должна иметь владение.
+Представление должно иметь контракт.
+Сборка должна объявлять уровень гарантии.
+Нормализация должна иметь предел.
 Аудит должен объяснять результат назад.
 ```
 
@@ -24,7 +32,11 @@
 
 ```text
 Meaning-rich above.
+Ownership-safe in memory.
+Layout-stable at boundaries.
 Execution-dense below.
+Assurance-explicit by build mode.
+Normalization-bounded by fuel.
 Audit-complete backward.
 ```
 
@@ -36,6 +48,9 @@ IR / compiler layer
 Runtime control layer
 Hardware execution layer
 Proof / audit layer
+Memory ownership and resource layer
+ABI / layout / serialization layer
+Build-mode / assurance layer
 High-performance native compilation layer
 AI-agent development workflow
 ```
@@ -1108,7 +1123,7 @@ compiler trusted components list.
 
 `dlm explain/audit` must be able to show trusted base summary.
 
-### Влияение
+### Влияние
 
 ```text
 proof trust;
@@ -1344,7 +1359,357 @@ production reliability.
 
 ---
 
-## 26. How these laws affect future patch review
+## 26. Ownership / Alias / Lifetime — часть runtime-семантики
+
+### Формулировка
+
+Every runtime region, buffer, tensor, object handle or external resource must have explicit ownership, aliasing, mutation and lifetime semantics.
+
+```text
+Owned<T>
+Borrowed<T>
+Shared<T>
+Mutable<T>
+NoAlias<T>
+ReadOnly<T>
+GpuOwned<T>
+RemoteOwned<T>
+Checkpointed<T>
+Expired<T>
+```
+
+### Зачем это нужно
+
+DLM не сможет быть одновременно быстрым и безопасным без явных правил владения. Dense buffers, zero-copy, SIMD, GPU reuse, remote execution and checkpoint/restore требуют не только типа и паспорта, но и ответа на вопросы:
+
+```text
+кто владеет region;
+кто может читать;
+кто может писать;
+есть ли alias;
+жив ли handle;
+можно ли переиспользовать buffer;
+можно ли безопасно fused/parallel mutate;
+можно ли передать ownership на GPU/remote worker.
+```
+
+### Что запрещено
+
+```text
+mutating shared region without exclusive capability;
+zero-copy alias without alias contract;
+GPU buffer reuse while CPU alias is mutable;
+remote handle used after invalidation;
+checkpoint restore over live mutable aliases;
+NoAlias optimization without ownership proof;
+FFI pointer escaping without lifetime boundary;
+use-after-free hidden behind runtime descriptor.
+```
+
+### Что разрешено
+
+```text
+RegionOwnership;
+BorrowScope;
+AliasPolicy;
+LifetimeToken;
+NoAliasCapability;
+ExclusiveMutationCapability;
+ReadOnlySharedCapability;
+MoveToGpuBridge;
+MoveToRemoteBridge;
+CheckpointOwnershipTransfer;
+explicit invalidation event in history.
+```
+
+### Проверка закона
+
+Every runtime region and external handle must answer:
+
+```text
+who owns it?
+who may read it?
+who may mutate it?
+can it be aliased?
+when does it expire?
+which bridge changes ownership?
+which audit event records the change?
+```
+
+### Влияние
+
+```text
+runtime safety;
+zero-copy execution;
+SIMD/vectorization;
+GPU buffer reuse;
+remote execution;
+checkpoint/restore;
+FFI safety;
+native backend optimization.
+```
+
+---
+
+## 27. Stable ABI / Layout contract
+
+### Формулировка
+
+Low-level runtime representation must have explicit, versioned and auditable layout contracts.
+
+```text
+Logical type is not physical layout.
+Physical layout must be declared.
+Layout changes must be versioned.
+Boundary layouts must be stable or explicitly migrated.
+```
+
+### Зачем это нужно
+
+DLM может иметь богатую верхнюю семантику, но native backend, FFI, GPU kernels, serialization, compiled artifact cache and cross-version packages требуют точного физического представления.
+
+Без layout law невозможно надёжно делать:
+
+```text
+LLVM/MLIR lowering;
+C ABI / Rust ABI / C++ ABI / GPU ABI;
+serialized proof/runtime artifacts;
+binary cache;
+zero-copy mapped buffers;
+columnar execution;
+checkpoint portability;
+package compatibility.
+```
+
+### Что запрещено
+
+```text
+implicit layout for boundary types;
+ABI determined by compiler accident;
+serialized artifact without layout version;
+GPU kernel assuming undocumented stride/alignment;
+FFI using semantic type without physical representation;
+cache reuse after layout-affecting change;
+checkpoint restore across incompatible layout silently.
+```
+
+### Что разрешено
+
+```text
+LayoutId;
+LayoutVersion;
+AbiProfile;
+AlignmentContract;
+StrideContract;
+EndiannessContract;
+SerializationSchema;
+MigrationBridge;
+LayoutFingerprint;
+layout-aware cache key.
+```
+
+### Проверка закона
+
+Every object crossing native, GPU, FFI, serialization, package or checkpoint boundary must declare:
+
+```text
+dtype;
+shape;
+layout;
+alignment;
+stride/order;
+endianness if relevant;
+version;
+compatibility or migration rule;
+fingerprint.
+```
+
+### Влияние
+
+```text
+native compilation;
+FFI;
+GPU kernels;
+serialized artifacts;
+package manager;
+checkpoint/restore;
+binary cache;
+reproducible builds.
+```
+
+---
+
+## 28. Build Modes / Assurance Levels
+
+### Формулировка
+
+Every DLM build, run, check, explain, audit and compile mode must explicitly declare its assurance level: what is checked, what is erased, what is retained, what is trusted and what remains open.
+
+### Canonical modes
+
+```text
+research
+  Allows OpenObligation and experimental laws.
+  Must report incomplete enforcement.
+
+debug-audit
+  Keeps full proofs, passports, spans, history and pass reports.
+  Slow but maximally explainable.
+
+release-safe
+  Erases hot-path proofs but keeps audit fingerprints, trusted-base fingerprints and reproducibility metadata.
+  Default production target.
+
+release-fast
+  May erase more metadata and enable unchecked/lower-assurance optimizations only if status is honestly downgraded or reported.
+  Never pretends to be release-safe.
+
+certified
+  Allows only verified passes, checked proofs, closed obligations and explicit trusted base.
+  Highest assurance target.
+```
+
+### Зачем это нужно
+
+DLM должен быть честным не только по объектам, но и по режимам. Один и тот же проект может проверяться для исследования, аудита, production, high-performance execution or certified release. Эти режимы не должны смешиваться.
+
+### Что запрещено
+
+```text
+release-fast claims certified guarantees;
+unchecked optimization hidden in release-safe;
+debug-only proof data required for production correctness;
+research OpenObligation exported as verified theorem;
+mode-specific erased metadata not recorded;
+cache shared across incompatible assurance modes.
+```
+
+### Что разрешено
+
+```text
+AssuranceProfile;
+BuildMode;
+ErasurePolicy;
+RetainedMetadataPolicy;
+OptimizationAssurance;
+ModeFingerprint;
+Mode-specific audit report;
+status downgrade by mode.
+```
+
+### Проверка закона
+
+Every command and compiled artifact must be able to report:
+
+```text
+mode;
+assurance level;
+trusted base;
+erasure policy;
+optimization policy;
+open obligations;
+retained audit links;
+cache compatibility.
+```
+
+### Влияние
+
+```text
+CLI;
+compiler backend;
+CI/release process;
+package publishing;
+production deployments;
+research experiments;
+audit reproducibility.
+```
+
+---
+
+## 29. Bounded Normalization / Termination Budget
+
+### Формулировка
+
+Normalization, symbolic evaluation, proof search, tactic execution, rewrite, desugaring, optimization and reflection expansion must be bounded, staged and auditable.
+
+```text
+No unbounded normalization without explicit budget.
+No proof search without fuel/strategy report.
+No rewrite loop without termination guard.
+No reflection expansion without depth/level boundary.
+```
+
+### Зачем это нужно
+
+A formally rich language can be logically correct and still unusable if checker, normalizer or proof search can diverge. DLM must distinguish:
+
+```text
+success;
+rejected;
+unknown within budget;
+timeout;
+fuel exhausted;
+requires stronger proof;
+requires explicit axiom/assumption;
+requires manual theorem.
+```
+
+### Что запрещено
+
+```text
+unbounded normalization by default;
+rewrite rules without loop guard;
+recursive macro/desugaring expansion without depth limit;
+proof search that silently times out as failure;
+reflection expansion crossing meta-level without budget;
+optimizer pass that may not terminate without report;
+normalization result depending on nondeterministic rule order.
+```
+
+### Что разрешено
+
+```text
+NormalizationFuel;
+ProofSearchBudget;
+RewriteStrategy;
+TerminationGuard;
+DepthLimit;
+StepLimit;
+TimeoutStatus;
+UnknownWithinBudget;
+NormalizationReport;
+stable deterministic rule order.
+```
+
+### Проверка закона
+
+Every potentially expanding/checking/searching pass must declare:
+
+```text
+budget type;
+default limit;
+what happens when budget is exhausted;
+whether result is Rejected, Unknown, OpenObligation or Partial;
+how the report appears in explain/audit;
+how deterministic replay is performed.
+```
+
+### Влияние
+
+```text
+checker reliability;
+proof assistant layer;
+rewrite engine;
+macro/desugaring system;
+reflection guard;
+optimizer;
+CI stability;
+AI-agent patch safety.
+```
+
+---
+
+## 30. How these laws affect future patch review
 
 Every future DLM patch should be checked against this short checklist:
 
@@ -1352,52 +1717,81 @@ Every future DLM patch should be checked against this short checklist:
 Does it preserve semantic layer separation?
 Does it use passport/capability/trust instead of raw type-only checks?
 Does it avoid carrying full proof/history into hot runtime?
-Does it keep trust monotonic?
-Does it preserve bridge contracts?
+Does it keep passports regional for dense data?
+Does it keep the pure core deterministic?
 Does it keep effects explicit?
+Does it route computation through capabilities?
+Does it preserve bridge contracts?
+Does it keep trust monotonic?
+Does it preserve full audit history or runtime fingerprints?
+Does it keep checker logic pass-based?
 Does it avoid String references after resolution?
 Does it preserve Span/source origin?
 Does it keep runtime representation dense?
 Does it keep GPU execution batch-first?
+Does it keep Location in passport/descriptor state?
 Does it make materialization explicit?
+Does it declare cost-class behavior?
+Does it make optimizations verified or honestly downgraded?
+Does it cache checked meaning, not raw text?
+Does it expose trusted base?
 Does it produce audit/explain information?
+Does it preserve ownership/alias/lifetime contracts?
+Does it preserve ABI/layout/version contracts?
+Does it declare build mode and assurance level?
+Does it bound normalization/proof-search/rewrite expansion?
 Does it remain AI-agent-friendly?
 Does it honestly downgrade status when full proof is absent?
 ```
 
 ---
 
-## 27. Readiness impact
+## 31. Readiness impact
 
-Adding these laws primarily increases architectural and fundamental readiness, not local code readiness.
+Adding these laws primarily increases architectural and fundamental readiness, not local code readiness. The document does not implement the laws by itself, but it closes the design gaps needed for a 100/100 architectural target.
 
 ```text
 Metamathematical foundation:
   Local readiness:         no direct code change
-  Architectural readiness: +3–5%
-  Fundamental readiness:   +3–5%
+  Architectural readiness: +4–6%
+  Fundamental readiness:   +4–6%
 
 Runtime / production execution:
   Local readiness:         no direct code change
-  Architectural readiness: +5–8%
-  Fundamental readiness:   +4–6%
+  Architectural readiness: +7–10%
+  Fundamental readiness:   +6–8%
 
 High-performance native compilation:
   Local readiness:         no direct code change
-  Architectural readiness: +6–10%
-  Fundamental readiness:   +5–8%
+  Architectural readiness: +9–12%
+  Fundamental readiness:   +8–10%
+
+Memory / resource safety:
+  Local readiness:         no direct code change
+  Architectural readiness: +8–12%
+  Fundamental readiness:   +7–10%
+
+ABI / package / artifact stability:
+  Local readiness:         no direct code change
+  Architectural readiness: +7–10%
+  Fundamental readiness:   +6–9%
+
+Assurance / release discipline:
+  Local readiness:         no direct code change
+  Architectural readiness: +6–9%
+  Fundamental readiness:   +6–9%
 
 AI-agent maintainability:
-  Architectural readiness: +8–12%
+  Architectural readiness: +10–14%
 ```
 
 ---
 
-## 28. Final principle
+## 32. Final principle
 
 DLM must not become a slow language with beautiful metadata.
 
-DLM must become a language that uses metadata to decide how to compute correctly and efficiently.
+DLM must become a language that uses metadata to decide how to compute correctly, efficiently, safely and reproducibly.
 
 ```text
 Passports are not runtime weight.
@@ -1411,6 +1805,18 @@ History is audit-level reconstruction data.
 
 Trust is not decoration.
 Trust is a monotonic safety label.
+
+Ownership is not an implementation detail.
+Ownership is a runtime safety contract.
+
+Layout is not compiler accident.
+Layout is a versioned boundary contract.
+
+Build mode is not a flag.
+Build mode is an assurance declaration.
+
+Normalization is not infinite magic.
+Normalization is a bounded, reported process.
 ```
 
 The final target is:
@@ -1418,8 +1824,22 @@ The final target is:
 ```text
 high-level mathematical clarity
 + explicit proof/trust/audit
++ ownership-safe runtime regions
++ stable ABI/layout boundaries
 + compact runtime control
 + dense hardware execution
++ explicit assurance modes
++ bounded normalization/proof search
 + explainable results
+```
+
+The 100/100 architectural formula is:
+
+```text
+DLM should be transparent enough to audit,
+strict enough to preserve soundness,
+dense enough to run fast,
+structured enough for AI agents to patch safely,
+and honest enough to downgrade status whenever proof is incomplete.
 ```
 

@@ -714,53 +714,49 @@ Implementation points:
 
 Known limitation: this is still a textual formula MVP. Full capture-avoiding substitution over a real term AST should replace it after function/lambda/dependent-term syntax lands.
 
-<!-- DLM_RUNTIME_HARDWARE_LAYERING_IMPLEMENTATION_NOTES -->
+<!-- RUNTIME_HARDWARE_LAYERING_PRINCIPLE_BLOCK -->
+## Runtime / Hardware Layering implementation note
 
-## Runtime / Hardware Layering Principle
-
-Future compiler/runtime/GPU work must preserve the four-layer separation:
-
-```text
-Source / mathematical layer -> IR / compiler layer -> Runtime control layer -> Hardware execution layer
-```
-
-Proof, passport, trust and history are full semantic objects at the high level. Hot runtime paths must use proof-erased code, compact passport descriptors, dense buffers, explicit location capabilities, and batch scheduling.
-
-Forbidden direction:
+Future runtime/compiler patches must preserve the four-layer separation:
 
 ```text
-full passport per scalar;
-proof checking inside GPU kernel;
-history chain per array element;
-trust-level branching inside SIMD/SIMT;
-implicit CPU/GPU transfer;
-implicit materialization.
+source/mathematical -> IR/compiler -> runtime control -> hardware execution
 ```
 
-
+Proof checking, full history and full passports belong high in the stack. Dense buffers, compact descriptors and deterministic kernels belong low in the stack.
 
 <!-- DLM_ARCHITECTURAL_LAWS_BLOCK -->
-
 ## DLM Architectural Laws enforcement note
 
-`docs/DLM_ARCHITECTURAL_LAWS.md` is now part of the implementation discipline.
+Every future patch should be reviewed against `docs/DLM_ARCHITECTURAL_LAWS.md`: semantic layer separation, passport-governed operations, proof erasure, dense runtime data, explicit effects, bridge contracts, trust monotonicity, ID-based resolution, Span preservation, visible trusted base and honest downgrade.
 
-For every future patch, check:
+<!-- V0_57_FUNCTION_LAMBDA_APPLICATION_BLOCK -->
+## v0.57.0 — Function Type / Lambda / Application Foundation
+
+DLM now has an ordinary function foundation for Stage 2 — ordinary mathematics of the language.
+
+Added:
 
 ```text
-Does it preserve semantic layer separation?
-Does it use passports/capabilities/trust rather than raw type-only checks?
-Does it avoid carrying full proof/history into hot runtime?
-Does it keep trust monotonic?
-Does it preserve bridge contracts?
-Does it keep effects explicit?
-Does it avoid String references after resolution?
-Does it preserve Span/source origin?
-Does it keep runtime data dense?
-Does it keep GPU execution batch-first?
-Does it make materialization explicit?
-Does it produce audit/explain information?
-Does it remain AI-agent-friendly?
-Does it honestly downgrade status when full proof is absent?
+FunctionType
+LambdaTerm
+ApplicationTerm
+ApplicationStatus
 ```
 
+Main law:
+
+```text
+Function application is not theorem proving.
+LambdaTerm is not StaticProof.
+ApplicationTerm is not TruthClaim.
+```
+
+Readiness delta:
+
+```text
+Stage 2 — Ordinary mathematics of the language
+Local readiness:         18–24% -> 24–32%
+Architectural readiness: 40–50% -> 44–56%
+Fundamental readiness:   25–35% -> 28–40%
+```

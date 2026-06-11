@@ -8,6 +8,7 @@ pub mod certificate;
 pub mod certificate_audit;
 pub mod diagnostics;
 pub mod equality;
+pub mod function;
 pub mod induction;
 pub mod logic;
 pub mod ids;
@@ -64,3 +65,5 @@ pub use statement::{axiom_theorem, goal_decl, goal_passport, hypothesis_decl, hy
 pub use tactic::{execute_tactic_script, TacticCommand, TacticScript, TacticScriptReport, TacticScriptStatus, TacticScriptStep, TacticStepIndex};
 pub use theorem_dependency::{export_global_metatheory_inventory, global_metatheory_inventory, global_metatheory_inventory_passport, render_global_metatheory_inventory, require_verified_global_metatheory_inventory, theorem_dependency_edge, theorem_dependency_node_from_passport, GlobalMetatheoryInventoryReport, MetatheoryInventoryStatus, TheoremDependencyEdge, TheoremDependencyNode, TheoremDependencyNodeKind};
 pub use trusted_base::{export_trusted_base_closure, render_trusted_base_closure, require_closed_trusted_base_closure, trusted_base_closure, trusted_base_closure_passport, trusted_base_evidence_from_axiom_registry, trusted_base_evidence_from_conservative_extension, trusted_base_evidence_from_dependency_audit, trusted_base_evidence_from_global_inventory, trusted_base_evidence_from_metatheory_closure, trusted_base_evidence_from_passport, trusted_base_evidence_from_soundness_boundary_ledger, TrustedBaseClosureReport, TrustedBaseClosureStatus, TrustedBaseEvidence, TrustedBaseEvidenceKind};
+
+pub use function::*;

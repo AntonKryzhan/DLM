@@ -523,26 +523,43 @@ Architectural readiness: 35–45% -> 40–50%
 Fundamental readiness:   22–32% -> 25–35%
 ```
 
-<!-- DLM_RUNTIME_HARDWARE_LAYERING_UPDATE -->
+<!-- RUNTIME_HARDWARE_LAYERING_PRINCIPLE_BLOCK -->
+## Docs update — Runtime / Hardware Layering Principle
 
-## Runtime / Hardware Layering Principle
-
-Added global roadmap principle:
-
-```text
-Meaning should be holographic.
-Execution should be dense.
-```
-
-This records that passports/proofs/history guide compiler/runtime decisions, but hardware execution must remain dense and minimal.
-
-
+Added `docs/RUNTIME_HARDWARE_LAYERING_PRINCIPLE.md`, which fixes a global rule for future runtime, GPU and compiler work: rich semantic meaning must stay high-level, while hardware execution must stay dense and compact.
 
 <!-- DLM_ARCHITECTURAL_LAWS_BLOCK -->
-
-## Docs update вЂ” DLM Architectural Laws
+## Docs update — DLM Architectural Laws
 
 Added `docs/DLM_ARCHITECTURAL_LAWS.md`, a detailed architectural law document that defines 25 global laws for DLM development.
 
-This is a docs-only governance patch. It does not change Rust code, but it changes the standard by which future code patches should be reviewed.
+<!-- V0_57_FUNCTION_LAMBDA_APPLICATION_BLOCK -->
+## v0.57.0 — Function Type / Lambda / Application Foundation
 
+DLM now has an ordinary function foundation for Stage 2 — ordinary mathematics of the language.
+
+Added:
+
+```text
+FunctionType
+LambdaTerm
+ApplicationTerm
+ApplicationStatus
+```
+
+Main law:
+
+```text
+Function application is not theorem proving.
+LambdaTerm is not StaticProof.
+ApplicationTerm is not TruthClaim.
+```
+
+Readiness delta:
+
+```text
+Stage 2 — Ordinary mathematics of the language
+Local readiness:         18–24% -> 24–32%
+Architectural readiness: 40–50% -> 44–56%
+Fundamental readiness:   25–35% -> 28–40%
+```

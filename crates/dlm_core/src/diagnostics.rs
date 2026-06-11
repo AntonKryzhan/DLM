@@ -49,6 +49,7 @@ pub enum DiagnosticKind {
     MetatheoryFoundationError,
     LogicFormulaError,
     SubstitutionError,
+    FunctionTermError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -210,6 +211,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::MetatheoryFoundationError => "E0925 MetatheoryFoundationError",
             DiagnosticKind::LogicFormulaError => "E0926 LogicFormulaError",
             DiagnosticKind::SubstitutionError => "E0927 SubstitutionError",
+            DiagnosticKind::FunctionTermError => "E0928 FunctionTermError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

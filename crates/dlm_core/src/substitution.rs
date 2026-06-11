@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 use std::fmt;
 
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
-use crate::logic::{formula_from_passport, BoundVariable, QuantifiedFormula, QuantifierKind};
+use crate::logic::{formula_from_passport, BoundVariable, QuantifiedFormula};
 use crate::passport::{
     Capability, CapabilitySet, ConstructionMode, CostClass, HistoryChain, LocationContext, Passport,
     Provenance, TheoryContext, TrustLevel, TypeKind, ValidationState,
