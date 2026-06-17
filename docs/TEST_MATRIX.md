@@ -908,3 +908,23 @@ cargo test -p dlm_core --test prelude_eval
 ```
 
 Covers deterministic primitive evaluation, explicit option boundary for sequence index, bounded symbolic map/fold application, fuel rejection, contract rejection, evidence smuggling rejection, taint preservation and stable exports.
+
+## v0.68.0 — Prelude lowering
+
+```powershell
+cargo test -p dlm_core --test prelude_lowering
+cargo test -p dlm_core --test prelude_eval
+cargo test -p dlm_core --test standard_prelude
+cargo test
+```
+
+Covers:
+
+```text
+verified_erased scalar lowering;
+rejected_evaluation from failed prelude evaluation;
+rejected_evidence_boundary for proof/theorem/truth/runtime evidence;
+gpu_batch rejects scalar operations and accepts bounded collection symbolic lowering;
+Axiom/Oracle/Unsafe taint is preserved as downgraded_tainted;
+export/fingerprint target sensitivity.
+```

@@ -3264,3 +3264,15 @@ Introduce canonical checked contracts for the first algebraic prelude: Nat, Bool
 ## v0.67.0 — Prelude Evaluation / Small-Step Algebraic Semantics
 
 Adds a narrow, auditable evaluation boundary for verified standard prelude contracts. This moves Stage 2 from “declared algebraic operations” toward executable algebraic semantics while preserving explicit fuel, taint, and proof/runtime separation.
+
+## v0.68.0 — Prelude Lowering / Verified Erasure Boundary
+
+Status: implemented as a semantic/audit layer.
+
+Purpose:
+
+```text
+small-step prelude semantics -> explicit lowering report -> future runtime/compiler backend
+```
+
+This is not machine-code emission yet. It is the checked boundary that prevents backend work from silently dropping proof/trust/provenance obligations.

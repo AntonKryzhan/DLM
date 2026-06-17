@@ -642,3 +642,9 @@ Raised when a standard prelude contract has an invalid identifier, malformed typ
 ## E0938 PreludeEvaluationError
 
 Raised when a standard prelude evaluation request violates the small-step algebraic boundary: unverified contract, wrong input type, insufficient fuel, or proof/theorem/truth/runtime evidence used as an ordinary value.
+
+## E0939 PreludeLoweringError
+
+Raised by the prelude lowering boundary when a lowering artifact name is invalid or when downstream code requires `verified_erased` but receives symbolic, tainted, rejected-target, rejected-evaluation, or evidence-boundary status.
+
+This diagnostic protects the line between small-step algebraic semantics and future runtime/compiler lowering.

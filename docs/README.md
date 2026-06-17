@@ -140,3 +140,9 @@ The project now has a checked algebraic prelude boundary for Nat/Bool/Option/Res
 ## v0.67 — Prelude Evaluation
 
 See `PRELUDE_EVALUATION.md` for the small-step algebraic evaluator for verified standard prelude contracts.
+
+## v0.68.0 — Prelude Lowering / Verified Erasure Boundary
+
+Adds `PRELUDE_LOWERING.md` and `crates/dlm_core/src/prelude_lowering.rs`.
+
+This layer turns a verified `PreludeEvaluationReport` into an explicit `PreludeLoweringReport` for audit-only, interpreter, native-scalar, native-vector, GPU-batch, or remote-batch targets. It verifies erasure boundaries without producing hidden runtime/compiler magic.

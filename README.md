@@ -856,3 +856,9 @@ The project now has a checked algebraic prelude boundary for Nat/Bool/Option/Res
 ## v0.67.0 — Prelude Evaluation / Small-Step Algebraic Semantics
 
 DLM now has a small-step evaluator for verified standard prelude contracts. Primitive Nat/Bool/length/index operations reduce deterministically; Option/Result/List/Sequence map/fold preserve algebraic shape and use bounded symbolic application instead of executing arbitrary hidden function bodies. See `docs/PRELUDE_EVALUATION.md`.
+
+### v0.68.0 — Prelude Lowering / Verified Erasure Boundary
+
+DLM now has an explicit audit boundary between small-step standard prelude evaluation and future runtime/compiler lowering. A `PreludeEvaluationReport` can be lowered into a `PreludeLoweringReport` only with an explicit target and erasure mode.
+
+This keeps dense runtime representation compatible with DLM's traceability laws: proof/passport metadata may be erased from hot runtime data only when a descriptor preserves the audit path.
