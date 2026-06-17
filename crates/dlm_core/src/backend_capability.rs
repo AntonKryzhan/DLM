@@ -204,7 +204,7 @@ pub fn validate_backend_lowering(
         match lowering.status {
             PreludeLoweringStatus::VerifiedErased => BackendLoweringStatus::VerifiedAccepted,
             PreludeLoweringStatus::SymbolicLowered => {
-                if target_accepts_symbolic(lowering.target) && backend.capabilities.contains(&BackendCapability::Batchable) {
+                if symbolic_backend_capability_is_sufficient(lowering.target, &backend.capabilities) {
                     open_obligations.push(format!(
                         "backend `{}` accepts symbolic bounded lowering for operation `{}`; arbitrary user code is still not executed implicitly",
                         backend.name, lowering.operation
@@ -212,7 +212,7 @@ pub fn validate_backend_lowering(
                     BackendLoweringStatus::SymbolicAccepted
                 } else {
                     open_obligations.push(format!(
-                        "backend `{}` cannot consume symbolic lowering `{}` without explicit batch capability",
+                        "backend `{}` cannot consume symbolic lowering `{}` without the target-specific symbolic execution capability",
                         backend.name, lowering.name
                     ));
                     BackendLoweringStatus::RejectedLowering
@@ -402,11 +402,19 @@ pub fn export_backend_lowering_report(report: &BackendLoweringReport) -> String 
     out
 }
 
-fn target_accepts_symbolic(target: PreludeLoweringTarget) -> bool {
-    matches!(
-        target,
-        PreludeLoweringTarget::NativeVector | PreludeLoweringTarget::GpuBatch | PreludeLoweringTarget::RemoteBatch
-    )
+fn symbolic_backend_capability_is_sufficient(
+    target: PreludeLoweringTarget,
+    capabilities: &BTreeSet<BackendCapability>,
+) -> bool {
+    match target {
+        PreludeLoweringTarget::NativeVector => capabilities.contains(&BackendCapability::Vectorizable),
+        PreludeLoweringTarget::GpuBatch | PreludeLoweringTarget::RemoteBatch => {
+            capabilities.contains(&BackendCapability::Batchable)
+        }
+        PreludeLoweringTarget::AuditOnly
+        | PreludeLoweringTarget::Interpreter
+        | PreludeLoweringTarget::NativeScalar => false,
+    }
 }
 
 fn backend_representation(
