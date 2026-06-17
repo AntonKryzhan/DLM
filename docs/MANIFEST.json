@@ -70,6 +70,7 @@
         "docs/SEQUENCE_TYPES.md",
         "docs/TRAVERSAL_BOUNDARY.md",
         "RECURSION_BOUNDARY.md",
-        "TERMINATION_BUDGET.md"
+        "TERMINATION_BUDGET.md",
+        "STANDARD_PRELUDE.md"
     ]
 }

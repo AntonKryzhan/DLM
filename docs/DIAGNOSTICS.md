@@ -633,3 +633,7 @@ Raised when a finite traversal violates the traversal boundary: wrong function c
 ## v0.65 — Termination / Normalization Budget Unification
 
 Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.
+
+## E0937 StandardPreludeError
+
+Raised when a standard prelude contract has an invalid identifier, malformed type identity, signature mismatch, missing verified budget, or non-checked function contract.

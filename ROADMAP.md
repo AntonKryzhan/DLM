@@ -3254,3 +3254,8 @@ Adds audited finite traversal objects over explicit finite collections: `MapTrav
 ### v0.64 — Recursion / Well-Founded Fuel Boundary
 
 Stage 2 gains explicit bounded recursion with well-founded evidence requirements and fuel-only open status.
+
+
+### v0.66 — Standard Algebraic Prelude Foundation
+
+Introduce canonical checked contracts for the first algebraic prelude: Nat, Bool, Option, Result, List and Sequence operations. This connects ordinary math to the already-bounded computation model without magic primitives.

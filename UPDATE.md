@@ -614,3 +614,7 @@ Added finite List/Sequence foundation with explicit item typing, explicit finite
 ## v0.65 — Termination / Normalization Budget Unification
 
 Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.
+
+## v0.66.0 — Standard Algebraic Prelude Foundation
+
+Adds checked standard prelude contracts for Nat/Bool/Option/Result/List/Sequence operations. Collection map/fold contracts require explicit verified unified termination budgets. Prelude contracts preserve Axiom/Oracle/Unsafe taint and remain audit objects, not proof/theorem/truth claims.

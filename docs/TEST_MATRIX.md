@@ -894,3 +894,8 @@ Adds explicit `Option<T>`, `Result<T,E>` and `PartialityReport` objects for ordi
 ## v0.65 — Termination / Normalization Budget Unification
 
 Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.
+
+## v0.66 Standard Algebraic Prelude Foundation
+
+- `cargo test -p dlm_core --test standard_prelude`
+- verifies canonical Nat/Bool/Option/Result/List/Sequence prelude contracts, exact signatures, explicit budgets, taint preservation and stable exports.

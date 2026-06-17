@@ -805,3 +805,8 @@ Introduced `recursion.rs` with `RecursionSchemeReport`, `RecursiveCallReport`, e
 ## v0.65 — Termination / Normalization Budget Unification
 
 Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetReport` to unify rewrite-normalization, traversal, and recursion fuel into one bounded-computation ledger. See `docs/TERMINATION_BUDGET.md`.
+
+
+## v0.66 implementation note
+
+`standard_prelude` introduces `PreludeOperationKind`, canonical signature generation, `StandardPreludeContractReport`, passport export and audit rendering for checked prelude operations. Signature mismatches and missing budgets are explicit statuses rather than implicit coercions.

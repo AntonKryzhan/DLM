@@ -58,6 +58,7 @@ pub enum DiagnosticKind {
     TraversalError,
     RecursionBoundaryError,
     TerminationBudgetError,
+    StandardPreludeError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -228,6 +229,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::TraversalError => "E0934 TraversalError",
             DiagnosticKind::RecursionBoundaryError => "E0935 RecursionBoundaryError",
             DiagnosticKind::TerminationBudgetError => "E0936 TerminationBudgetError",
+            DiagnosticKind::StandardPreludeError => "E0937 StandardPreludeError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,
