@@ -61,6 +61,7 @@ pub enum DiagnosticKind {
     StandardPreludeError,
     PreludeEvaluationError,
     PreludeLoweringError,
+    BackendCapabilityError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -234,6 +235,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::StandardPreludeError => "E0937 StandardPreludeError",
             DiagnosticKind::PreludeEvaluationError => "E0938 PreludeEvaluationError",
             DiagnosticKind::PreludeLoweringError => "E0939 PreludeLoweringError",
+            DiagnosticKind::BackendCapabilityError => "E0940 BackendCapabilityError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

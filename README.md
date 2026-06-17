@@ -857,8 +857,7 @@ The project now has a checked algebraic prelude boundary for Nat/Bool/Option/Res
 
 DLM now has a small-step evaluator for verified standard prelude contracts. Primitive Nat/Bool/length/index operations reduce deterministically; Option/Result/List/Sequence map/fold preserve algebraic shape and use bounded symbolic application instead of executing arbitrary hidden function bodies. See `docs/PRELUDE_EVALUATION.md`.
 
-### v0.68.0 — Prelude Lowering / Verified Erasure Boundary
 
-DLM now has an explicit audit boundary between small-step standard prelude evaluation and future runtime/compiler lowering. A `PreludeEvaluationReport` can be lowered into a `PreludeLoweringReport` only with an explicit target and erasure mode.
+## v0.69.0 — Backend Capability / Lowering Target Contracts
 
-This keeps dense runtime representation compatible with DLM's traceability laws: proof/passport metadata may be erased from hot runtime data only when a descriptor preserves the audit path.
+Adds explicit backend capability contracts for consuming prelude lowering reports. Backends must declare deterministic/pure/no_alloc/no_alias/vectorizable/batchable/gpu_resident/remote_serializable/value_preserving/descriptor_preserving capabilities before a lowered artifact can be accepted. See `docs/BACKEND_CAPABILITY.md`.

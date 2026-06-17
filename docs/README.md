@@ -146,3 +146,5 @@ See `PRELUDE_EVALUATION.md` for the small-step algebraic evaluator for verified 
 Adds `PRELUDE_LOWERING.md` and `crates/dlm_core/src/prelude_lowering.rs`.
 
 This layer turns a verified `PreludeEvaluationReport` into an explicit `PreludeLoweringReport` for audit-only, interpreter, native-scalar, native-vector, GPU-batch, or remote-batch targets. It verifies erasure boundaries without producing hidden runtime/compiler magic.
+
+- `BACKEND_CAPABILITY.md` — backend capability and lowering-target contract layer for scalar/vector/GPU/remote lowering.

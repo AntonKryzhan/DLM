@@ -404,6 +404,16 @@ pub enum TypeKind {
         target: String,
         status: String,
     },
+    BackendCapabilityContract {
+        name: String,
+        target: String,
+        status: String,
+    },
+    BackendLoweringReport {
+        name: String,
+        target: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -630,6 +640,12 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::PreludeLoweringReport { name, target, status } => {
                 write!(f, "PreludeLoweringReport<{name}:{target}:{status}>")
+            }
+            TypeKind::BackendCapabilityContract { name, target, status } => {
+                write!(f, "BackendCapabilityContract<{name}:{target}:{status}>")
+            }
+            TypeKind::BackendLoweringReport { name, target, status } => {
+                write!(f, "BackendLoweringReport<{name}:{target}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

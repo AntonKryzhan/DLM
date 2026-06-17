@@ -648,3 +648,8 @@ Raised when a standard prelude evaluation request violates the small-step algebr
 Raised by the prelude lowering boundary when a lowering artifact name is invalid or when downstream code requires `verified_erased` but receives symbolic, tainted, rejected-target, rejected-evaluation, or evidence-boundary status.
 
 This diagnostic protects the line between small-step algebraic semantics and future runtime/compiler lowering.
+
+
+## E0940 BackendCapabilityError
+
+Raised when a backend capability contract or backend lowering plan is invalid. Typical cases: missing required backend capability, lowering target mismatch, rejected prelude lowering, or trying to consume symbolic/tainted lowering as fully verified backend code.

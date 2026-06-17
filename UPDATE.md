@@ -624,22 +624,7 @@ Adds checked standard prelude contracts for Nat/Bool/Option/Result/List/Sequence
 
 Added `PreludeEvaluationReport` and small-step evaluation for verified standard prelude operations. Evaluation is deterministic and fuel-bounded; map/fold use symbolic application and do not run arbitrary user code.
 
-## v0.68.0 — Prelude Lowering / Verified Erasure Boundary
 
-Added explicit lowering reports for standard prelude evaluation results.
+## v0.69.0 — Backend Capability / Lowering Target Contracts
 
-Changed files:
-
-```text
-crates/dlm_core/src/prelude_lowering.rs
-crates/dlm_core/tests/prelude_lowering.rs
-docs/PRELUDE_LOWERING.md
-```
-
-Core rule:
-
-```text
-PreludeLoweringReport != Proof/Theorem/TruthClaim/RuntimeWitness
-```
-
-The patch introduces lowering targets (`audit_only`, `interpreter`, `native_scalar`, `native_vector`, `gpu_batch`, `remote_batch`) and erasure modes (`audit_only`, `proof_erased`, `passport_erased_with_descriptor`). GPU/remote targets are batch-first and reject scalar prelude lowering.
+Adds `BackendCapabilityContract` and `BackendLoweringReport`. The compiler/runtime path now checks backend capabilities before accepting prelude lowering artifacts: scalar, vector, GPU and remote targets require explicit capability sets, preserve taint, and keep symbolic lowering visible instead of treating it as fully verified runtime code.

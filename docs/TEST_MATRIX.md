@@ -928,3 +928,15 @@ gpu_batch rejects scalar operations and accepts bounded collection symbolic lowe
 Axiom/Oracle/Unsafe taint is preserved as downgraded_tainted;
 export/fingerprint target sensitivity.
 ```
+
+
+## v0.69.0 — Backend Capability / Lowering Target Contracts
+
+```powershell
+cargo test -p dlm_core --test backend_capability
+cargo test -p dlm_core --test prelude_lowering
+cargo test -p dlm_core --test prelude_eval
+cargo test
+```
+
+Covers verified scalar backend acceptance, missing capability rejection, symbolic GPU batch acceptance, target mismatch rejection, taint preservation and stable backend exports.

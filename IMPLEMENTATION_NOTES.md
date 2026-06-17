@@ -816,16 +816,7 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 
 `prelude_eval` introduces an explicit small-step semantics layer above `standard_prelude`. It accepts only `verified_checked` prelude contracts, rejects proof/theorem/truth/runtime evidence as ordinary values, consumes explicit fuel for collection traversal, preserves taint, and exports stable evaluation reports.
 
-## v0.68.0 implementation notes
 
-The `prelude_lowering` module introduces `PreludeLoweringReport` as a distinct audit artifact. It consumes `PreludeEvaluationReport` and records target, erasure mode, representation descriptor, trust/provenance taint and open obligations.
+## v0.69.0 — Backend Capability / Lowering Target Contracts
 
-Important constraints:
-
-```text
-rejected prelude evaluations cannot be value-preserving lowered;
-proof/theorem/truth/runtime evidence cannot be erased into runtime data;
-GPU/remote lowering is batch-first;
-Axiom/Oracle/Unsafe taint downgrades clean lowering;
-verified_erased is the only status accepted by require_verified_lowering.
-```
+Implemented `backend_capability` with explicit target capability requirements, backend contract reports, backend lowering reports, stable exports and taint preservation. `symbolic_accepted` is intentionally not `verified_accepted`; symbolic batch lowering remains an auditable boundary.
