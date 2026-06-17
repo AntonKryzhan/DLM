@@ -72,5 +72,8 @@
         "RECURSION_BOUNDARY.md",
         "TERMINATION_BUDGET.md",
         "STANDARD_PRELUDE.md"
+    ],
+    "files": [
+        "PRELUDE_EVALUATION.md"
     ]
 }

@@ -851,3 +851,8 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 ## v0.66.0 — Standard Algebraic Prelude Foundation
 
 The project now has a checked algebraic prelude boundary for Nat/Bool/Option/Result/List/Sequence operations. Standard prelude operations are explicit contracts with signatures, budgets, taint propagation and stable fingerprints.
+
+
+## v0.67.0 — Prelude Evaluation / Small-Step Algebraic Semantics
+
+DLM now has a small-step evaluator for verified standard prelude contracts. Primitive Nat/Bool/length/index operations reduce deterministically; Option/Result/List/Sequence map/fold preserve algebraic shape and use bounded symbolic application instead of executing arbitrary hidden function bodies. See `docs/PRELUDE_EVALUATION.md`.

@@ -135,3 +135,8 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 ## v0.66.0 — Standard Algebraic Prelude Foundation
 
 The project now has a checked algebraic prelude boundary for Nat/Bool/Option/Result/List/Sequence operations. Standard prelude operations are explicit contracts with signatures, budgets, taint propagation and stable fingerprints.
+
+
+## v0.67 — Prelude Evaluation
+
+See `PRELUDE_EVALUATION.md` for the small-step algebraic evaluator for verified standard prelude contracts.

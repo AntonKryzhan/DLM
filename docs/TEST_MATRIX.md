@@ -899,3 +899,12 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 
 - `cargo test -p dlm_core --test standard_prelude`
 - verifies canonical Nat/Bool/Option/Result/List/Sequence prelude contracts, exact signatures, explicit budgets, taint preservation and stable exports.
+
+
+## v0.67 — Prelude Evaluation / Small-Step Algebraic Semantics
+
+```powershell
+cargo test -p dlm_core --test prelude_eval
+```
+
+Covers deterministic primitive evaluation, explicit option boundary for sequence index, bounded symbolic map/fold application, fuel rejection, contract rejection, evidence smuggling rejection, taint preservation and stable exports.

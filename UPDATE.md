@@ -618,3 +618,8 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 ## v0.66.0 — Standard Algebraic Prelude Foundation
 
 Adds checked standard prelude contracts for Nat/Bool/Option/Result/List/Sequence operations. Collection map/fold contracts require explicit verified unified termination budgets. Prelude contracts preserve Axiom/Oracle/Unsafe taint and remain audit objects, not proof/theorem/truth claims.
+
+
+## v0.67.0
+
+Added `PreludeEvaluationReport` and small-step evaluation for verified standard prelude operations. Evaluation is deterministic and fuel-bounded; map/fold use symbolic application and do not run arbitrary user code.

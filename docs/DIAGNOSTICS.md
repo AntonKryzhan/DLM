@@ -637,3 +637,8 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 ## E0937 StandardPreludeError
 
 Raised when a standard prelude contract has an invalid identifier, malformed type identity, signature mismatch, missing verified budget, or non-checked function contract.
+
+
+## E0938 PreludeEvaluationError
+
+Raised when a standard prelude evaluation request violates the small-step algebraic boundary: unverified contract, wrong input type, insufficient fuel, or proof/theorem/truth/runtime evidence used as an ordinary value.

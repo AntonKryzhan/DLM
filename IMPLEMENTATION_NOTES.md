@@ -810,3 +810,8 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 ## v0.66 implementation note
 
 `standard_prelude` introduces `PreludeOperationKind`, canonical signature generation, `StandardPreludeContractReport`, passport export and audit rendering for checked prelude operations. Signature mismatches and missing budgets are explicit statuses rather than implicit coercions.
+
+
+## v0.67 implementation note — Prelude Evaluation
+
+`prelude_eval` introduces an explicit small-step semantics layer above `standard_prelude`. It accepts only `verified_checked` prelude contracts, rejects proof/theorem/truth/runtime evidence as ordinary values, consumes explicit fuel for collection traversal, preserves taint, and exports stable evaluation reports.

@@ -59,6 +59,7 @@ pub enum DiagnosticKind {
     RecursionBoundaryError,
     TerminationBudgetError,
     StandardPreludeError,
+    PreludeEvaluationError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -230,6 +231,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::RecursionBoundaryError => "E0935 RecursionBoundaryError",
             DiagnosticKind::TerminationBudgetError => "E0936 TerminationBudgetError",
             DiagnosticKind::StandardPreludeError => "E0937 StandardPreludeError",
+            DiagnosticKind::PreludeEvaluationError => "E0938 PreludeEvaluationError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

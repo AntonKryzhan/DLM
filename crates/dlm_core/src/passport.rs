@@ -394,6 +394,11 @@ pub enum TypeKind {
         operation: String,
         status: String,
     },
+    PreludeEvaluationReport {
+        name: String,
+        operation: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -614,6 +619,9 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::StandardPreludeContract { name, operation, status } => {
                 write!(f, "StandardPreludeContract<{name}:{operation}:{status}>")
+            }
+            TypeKind::PreludeEvaluationReport { name, operation, status } => {
+                write!(f, "PreludeEvaluationReport<{name}:{operation}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

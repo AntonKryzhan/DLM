@@ -3259,3 +3259,8 @@ Stage 2 gains explicit bounded recursion with well-founded evidence requirements
 ### v0.66 — Standard Algebraic Prelude Foundation
 
 Introduce canonical checked contracts for the first algebraic prelude: Nat, Bool, Option, Result, List and Sequence operations. This connects ordinary math to the already-bounded computation model without magic primitives.
+
+
+## v0.67.0 — Prelude Evaluation / Small-Step Algebraic Semantics
+
+Adds a narrow, auditable evaluation boundary for verified standard prelude contracts. This moves Stage 2 from “declared algebraic operations” toward executable algebraic semantics while preserving explicit fuel, taint, and proof/runtime separation.
