@@ -73,10 +73,12 @@
     "TERMINATION_BUDGET.md",
     "STANDARD_PRELUDE.md",
     "PRELUDE_LOWERING.md",
-    "BACKEND_CAPABILITY.md"
+    "BACKEND_CAPABILITY.md",
+    "BACKEND_LAYOUT.md"
   ],
   "files": [
     "PRELUDE_EVALUATION.md",
-    "BACKEND_CAPABILITY.md"
+    "BACKEND_CAPABILITY.md",
+    "BACKEND_LAYOUT.md"
   ]
 }

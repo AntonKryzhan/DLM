@@ -414,6 +414,16 @@ pub enum TypeKind {
         target: String,
         status: String,
     },
+    BackendLayoutDescriptor {
+        name: String,
+        target: String,
+        status: String,
+    },
+    BackendLayoutReport {
+        name: String,
+        target: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -646,6 +656,12 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::BackendLoweringReport { name, target, status } => {
                 write!(f, "BackendLoweringReport<{name}:{target}:{status}>")
+            }
+            TypeKind::BackendLayoutDescriptor { name, target, status } => {
+                write!(f, "BackendLayoutDescriptor<{name}:{target}:{status}>")
+            }
+            TypeKind::BackendLayoutReport { name, target, status } => {
+                write!(f, "BackendLayoutReport<{name}:{target}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

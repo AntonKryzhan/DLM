@@ -940,3 +940,14 @@ cargo test
 ```
 
 Covers verified scalar backend acceptance, missing capability rejection, symbolic GPU batch acceptance, target mismatch rejection, taint preservation and stable backend exports.
+
+
+## v0.70 Backend Layout / ABI Descriptor Boundary
+
+Required Rust test:
+
+```powershell
+cargo test -p dlm_core --test backend_layout
+```
+
+The test matrix must confirm explicit ABI descriptors, target/container compatibility, metadata erasure boundaries, GPU buffer descriptors, vector dense layouts, taint preservation, and stable ABI-sensitive exports.

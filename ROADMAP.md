@@ -3266,6 +3266,36 @@ Introduce canonical checked contracts for the first algebraic prelude: Nat, Bool
 Adds a narrow, auditable evaluation boundary for verified standard prelude contracts. This moves Stage 2 from “declared algebraic operations” toward executable algebraic semantics while preserving explicit fuel, taint, and proof/runtime separation.
 
 
-## v0.69.0 — Backend Capability / Lowering Target Contracts
+## v0.70.0 — Backend Layout / ABI Descriptor Boundary
 
-The lowering track now has backend contracts. Next compiler/runtime work should consume `BackendLoweringReport` rather than making ad-hoc backend decisions. This prepares future verified lowering, vectorization and GPU/remote scheduling.
+Добавлен слой `backend_layout`: явный ABI/layout descriptor между `BackendLoweringReport` и будущим runtime/compiler artifact.
+
+Ключевой закон:
+
+```text
+semantic value != arbitrary memory layout
+full passport/audit metadata != hot runtime payload
+```
+
+Новые объекты:
+
+```text
+BackendLayoutDescriptor
+BackendLayoutReport
+AbiScalarKind
+LayoutContainerKind
+LayoutMetadataPolicy
+BackendLayoutStatus
+```
+
+Новые гарантии:
+
+```text
+native_scalar требует scalar ABI/container;
+native_vector требует dense/slice layout;
+gpu_batch требует gpu_buffer layout;
+remote_batch требует remote_buffer layout;
+full passport/per-element metadata запрещены в runtime-hot layout;
+Axiom/Oracle/Unsafe taint сохраняется как downgraded_tainted;
+layout report не является Proof/Theorem/TruthClaim/RuntimeWitness.
+```

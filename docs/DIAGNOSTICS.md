@@ -653,3 +653,8 @@ This diagnostic protects the line between small-step algebraic semantics and fut
 ## E0940 BackendCapabilityError
 
 Raised when a backend capability contract or backend lowering plan is invalid. Typical cases: missing required backend capability, lowering target mismatch, rejected prelude lowering, or trying to consume symbolic/tainted lowering as fully verified backend code.
+
+
+## E0941 BackendLayoutError
+
+Raised when a backend layout or ABI descriptor would silently change representation semantics, hide passport/audit metadata in the hot path, mismatch a lowering target/operation, or accept a rejected backend lowering plan as executable runtime layout.

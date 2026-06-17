@@ -625,6 +625,36 @@ Adds checked standard prelude contracts for Nat/Bool/Option/Result/List/Sequence
 Added `PreludeEvaluationReport` and small-step evaluation for verified standard prelude operations. Evaluation is deterministic and fuel-bounded; map/fold use symbolic application and do not run arbitrary user code.
 
 
-## v0.69.0 — Backend Capability / Lowering Target Contracts
+## v0.70.0 — Backend Layout / ABI Descriptor Boundary
 
-Adds `BackendCapabilityContract` and `BackendLoweringReport`. The compiler/runtime path now checks backend capabilities before accepting prelude lowering artifacts: scalar, vector, GPU and remote targets require explicit capability sets, preserve taint, and keep symbolic lowering visible instead of treating it as fully verified runtime code.
+Добавлен слой `backend_layout`: явный ABI/layout descriptor между `BackendLoweringReport` и будущим runtime/compiler artifact.
+
+Ключевой закон:
+
+```text
+semantic value != arbitrary memory layout
+full passport/audit metadata != hot runtime payload
+```
+
+Новые объекты:
+
+```text
+BackendLayoutDescriptor
+BackendLayoutReport
+AbiScalarKind
+LayoutContainerKind
+LayoutMetadataPolicy
+BackendLayoutStatus
+```
+
+Новые гарантии:
+
+```text
+native_scalar требует scalar ABI/container;
+native_vector требует dense/slice layout;
+gpu_batch требует gpu_buffer layout;
+remote_batch требует remote_buffer layout;
+full passport/per-element metadata запрещены в runtime-hot layout;
+Axiom/Oracle/Unsafe taint сохраняется как downgraded_tainted;
+layout report не является Proof/Theorem/TruthClaim/RuntimeWitness.
+```
