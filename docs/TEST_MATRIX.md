@@ -951,3 +951,19 @@ cargo test -p dlm_core --test backend_layout
 ```
 
 The test matrix must confirm explicit ABI descriptors, target/container compatibility, metadata erasure boundaries, GPU buffer descriptors, vector dense layouts, taint preservation, and stable ABI-sensitive exports.
+
+## v0.71 dense runtime descriptor tests
+
+```text
+cargo test -p dlm_core --test dense_runtime
+```
+
+Covers:
+
+- scalar dense runtime descriptors;
+- dense vector stride and scalar boxing rejection;
+- GPU region / GPU-resident handle enforcement;
+- remote region / remote handle enforcement;
+- layout-container to runtime-representation matching;
+- taint-preserving downgrade;
+- stable descriptor/report exports.

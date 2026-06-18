@@ -658,3 +658,16 @@ Raised when a backend capability contract or backend lowering plan is invalid. T
 ## E0941 BackendLayoutError
 
 Raised when a backend layout or ABI descriptor would silently change representation semantics, hide passport/audit metadata in the hot path, mismatch a lowering target/operation, or accept a rejected backend lowering plan as executable runtime layout.
+
+## E0942 DenseRuntimeError
+
+Raised when a dense runtime descriptor violates the checked layout/runtime boundary.
+
+Examples:
+
+- scalar runtime descriptor has more than one element;
+- dense vector uses a stride different from element size;
+- GPU runtime target does not use a GPU-resident handle;
+- remote runtime target does not use a remote handle;
+- runtime representation does not match the backend layout container;
+- dense runtime attempts to carry full-passport or per-element passport metadata into a hot payload.

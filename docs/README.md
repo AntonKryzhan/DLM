@@ -151,3 +151,5 @@ This layer turns a verified `PreludeEvaluationReport` into an explicit `PreludeL
 
 
 - `BACKEND_LAYOUT.md` — backend ABI/layout descriptor boundary for scalar/vector/GPU/remote lowering artifacts.
+
+- `DENSE_RUNTIME_DESCRIPTOR.md` — dense runtime descriptor boundary for compact value/region payloads after backend layout validation.

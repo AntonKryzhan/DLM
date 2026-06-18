@@ -857,37 +857,12 @@ The project now has a checked algebraic prelude boundary for Nat/Bool/Option/Res
 
 DLM now has a small-step evaluator for verified standard prelude contracts. Primitive Nat/Bool/length/index operations reduce deterministically; Option/Result/List/Sequence map/fold preserve algebraic shape and use bounded symbolic application instead of executing arbitrary hidden function bodies. See `docs/PRELUDE_EVALUATION.md`.
 
+## v0.71.0 — Value Representation / Dense Runtime Descriptor
 
-## v0.70.0 — Backend Layout / ABI Descriptor Boundary
+DLM now has a dense runtime descriptor boundary after backend layout validation. `DenseRuntimeDescriptor` and `DenseRuntimeReport` represent compact scalar/vector/GPU/remote payload shapes while keeping audit/proof/passport data out of hot runtime data paths.
 
-Добавлен слой `backend_layout`: явный ABI/layout descriptor между `BackendLoweringReport` и будущим runtime/compiler artifact.
-
-Ключевой закон:
-
-```text
-semantic value != arbitrary memory layout
-full passport/audit metadata != hot runtime payload
-```
-
-Новые объекты:
+Key rule:
 
 ```text
-BackendLayoutDescriptor
-BackendLayoutReport
-AbiScalarKind
-LayoutContainerKind
-LayoutMetadataPolicy
-BackendLayoutStatus
-```
-
-Новые гарантии:
-
-```text
-native_scalar требует scalar ABI/container;
-native_vector требует dense/slice layout;
-gpu_batch требует gpu_buffer layout;
-remote_batch требует remote_buffer layout;
-full passport/per-element metadata запрещены в runtime-hot layout;
-Axiom/Oracle/Unsafe taint сохраняется как downgraded_tainted;
-layout report не является Proof/Theorem/TruthClaim/RuntimeWitness.
+meaning-rich above, execution-dense below
 ```

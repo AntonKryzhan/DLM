@@ -63,6 +63,7 @@ pub enum DiagnosticKind {
     PreludeLoweringError,
     BackendCapabilityError,
     BackendLayoutError,
+    DenseRuntimeError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -238,6 +239,7 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::PreludeLoweringError => "E0939 PreludeLoweringError",
             DiagnosticKind::BackendCapabilityError => "E0940 BackendCapabilityError",
             DiagnosticKind::BackendLayoutError => "E0941 BackendLayoutError",
+            DiagnosticKind::DenseRuntimeError => "E0942 DenseRuntimeError",
         };
         match (self.span, self.line) {
             (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,

@@ -816,37 +816,6 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 
 `prelude_eval` introduces an explicit small-step semantics layer above `standard_prelude`. It accepts only `verified_checked` prelude contracts, rejects proof/theorem/truth/runtime evidence as ordinary values, consumes explicit fuel for collection traversal, preserves taint, and exports stable evaluation reports.
 
+## v0.71.0 — Dense Runtime Descriptor Boundary
 
-## v0.70.0 — Backend Layout / ABI Descriptor Boundary
-
-Добавлен слой `backend_layout`: явный ABI/layout descriptor между `BackendLoweringReport` и будущим runtime/compiler artifact.
-
-Ключевой закон:
-
-```text
-semantic value != arbitrary memory layout
-full passport/audit metadata != hot runtime payload
-```
-
-Новые объекты:
-
-```text
-BackendLayoutDescriptor
-BackendLayoutReport
-AbiScalarKind
-LayoutContainerKind
-LayoutMetadataPolicy
-BackendLayoutStatus
-```
-
-Новые гарантии:
-
-```text
-native_scalar требует scalar ABI/container;
-native_vector требует dense/slice layout;
-gpu_batch требует gpu_buffer layout;
-remote_batch требует remote_buffer layout;
-full passport/per-element metadata запрещены в runtime-hot layout;
-Axiom/Oracle/Unsafe taint сохраняется как downgraded_tainted;
-layout report не является Proof/Theorem/TruthClaim/RuntimeWitness.
-```
+Implemented `dense_runtime.rs` with explicit dense runtime descriptors and reports. Runtime representations now distinguish scalar values, tagged values, dense vectors, slice views, GPU regions, remote regions, and audit-only descriptors. Ownership is explicit and target-aware. The layer rejects mismatched layout containers, scalar boxing of dense data, invalid stride/alignment, zero-sized payloads, and hot payloads that try to carry full passports or per-element passport metadata.

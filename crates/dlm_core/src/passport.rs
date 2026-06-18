@@ -424,6 +424,16 @@ pub enum TypeKind {
         target: String,
         status: String,
     },
+    DenseRuntimeDescriptor {
+        name: String,
+        target: String,
+        status: String,
+    },
+    DenseRuntimeReport {
+        name: String,
+        target: String,
+        status: String,
+    },
     ConsistencyClaim {
         theory: String,
     },
@@ -662,6 +672,12 @@ impl fmt::Display for TypeKind {
             }
             TypeKind::BackendLayoutReport { name, target, status } => {
                 write!(f, "BackendLayoutReport<{name}:{target}:{status}>")
+            }
+            TypeKind::DenseRuntimeDescriptor { name, target, status } => {
+                write!(f, "DenseRuntimeDescriptor<{name}:{target}:{status}>")
+            }
+            TypeKind::DenseRuntimeReport { name, target, status } => {
+                write!(f, "DenseRuntimeReport<{name}:{target}:{status}>")
             }
             TypeKind::ConsistencyClaim { theory } => write!(f, "Consistency<{theory}>"),
             TypeKind::ProofTerm { rule } => write!(f, "ProofTerm<{rule}>"),

@@ -624,37 +624,13 @@ Adds checked standard prelude contracts for Nat/Bool/Option/Result/List/Sequence
 
 Added `PreludeEvaluationReport` and small-step evaluation for verified standard prelude operations. Evaluation is deterministic and fuel-bounded; map/fold use symbolic application and do not run arbitrary user code.
 
+## v0.71.0 — Value Representation / Dense Runtime Descriptor
 
-## v0.70.0 — Backend Layout / ABI Descriptor Boundary
+Adds `DenseRuntimeDescriptor` and `DenseRuntimeReport`, the first dense runtime representation layer after backend layout validation. The layer records scalar, tagged, dense-vector, slice-view, GPU-region, remote-region and audit-only runtime forms without turning descriptors into proofs, theorems, truth claims or runtime witnesses.
 
-Добавлен слой `backend_layout`: явный ABI/layout descriptor между `BackendLoweringReport` и будущим runtime/compiler artifact.
-
-Ключевой закон:
-
-```text
-semantic value != arbitrary memory layout
-full passport/audit metadata != hot runtime payload
-```
-
-Новые объекты:
+Main law:
 
 ```text
-BackendLayoutDescriptor
-BackendLayoutReport
-AbiScalarKind
-LayoutContainerKind
-LayoutMetadataPolicy
-BackendLayoutStatus
-```
-
-Новые гарантии:
-
-```text
-native_scalar требует scalar ABI/container;
-native_vector требует dense/slice layout;
-gpu_batch требует gpu_buffer layout;
-remote_batch требует remote_buffer layout;
-full passport/per-element metadata запрещены в runtime-hot layout;
-Axiom/Oracle/Unsafe taint сохраняется как downgraded_tainted;
-layout report не является Proof/Theorem/TruthClaim/RuntimeWitness.
+Passport/audit/proof metadata stays above hot runtime payloads.
+Dense runtime data is region/value/block-oriented, not passport-per-element.
 ```
