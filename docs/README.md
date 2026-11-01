@@ -1,3 +1,5 @@
+> **Current guides for DLM v0.131.0 / Актуальные руководства:** [Русский](LANGUAGE_GUIDE_RU.md) · [English](LANGUAGE_GUIDE_EN.md). The historical version notes below are retained for compatibility and research context.
+
 # DLM / ЯРД — Implementation Documentation Pack v1.0
 
 **Актуальная навигация для исходников v0.100.1:** основной инженерный план —
