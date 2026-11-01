@@ -1,4 +1,10 @@
-# DLM — Deductive Logic Machine
+[Русский](docs/LANGUAGE_GUIDE_RU.md) | [English](docs/LANGUAGE_GUIDE_EN.md)
+
+> **Documentation / Документация (v0.131.0):** [Руководство на русском](docs/LANGUAGE_GUIDE_RU.md) · [English language guide](docs/LANGUAGE_GUIDE_EN.md). Both include quick start, verified syntax examples, compilation, types, proofs, effects, ownership, graphics, limitations, and links to detailed technical references. The existing README below preserves historical background and version notes.
+
+---
+
+# DLM — Deductive Language Machine
 
 > Current source version: **0.131.0**. DLM is an experimental language with a
 > native C backend for its supported executable subset, formal reasoning, and
