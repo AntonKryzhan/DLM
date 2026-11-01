@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 
 use crate::ast::*;
@@ -6,6 +7,13 @@ use crate::passport::*;
 use crate::passes::{run_frontend_passes, PassId, PassPipelineReport, PassReport, PassStatus};
 use crate::policy;
 pub use crate::policy::CheckPolicy;
+
+mod modules;
+mod ordinary_surface;
+mod statements;
+pub use statements::MAX_PROOF_CASES;
+pub use ordinary_surface::{BYTE_BUFFER_BUILTINS, DENSE_NAT_BUILTINS, FILE_BUILTINS, FLOAT_BUILTINS, GRAPH_BUILTINS, LINALG_BUILTINS, DEFAULT_RECURSION_FUEL, INT_BUILTINS, MAX_RECURSION_FUEL, ORDINARY_BUILTINS, TEXT_BUILTINS};
+pub(crate) use ordinary_surface::builtin_effect;
 
 #[derive(Debug, Clone)]
 pub struct CheckReport {
@@ -16,6 +24,11 @@ pub struct CheckReport {
     pub bridges: Vec<BridgeDecl>,
     pub diagnostics: Vec<Diagnostic>,
     pub passes: PassPipelineReport,
+    /// v0.76: proof certificates of theorems and axioms declared in the module.
+    pub certificates: Vec<crate::certificate::ProofCertificate>,
+    /// v0.87: checked types of expressions and contracts of functions (all
+    /// modules of the program), for lowering into the typed IR.
+    pub typed: crate::typed_core::TypedFacts,
 }
 
 impl CheckReport {
@@ -24,6 +37,9 @@ impl CheckReport {
     }
 }
 
+/// v0.84: stack of the checker thread (virtual; committed lazily).
+pub const CHECKER_STACK_BYTES: usize = 256 << 20;
+
 #[derive(Default)]
 pub struct Checker {
     policy: CheckPolicy,
@@ -31,6 +47,33 @@ pub struct Checker {
     bridges: Vec<BridgeDecl>,
     inferred: Vec<(String, Passport)>,
     diagnostics: Vec<Diagnostic>,
+    /// v0.73: checked `fn` declarations per theory.
+    functions: ordinary_surface::FunctionTable,
+    /// v0.73: parameter frames while a function body is being checked.
+    locals: RefCell<Vec<BTreeMap<String, Passport>>>,
+    /// v0.74: signature of the recursive function whose body is being checked.
+    pending_fn: RefCell<Option<FnDecl>>,
+    /// v0.81: members of the mutual group whose bodies are being checked.
+    pending_group: RefCell<Vec<FnDecl>>,
+    /// v0.74: declared record types per theory.
+    records: BTreeMap<String, BTreeMap<String, crate::structural::RecordTypeReport>>,
+    /// v0.76: certificates of theorems and axioms.
+    certificates: Vec<crate::certificate::ProofCertificate>,
+    /// v0.77: theorems usable as rewrite lemmas, per theory.
+    lemmas: BTreeMap<String, BTreeMap<String, statements::LemmaInfo>>,
+    /// v0.80: module being checked.
+    current_module: String,
+    current_source: crate::diagnostics::SourceFile,
+    /// v0.80: module of every checked theory.
+    theory_modules: BTreeMap<String, String>,
+    /// v0.80: private names per theory (own and inherited within a module).
+    private_names: BTreeMap<String, std::collections::BTreeSet<String>>,
+    /// v0.80: names hidden from a theory's own code (name -> owning module).
+    hidden: BTreeMap<String, BTreeMap<String, String>>,
+    /// v0.80: base of every derived theory.
+    inherited_from: BTreeMap<String, String>,
+    /// v0.87: Typed Core facts collected while checking.
+    typed: RefCell<crate::typed_core::TypedFacts>,
 }
 
 impl Checker {
@@ -42,7 +85,95 @@ impl Checker {
         Self { policy, ..Self::default() }
     }
 
-    pub fn check_module(mut self, module: &Module) -> CheckReport {
+    pub fn check_module(self, module: &Module) -> CheckReport {
+        self.check_program(&crate::program::Program::single(module.clone()))
+    }
+
+    /// v0.80: check a program: imported modules first, then the root. The
+    /// report describes the root module; diagnostics of imported modules are
+    /// included with the module name.
+    pub fn check_program(self, program: &crate::program::Program) -> CheckReport {
+        // v0.84: deeply nested expressions recurse through large checker
+        // frames; check on a thread with a large (lazily committed) stack, so
+        // the caller's stack size does not matter.
+        std::thread::scope(|scope| {
+            let spawned = std::thread::Builder::new()
+                .name("dlm-checker".to_string())
+                .stack_size(CHECKER_STACK_BYTES)
+                .spawn_scoped(scope, move || self.check_program_on_current_thread(program));
+            match spawned {
+                Ok(handle) => match handle.join() {
+                    Ok(report) => report,
+                    Err(panic) => std::panic::resume_unwind(panic),
+                },
+                Err(err) => panic!("cannot start the checker thread: {err}"),
+            }
+        })
+    }
+
+    fn check_program_on_current_thread(mut self, program: &crate::program::Program) -> CheckReport {
+        self.typed.get_mut().bind_contexts(program);
+        for module in &program.modules {
+            self.typed.get_mut().record_sources(module);
+        }
+        let mut loaded = std::collections::BTreeSet::new();
+        let mut dependency_diagnostics = Vec::new();
+        for dependency in program.dependencies() {
+            self.current_module = dependency.name.clone();
+            self.current_source = dependency.source.clone();
+            let mut diagnostics = self.check_imports_loaded(dependency, &loaded);
+            match run_frontend_passes(dependency) {
+                Ok(_) => {
+                    for item in &dependency.items {
+                        if let ModuleItem::Theory(theory) = item {
+                            self.check_theory(theory);
+                        }
+                    }
+                }
+                Err(report) => diagnostics.extend(report.diagnostics().cloned()),
+            }
+            diagnostics.append(&mut self.diagnostics);
+            dependency_diagnostics.extend(diagnostics.into_iter().map(|d| Diagnostic {
+                message: format!("in imported module '{}': {}", dependency.name, d.message),
+                ..d
+            }.in_source(&dependency.source)));
+            self.inferred.clear();
+            self.certificates.clear();
+            loaded.insert(dependency.name.clone());
+        }
+        let module = program.root();
+        self.current_module = module.name.clone();
+        self.current_source = module.source.clone();
+        self.diagnostics = dependency_diagnostics;
+        let root_diagnostics_start = self.diagnostics.len();
+        let import_diagnostics = self.check_imports_loaded(module, &loaded);
+        self.diagnostics.extend(import_diagnostics);
+        self.diagnostics.extend(program.generic_diagnostics.iter().cloned());
+        // v0.83: at most one entry point `fn main()`, without parameters.
+        let mains: Vec<(&str, &FnDecl)> = module
+            .items
+            .iter()
+            .filter_map(|item| match item {
+                ModuleItem::Theory(theory) => Some(theory.items.iter().filter_map(move |item| match item {
+                    TheoryItem::Fn(decl) if decl.name == "main" => Some((theory.name.as_str(), decl)),
+                    _ => None,
+                })),
+                _ => None,
+            })
+            .flatten()
+            .collect();
+        for (_, decl) in mains.iter().filter(|(_, decl)| !decl.params.is_empty()) {
+            self.diagnostics.push(Diagnostic::error(DiagnosticKind::FunctionTermError, Some(decl.line), "fn main must not take parameters")
+                .with_help("read program input with args(), read_line() or read_all()"));
+        }
+        if mains.len() > 1 {
+            let theories: Vec<&str> = mains.iter().map(|(theory, _)| *theory).collect();
+            self.diagnostics.push(Diagnostic::error(
+                DiagnosticKind::FunctionTermError,
+                Some(mains[1].1.line),
+                format!("module '{}' declares several main functions (theories {})", module.name, theories.join(", ")),
+            ));
+        }
         let mut passes = match run_frontend_passes(module) {
             Ok(frontend) => frontend.report,
             Err(mut report) => {
@@ -50,7 +181,12 @@ impl Checker {
                     PassId::LegacyChecker,
                     "legacy checker skipped because frontend resolution failed",
                 ));
-                let diagnostics = report.diagnostics().cloned().collect();
+                let mut diagnostics: Vec<Diagnostic> = std::mem::take(&mut self.diagnostics);
+                diagnostics.extend(report.diagnostics().cloned());
+                for diagnostic in &mut diagnostics[root_diagnostics_start..] {
+                    *diagnostic = diagnostic.clone().in_source(&module.source);
+                }
+                let diagnostics = diagnostics.into_iter().map(|d| program.locate_diagnostic(d)).collect();
                 return CheckReport {
                     module_name: module.name.clone(),
                     theory_count: 0,
@@ -59,6 +195,8 @@ impl Checker {
                     bridges: Vec::new(),
                     diagnostics,
                     passes: report,
+                    certificates: Vec::new(),
+                    typed: self.typed.take(),
                 };
             }
         };
@@ -92,25 +230,60 @@ impl Checker {
             )),
         });
 
+        for diagnostic in &mut self.diagnostics[root_diagnostics_start..] {
+            *diagnostic = diagnostic.clone().in_source(&module.source);
+        }
+        self.typed.get_mut().finish(self.diagnostics.is_empty());
         CheckReport {
             module_name: module.name.clone(),
             theory_count,
             value_count: self.inferred.len(),
             inferred: self.inferred,
             bridges: self.bridges,
-            diagnostics: self.diagnostics,
+            diagnostics: self.diagnostics.into_iter().map(|d| program.locate_diagnostic(d)).collect(),
             passes,
+            certificates: self.certificates,
+            typed: self.typed.take(),
         }
     }
 
     fn check_theory(&mut self, theory: &TheoryDecl) {
+        // v0.80: module registration, inheritance and visibility.
+        let inherited = match self.enter_theory(theory) {
+            Ok(inherited) => inherited,
+            Err(diag) => {
+                self.diagnostics.push(diag);
+                return;
+            }
+        };
         self.theories.entry(theory.name.clone()).or_default();
         for item in &theory.items {
+            let declared = match item {
+                TheoryItem::Let(decl) => Some((&decl.name, decl.line)),
+                TheoryItem::Fn(decl) => Some((&decl.name, decl.line)),
+                TheoryItem::Record(record) => Some((&record.name, record.line)),
+                TheoryItem::Statement(statement) => Some((&statement.name, statement.line)),
+                TheoryItem::Expr(_) => None,
+            };
+            if let Some((name, line)) = declared {
+                if let Some(base) = inherited.get(name) {
+                    self.diagnostics.push(Diagnostic::error(
+                        DiagnosticKind::NameError,
+                        Some(line),
+                        format!("theory '{}' redeclares '{name}' inherited from '{base}'", theory.name),
+                    ));
+                    continue;
+                }
+            }
             match item {
                 TheoryItem::Let(let_decl) => {
                     match self.infer_expr(&let_decl.expr, &theory.name) {
                         Ok(passport) => {
+                            self.check_theory_ownership(&let_decl.expr, &theory.name);
                             if let Err(diag) = self.validate_policy(&passport, let_decl.line) {
+                                self.diagnostics.push(diag);
+                            }
+                            if let Err(diag) = self.check_function_binding(&let_decl.name, &passport, &theory.name, let_decl.line) {
                                 self.diagnostics.push(diag);
                             }
                             self.theories.entry(theory.name.clone()).or_default().insert(let_decl.name.clone(), passport.clone());
@@ -122,9 +295,93 @@ impl Checker {
                 TheoryItem::Expr(expr) => {
                     match self.infer_expr(expr, &theory.name) {
                         Ok(passport) => {
+                            self.check_theory_ownership(expr, &theory.name);
                             if let Err(diag) = self.validate_policy(&passport, expr.line) {
                                 self.diagnostics.push(diag);
                             }
+                        }
+                        Err(diag) => self.diagnostics.push(diag),
+                    }
+                }
+                TheoryItem::Statement(statement) => {
+                    if let Err(diag) = crate::ownership::check_statement_expr(&statement.body, &|name| self.buffer_shape(&theory.name, name)) {
+                        self.diagnostics.push(diag);
+                        continue;
+                    }
+                    match self.check_statement_item(&theory.name, statement) {
+                        Ok(passport) => {
+                            if let Err(diag) = self.validate_policy(&passport, statement.line) {
+                                self.diagnostics.push(diag);
+                            }
+                            self.theories.entry(theory.name.clone()).or_default().insert(statement.name.clone(), passport.clone());
+                            self.inferred.push((format!("{}.{}", theory.name, statement.name), passport));
+                        }
+                        Err(diag) => self.diagnostics.push(diag),
+                    }
+                }
+                TheoryItem::Record(record) => {
+                    match self.check_record_decl(&theory.name, record) {
+                        Ok(passport) => {
+                            self.inferred.push((format!("{}.{}", theory.name, record.name), passport));
+                        }
+                        Err(diag) => self.diagnostics.push(diag),
+                    }
+                }
+                TheoryItem::Fn(fn_decl) if !fn_decl.mutual.is_empty() => {
+                    // v0.81: a mutual group is checked as a whole at its first member.
+                    if fn_decl.mutual.first() != Some(&fn_decl.name) {
+                        continue;
+                    }
+                    let group: Vec<FnDecl> = theory
+                        .items
+                        .iter()
+                        .filter_map(|item| match item {
+                            TheoryItem::Fn(decl) if fn_decl.mutual.contains(&decl.name) => Some(decl.clone()),
+                            _ => None,
+                        })
+                        .collect();
+                    match self.check_mutual_group(&theory.name, &group) {
+                        Ok(passports) => {
+                            for (decl, passport) in group.iter().zip(passports) {
+                                if let Err(diag) = self.validate_policy(&passport, decl.line) {
+                                    self.diagnostics.push(diag);
+                                }
+                                self.inferred.push((format!("{}.{}", theory.name, decl.name), passport));
+                            }
+                        }
+                        Err(diag) => self.diagnostics.push(diag),
+                    }
+                }
+                TheoryItem::Fn(fn_decl) => {
+                    // v0.81: a call to a fn declared later is a forward
+                    // reference; mutual recursion needs a `mutual` block.
+                    let mut calls = Vec::new();
+                    ordinary_surface::called_names(&fn_decl.body, &mut calls);
+                    let position = theory
+                        .items
+                        .iter()
+                        .position(|item| matches!(item, TheoryItem::Fn(other) if std::ptr::eq(other, fn_decl)));
+                    let later = theory.items.iter().skip(position.map_or(0, |p| p + 1)).find_map(|item| match item {
+                        TheoryItem::Fn(other) if calls.contains(&other.name) && !fn_decl.params.iter().any(|p| p.name == other.name) => Some(other.name.clone()),
+                        _ => None,
+                    });
+                    if let Some(later) = later {
+                        self.diagnostics.push(
+                            Diagnostic::error(
+                                DiagnosticKind::RecursionBoundaryError,
+                                Some(fn_decl.line),
+                                format!("fn '{}' calls '{later}', which is declared later in theory '{}'", fn_decl.name, theory.name),
+                            )
+                            .with_help("declare functions before their callers, or group mutually recursive functions in a `mutual { ... }` block"),
+                        );
+                        continue;
+                    }
+                    match self.check_fn_decl(&theory.name, fn_decl) {
+                        Ok(passport) => {
+                            if let Err(diag) = self.validate_policy(&passport, fn_decl.line) {
+                                self.diagnostics.push(diag);
+                            }
+                            self.inferred.push((format!("{}.{}", theory.name, fn_decl.name), passport));
                         }
                         Err(diag) => self.diagnostics.push(diag),
                     }
@@ -133,8 +390,43 @@ impl Checker {
         }
     }
 
+    /// v0.102: ownership of byte buffers created by theory-level code.
+    fn check_theory_ownership(&mut self, expr: &Expr, theory: &str) {
+        match crate::ownership::check_theory_expr(expr, &|name| self.buffer_shape(theory, name)) {
+            Ok(plan) => {
+                let mut typed = self.typed.borrow_mut();
+                typed.released_lets.extend(plan.lets);
+                typed.released_branches.extend(plan.branches);
+            }
+            Err(diag) => self.diagnostics.push(diag),
+        }
+    }
+
+    /// Infer `expr` and record its checked type in the Typed Core facts.
     fn infer_expr(&self, expr: &Expr, ambient_theory: &str) -> Result<Passport, Diagnostic> {
+        let result = self.infer_expr_kind(expr, ambient_theory).map_err(|d| d.at_expr(expr.span));
+        if let Ok(passport) = &result {
+            if let Some(ty) = crate::ordinary::surface_type_of(passport).and_then(|t| crate::ordinary::parse_ordinary_type(&t).ok()) {
+                self.typed.borrow_mut().record(expr.id, ty, expr.span, ambient_theory);
+            }
+        }
+        result
+    }
+
+    fn infer_expr_kind(&self, expr: &Expr, ambient_theory: &str) -> Result<Passport, Diagnostic> {
         match &expr.kind {
+            // v0.83: Text literal.
+            ExprKind::TextLiteral(_) => Ok(ordinary_surface::text_literal(ambient_theory)),
+            // v0.82: `let name = value in body`.
+            ExprKind::Let { name, value, body } => {
+                let bound = self.infer_expr(value, ambient_theory)?;
+                let mut frame = self.locals.borrow().last().cloned().unwrap_or_default();
+                frame.insert(name.clone(), bound);
+                self.locals.borrow_mut().push(frame);
+                let result = self.infer_expr(body, ambient_theory);
+                self.locals.borrow_mut().pop();
+                result
+            }
             ExprKind::IntLiteral(value) => {
                 if value.len() <= 18 {
                     Ok(Passport::literal_nat(ambient_theory))
@@ -154,6 +446,10 @@ impl Checker {
             ExprKind::Add { lhs, rhs } => {
                 let lhs = self.infer_expr(lhs, ambient_theory)?;
                 let rhs = self.infer_expr(rhs, ambient_theory)?;
+                // v0.85: Int + Int.
+                if int_operands(&lhs, &rhs, "+", expr.line)?.is_some() {
+                    return Ok(ordinary_surface::typed_value(ambient_theory, "Int", &[&lhs, &rhs], "prelude:int.add"));
+                }
                 self.require_capability(&lhs, Capability::CanAddAsNat, expr.line, "left operand of + must support Nat addition")?;
                 self.require_capability(&rhs, Capability::CanAddAsNat, expr.line, "right operand of + must support Nat addition")?;
                 Ok(Passport::add_result(&lhs, &rhs, ambient_theory))
@@ -161,6 +457,7 @@ impl Checker {
             ExprKind::CompareGt { lhs, rhs } => {
                 let lhs = self.infer_expr(lhs, ambient_theory)?;
                 let rhs = self.infer_expr(rhs, ambient_theory)?;
+                int_operands(&lhs, &rhs, ">", expr.line)?;
                 let direct = lhs.capabilities.contains(Capability::CanCompareDirect)
                     && rhs.capabilities.contains(Capability::CanCompareDirect);
                 let by_proof = lhs.capabilities.contains(Capability::CanCompareByProof)
@@ -186,10 +483,14 @@ impl Checker {
                 })
             }
             ExprKind::Call { name, args } => self.infer_call(name, args, ambient_theory, expr.line),
+            ExprKind::Lambda { params, body } => self.infer_lambda(params, body, ambient_theory, expr.line),
         }
     }
 
     fn infer_call(&self, name: &str, args: &[Expr], ambient_theory: &str, line: usize) -> Result<Passport, Diagnostic> {
+        if let Some(result) = self.infer_ordinary_call(name, args, ambient_theory, line) {
+            return result;
+        }
         match name {
             "universe" => Err(Diagnostic::error(
                 DiagnosticKind::UniverseLevelError,
@@ -878,6 +1179,36 @@ impl Checker {
                 }
                 Ok(Passport::restored_memory_region(ambient_theory, &checkpoint))
             }
+            "checkpoint_gpu_memory" | "gpu_checkpoint_memory" | "checkpoint_vram" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("{name} expects one DistributedGpuMemory argument")));
+                }
+                let region = self.infer_expr(&args[0], ambient_theory)?;
+                if !matches!(region.ty, TypeKind::DistributedGpuMemory { .. }) {
+                    return Err(Diagnostic::error(
+                        DiagnosticKind::DistributedResourceError,
+                        Some(line),
+                        "checkpoint_gpu_memory expects a DistributedGpuMemory value",
+                    ).with_help(format!("value passport: {region}")));
+                }
+                self.require_capability(&region, Capability::CanCheckpointGpuMemory, line, "checkpoint_gpu_memory requires can_checkpoint_gpu_memory")?;
+                Ok(Passport::gpu_memory_checkpoint(ambient_theory, &region))
+            }
+            "restore_gpu_memory" | "restore_gpu_checkpoint" | "restore_vram" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("{name} expects one GpuMemoryCheckpoint argument")));
+                }
+                let checkpoint = self.infer_expr(&args[0], ambient_theory)?;
+                if !matches!(checkpoint.ty, TypeKind::GpuMemoryCheckpoint { .. }) {
+                    return Err(Diagnostic::error(
+                        DiagnosticKind::DistributedResourceError,
+                        Some(line),
+                        "restore_gpu_memory expects a GpuMemoryCheckpoint value",
+                    ).with_help(format!("value passport: {checkpoint}")));
+                }
+                self.require_capability(&checkpoint, Capability::CanRestoreGpuMemoryCheckpoint, line, "restore_gpu_memory requires can_restore_gpu_memory_checkpoint")?;
+                Ok(Passport::restored_gpu_memory_region(ambient_theory, &checkpoint))
+            }
             "compile_portable" | "portable_code" | "make_portable" => {
                 if args.len() != 1 {
                     return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("{name} expects one serializable value")));
@@ -1255,6 +1586,40 @@ impl Checker {
                     return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), "read_nat expects no arguments"));
                 }
                 Ok(Passport::runtime_nat_from_input(ambient_theory))
+            }
+            // v0.83: program arguments.
+            "args" => {
+                if !args.is_empty() {
+                    return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), "args expects no arguments"));
+                }
+                let mut passport = ordinary_surface::typed_value(ambient_theory, "List<Text>", &[], "runtime_input:args");
+                passport.construction = ConstructionMode::External;
+                passport.provenance = Provenance::RuntimeInput;
+                passport.validation = ValidationState::Parsed;
+                Ok(passport)
+            }
+            // v0.83: line-oriented stdin and stdout.
+            "read_line" | "read_all" => {
+                if !args.is_empty() {
+                    return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), format!("{name} expects no arguments")));
+                }
+                let ty = if name == "read_line" { "Option<Text>" } else { "Text" };
+                let mut passport = ordinary_surface::typed_value(ambient_theory, ty, &[], format!("runtime_input:{name}"));
+                passport.construction = ConstructionMode::External;
+                passport.provenance = Provenance::RuntimeInput;
+                passport.validation = ValidationState::Parsed;
+                Ok(passport)
+            }
+            "print_line" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::ParseError, Some(line), "print_line expects one argument"));
+                }
+                let value = self.infer_expr(&args[0], ambient_theory)?;
+                if !matches!(value.ty, TypeKind::Text) {
+                    return Err(Diagnostic::error(DiagnosticKind::AccessError, Some(line), "print_line expects a Text value")
+                        .with_help(format!("value passport: {value}")));
+                }
+                Ok(ordinary_surface::typed_value(ambient_theory, "Text", &[&value], "output:print_line"))
             }
             "require" => {
                 if args.len() != 1 {
@@ -1734,11 +2099,13 @@ impl Checker {
                     )),
                 }
             }
-            other => Err(Diagnostic::error(
-                DiagnosticKind::NameError,
-                Some(line),
-                format!("unknown builtin or function '{other}' in MVP"),
-            )),
+            other => self
+                .infer_user_fn_call(other, args, ambient_theory, line)
+                .unwrap_or_else(|| Err(Diagnostic::error(
+                    DiagnosticKind::NameError,
+                    Some(line),
+                    format!("unknown builtin or function '{other}' in MVP"),
+                ))),
         }
     }
 
@@ -1753,14 +2120,20 @@ impl Checker {
     }
 
     fn lookup_ident(&self, name: &str, ambient_theory: &str, line: usize) -> Result<Passport, Diagnostic> {
-        self.theories.get(ambient_theory)
-            .and_then(|scope| scope.get(name))
-            .cloned()
-            .ok_or_else(|| Diagnostic::error(
-                DiagnosticKind::NameError,
-                Some(line),
-                format!("unknown name '{name}' in theory {ambient_theory}"),
-            ))
+        if let Some(local) = self.locals.borrow().last().and_then(|frame| frame.get(name)).cloned() {
+            return Ok(local);
+        }
+        if let Some(value) = self.theories.get(ambient_theory).and_then(|scope| scope.get(name)).cloned() {
+            return Ok(value);
+        }
+        if let Some(function_value) = self.lookup_function_value(name, ambient_theory, line) {
+            return function_value;
+        }
+        Err(Diagnostic::error(
+            DiagnosticKind::NameError,
+            Some(line),
+            format!("unknown name '{name}' in theory {ambient_theory}"),
+        ))
     }
 
     fn lookup_qualified(&self, theory: &str, name: &str, ambient_theory: &str, line: usize) -> Result<Passport, Diagnostic> {
@@ -1909,5 +2282,21 @@ impl Checker {
 
     fn find_bridge(&self, source: &str, target: &str, kind: BridgeKind) -> Option<&BridgeDecl> {
         crate::bridge::find_bridge(&self.bridges, source, target, &kind)
+    }
+}
+
+/// v0.85: `Some(())` when both operands of `op` are Int, `None` when neither
+/// is, an error when Int and another type are mixed (no implicit coercion).
+fn int_operands(lhs: &Passport, rhs: &Passport, op: &str, line: usize) -> Result<Option<()>, Diagnostic> {
+    let is_int = |p: &Passport| crate::ordinary::surface_type_of(p).as_deref() == Some("Int");
+    match (is_int(lhs), is_int(rhs)) {
+        (true, true) => Ok(Some(())),
+        (false, false) => Ok(None),
+        _ => Err(Diagnostic::error(
+            DiagnosticKind::StandardPreludeError,
+            Some(line),
+            format!("`{op}` mixes Int and another type"),
+        )
+        .with_help("convert Nat operands with int(n); ordinary operations insert no implicit coercions")),
     }
 }

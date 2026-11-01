@@ -671,3 +671,17 @@ Examples:
 - remote runtime target does not use a remote handle;
 - runtime representation does not match the backend layout container;
 - dense runtime attempts to carry full-passport or per-element passport metadata into a hot payload.
+
+## E0943 OwnershipError
+
+Raised (v0.102) when a `ByteBuf` owner is misused (see `docs/OWNERSHIP.md`):
+
+- used, borrowed or moved after it was moved (`used after it was moved at line L`);
+- moved twice in one call, or moved by an earlier argument and used by a later one;
+- moved in the lazily evaluated operand of `and`, `or` or `unwrap_or`;
+- captured by a function value, or a function value with a `ByteBuf` parameter;
+- a `ByteBuf` in a container, product, sum, record field, `Fn` type, type argument, theory-level value or statement;
+- a buffer-producing expression that is neither bound, moved nor returned, or an unnamed buffer in a borrow position;
+- (v0.103) a `&ByteBuf` parameter moved, returned or released by its borrower; one buffer both borrowed and moved by the same call.
+
+The diagnostic carries the physical position of the offending use.

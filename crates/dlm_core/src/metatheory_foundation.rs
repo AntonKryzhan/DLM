@@ -455,7 +455,9 @@ fn subject_from_passport(passport: &Passport, line: usize) -> Result<String, Dia
         TypeKind::EqProof { lhs, rhs } => format!("{lhs}={rhs}"),
         TypeKind::RewriteRule { name, lhs, rhs } => format!("{name}:{lhs}->{rhs}"),
         TypeKind::RewriteCertificate { from, to } => format!("{from}->{to}"),
-        TypeKind::NatInductionScheme { proposition_family } => proposition_family.clone(),
+        TypeKind::NatInductionScheme { proposition_family }
+        | TypeKind::ListInductionScheme { proposition_family, .. }
+        | TypeKind::NatStepInductionScheme { proposition_family, .. } => proposition_family.clone(),
         TypeKind::InductionProof { proposition }
         | TypeKind::InductionBaseCase { proposition }
         | TypeKind::InductionStepCase { proposition } => proposition.clone(),

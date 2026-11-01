@@ -107,3 +107,12 @@ certificate verification rejects theorem identity mismatch;
 fingerprint changes when proof trace changes;
 fingerprint validation catches tampering.
 ```
+# v0.88 clarification: independent evidence
+
+Certificates with `kernel: Some(KernelProof)` use format/fingerprint v2 and are independently replayed in the
+supported mathematical Nat equational fragment. The proof must establish exactly the certificate proposition;
+rehashing cannot make an invalid step acceptable. Other certificates keep v1 and explicitly report
+`proof_evidence: legacy-trusted`. Their `Checked` status does not claim independent proof replay.
+
+See `EQUATIONAL_REPLAY.md` for rules, budgets, export/check commands, assumptions and unsupported proofs.
+

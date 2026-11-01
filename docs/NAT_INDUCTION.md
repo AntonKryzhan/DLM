@@ -42,3 +42,23 @@ The MVP supports only finite Nat induction over string-named proposition familie
 ```powershell
 cargo test -p dlm_core --test nat_induction
 ```
+
+## v0.77 surface syntax
+
+`theorem name(n: Nat, ...): P by induction n` builds this layer's objects from `.dlm`. The proposition family is
+`P_name`, base and step static proofs come from the symbolic kernel, and the `InductionProof` is instantiated to the
+statement body. See `docs/PROOF_SURFACE.md`.
+
+## v0.78 — List induction
+
+Structural induction over `List<T>` has its own core objects: `list_induction_scheme`, `list_induction_base_case`
+(`P([])`), `list_induction_step_case` (`forall h:T, t:List<T>. P(t) -> P(cons(h, t))`) and `list_induction_proof`
+(`forall xs:List<T>. P(xs)`). A Nat scheme is not accepted where a list scheme is required. From `.dlm`,
+`by induction xs` on a `List<Nat>` variable uses them; see `docs/PROOF_SURFACE.md` (v0.78 section).
+
+## v0.79 — Step induction
+
+`nat_step_induction_scheme(P, s)` (`s >= 2`) needs the base cases `P(0) .. P(s-1)` in order
+(`nat_step_induction_base_case`) and the step `forall n:Nat. P(n) and .. and P(n+s-1) -> P(n+s)`
+(`nat_step_induction_step_case`); `nat_step_induction_proof` concludes `forall n:Nat. P(n)`. A plain Nat scheme is not
+accepted as a step scheme. From `.dlm`: `by induction n step s`.

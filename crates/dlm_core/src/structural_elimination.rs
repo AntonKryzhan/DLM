@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use crate::passport::{
+    ordinary_type_name,
     Capability, CapabilitySet, ConstructionMode, CostClass, HistoryChain, LocationContext, Passport,
     Provenance, TheoryContext, TrustLevel, TypeKind, ValidationState,
 };
@@ -342,6 +343,7 @@ fn ensure_structural_subject(passport: &Passport, what: &str, line: usize) -> Re
 fn ordinary_elimination_result_type(passport: &Passport, line: usize) -> Result<String, Diagnostic> {
     match &passport.ty {
         TypeKind::Nat
+        | TypeKind::TypedValue { .. }
         | TypeKind::Bool
         | TypeKind::Bytes
         | TypeKind::Text
@@ -362,7 +364,7 @@ fn ordinary_elimination_result_type(passport: &Passport, line: usize) -> Result<
         | TypeKind::RecordProjection { .. }
         | TypeKind::ProductElimination { .. }
         | TypeKind::SumElimination { .. }
-        | TypeKind::RecordPattern { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::RecordPattern { .. } => Ok(ordinary_type_name(&passport.ty)),
         TypeKind::Theorem { .. }
         | TypeKind::StaticProof(_)
         | TypeKind::ProofTerm { .. }

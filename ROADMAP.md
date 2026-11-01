@@ -1,8 +1,160 @@
 # ROADMAP.md — DLM / ЯРД
 
-## 0. Назначение дорожной карты
+## Актуальный рабочий курс — v0.131.0 (01.11.2026)
 
-Этот документ фиксирует текущую стратегию развития **DLM / ЯРД** после анализа текущего состояния проекта и материалов из `BOOKS.zip`.
+**Главная цель:** DLM — самостоятельный язык программирования общего назначения с
+предсказуемым нативным исполнением, явными эффектами и ресурсами, проверяемыми
+математическими контрактами и прозрачной доверенной базой. Математические
+библиотеки расширяют возможности языка, но не заменяют его прикладную основу.
+Формальные доказательства должны быть доступны там, где они нужны, а обычная
+программа не должна требовать доказательства каждой операции.
+
+Источник актуального состояния: `Cargo.toml` (0.131.0),
+`docs/LAW_STATUS.md`, `docs/MATHEMATICS_PROGRESS.md` и документация
+проверяемых возможностей. Исторические версии и прежние прогнозы ниже
+сохранены как журнал, **не как инструкция о следующем релизе**.
+
+### Отдельные очереди с явными зависимостями
+
+1. **Язык и прикладная инфраструктура (основной путь к v1.0).** Сохраняется
+   последовательность зависимостей A–H из закона 42: семантика и Typed Core,
+   независимые доказательные объекты, владение, плотные данные и обобщения,
+   файловая система/FFI, сеть и задачи, инструменты. Открытые обязательства
+   A/B/C закрываются в требуемой для следующего этапа области. Работа над D–H
+   не считается выполненной из-за появления математической библиотеки.
+2. **Математические библиотеки (отдельный последовательный путь).** Внутри этого
+   направления одновременно активен один раздел: «Числовая основа и точная
+   арифметика», критерии N01–N16. На v0.98.0 закрыты N01–N06 (6/16),
+   остальные 10 открыты. Следующий математический раздел не начинается до
+   подтверждённого закрытия 16/16, но это **не блокирует** системные
+   возможности, компилятор, память, стандартную библиотеку и тестирование.
+
+### Общие зависимости двух направлений
+
+| Задача | Зависимость | Учёт результата |
+|---|---|---|
+| N14: плотное хранение чисел | Владение D и плотные контейнеры E | Общая реализация; отдельные проверки скалярного layout и стоимости |
+| N15: скалярные свидетельства | Независимый checker C и правила соответствующего числового семейства | Nat-replay сам по себе не закрывает свидетельства дробей или оценок |
+
+Общая задача реализуется один раз; каждый зависимый критерий получает свои
+свидетельства приёмки. Отдельные очереди сохраняют технические зависимости.
+Ближайшая инженерная очередь: отдельная приёмка C-min, затем владение D и
+плотные данные E. Ограниченная передача объявлений A/B закрыта в v0.100;
+полные HIR/MIR остаются отдельными открытыми обязательствами. N07 остаётся следующим
+математическим пунктом, но не обязательным следующим патчем языка.
+
+**Инженерный шаг v0.99.0 (A/B):** `FileId` и таблица исходных файлов проходят
+через AST, resolver, Typed Core и IR. Ошибки парсера и проверки выражений
+получают физические позиции; ошибки библиотек сохраняют путь библиотеки.
+Верификатор проверяет файловые ID, диапазоны и соответствие `origin` проверенному
+Span. Объём и проверки: `docs/SOURCE_IDENTITY.md`. На этом шаге передача
+объявлений по именам и полноценные HIR/MIR ещё оставались открытыми.
+
+**Инженерный шаг v0.100.0 (B):** контракты функций и схемы записей передаются
+по `DeclId`; номинальные `RecordId` и типы формирует frontend. Lowering не
+восстанавливает сигнатуру при отсутствии проверенных фактов. Проверяются
+контекст, снимки объявлений и происхождение IR; старые именные таблицы —
+представление для инструментов, не источник фактов backend. Объём и проверки:
+`docs/DECLARATION_IDENTITY.md`. Эта ограниченная граница закрыта; полный
+Resolved HIR/MIR и перенос разрешения всех ссылок в frontend остаются Open.
+Следующий инженерный шаг — явная приёмка всех шести условий C-min, затем D/E
+по прежним условиям. Полный C не закрывается ограниченным replay.
+
+Recursive Discovery Research Program R0–R6 учитывается как отложенная
+исследовательская очередь. Её реализация сейчас не начинается и не меняет
+инженерный приоритет или критерии N01–N16.
+
+**Сводная версия v0.100.1:** полный исходный комплект включает изменения до
+v0.100.0 и дополнительный Q(i) API из отдельного патча. Существующие
+`ComplexQ`/`complexq_*` и профиль 1..16384 бит сохранены; счёт N01–N06
+остаётся 6/16. Это объединение не закрывает новый этап A–H или C-min.
+Объём: `docs/CUMULATIVE_BUILD.md`. Исследовательский документ
+`docs/RECURSIVE_DISCOVERY_RESEARCH_PROGRAM.md` включён как отложенный план.
+
+### C-min
+
+Ближайший объём C ограничен независимой проверкой равенств математических Nat:
+переменные, неотрицательные литералы, сложение и умножение, существующие правила
+`nat-semiring-v1` из `docs/EQUATIONAL_REPLAY.md`. Приёмка требует всех условий:
+
+1. Структурированный DAG проверяется без source checker, runtime и поиска доказательства.
+2. Проверяются области переменных, все ссылки и точное соответствие корня заявленному равенству; подмена цели или шага отвергается после пересчёта fingerprint.
+3. Аксиомы допускаются только из явно переданного внешнего контекста; самостоятельный файл не объявляет себе аксиомы, CLI использует пустой контекст.
+4. Неверные версии, правила, циклы, повреждённый формат и лишние данные отвергаются; исчерпание бюджета отличается от ложности утверждения.
+5. Экспорт/replay работает после удаления исходника; аудит различает `kernel-replay` и `legacy-trusted` и сохраняет зависимости доверия.
+6. Граница гарантий явна: Nat-равенство не доказывает `Defined_128`, безопасность памяти или корректность C backend и не разрешает удаление машинных проверок.
+
+**Статус v0.101.0: C-min принят (Validated).** Каждое из шести условий
+сопоставлено с отдельным тестом в `c_min_acceptance.rs` и `cli_c_min.rs`
+(таблица — `docs/EQUATIONAL_REPLAY.md`, раздел «C-min acceptance»). Полный C
+остаётся Open; следующий инженерный этап — D.
+
+Существующий фрагмент v0.88 — база этой приёмки. Свидетельства:
+`equational_kernel.rs`, `certificate_audit.rs`, `cli_proof_replay.rs` и
+проверки Typed Core/стирания. Статус нового переходного критерия — Designed;
+его закрытие требует явного сопоставления всех шести условий с результатами
+проверок. Правка плана сама по себе не закрывает C-min или полный C.
+После приёмки C-min и необходимых границ A/B можно переходить к D.
+Определения, общие леммы, подстановка, логика, кванторы и индукция сохраняются
+как Open полного C; они не входят в этот переходный критерий. Нарушения
+soundness или доверия в используемом фрагменте всегда блокируют переход.
+
+### Инженерный срез v0.130.0 — функции, обобщения, прикладной ввод-вывод
+
+Этапы A/B, E, F/G: `FnEffect` сохраняет явные границы эффектов и частичности
+через значения функций, замыкания, generics и IR. Добавлены четыре ограничения
+callable и пять встроенных проекций типов. Девять итеративных операций обхода
+имеют предсказуемый порядок и ранний выход; `std.effects` предоставляет
+обобщённые обёртки. `std.files` получает построчные callbacks и атомарные
+преобразования; существующий HTTP-сервер принимает обработчик с файловым I/O.
+
+Приёмка: дифференциальные тесты интерпретатора/C, отрицательные программы,
+повреждение IR, 50 000 элементов, ошибки файлов и реальный loopback HTTP.
+Подробный контракт: `docs/EFFECT_FUNCTIONS.md`. Предыдущие исправления
+0.129.0 включены в накопительный патч.
+
+Открыты пользовательские ассоциированные типы/HKT, произвольные владеющие
+контейнеры, lifetime/mutable borrow, задачи/async/cancellation, TLS и полное
+доказательство компилятора. Исследовательская программа Recursive Discovery
+R0–R6 остаётся отдельной отложенной очередью. Этот срез не закрывает целиком D–G.
+
+### Приоритет следующей инженерной работы
+
+| Порядок | Инженерный результат | Объективный критерий приёмки |
+|---|---|---|
+| 1 | Согласованная семантика A/B и недостающие границы Typed Core | Исходные ID/Span, типы и эффекты проверяются до backend; регрессии интерпретатора и C фиксируются тестами |
+| 2 | Приёмка ограниченного C-min | Шесть условий C-min подтверждены; общий этап C остаётся открытым |
+| 3 | Владение и изменяемые ресурсы (D) | Контракты move/borrow/lifetime и очистки на всех путях управления; тесты на ошибках и ранних выходах |
+| 4 | Плотные коллекции и обобщения (E) | Вектор/срез/буфер и пользовательские параметризованные типы без неявной поэлементной упаковки; воспроизводимые измерения |
+| 5 | Системные API (F) | Файлы, каталоги, ошибки и минимальный FFI; законченный преобразователь файлов, работающий в native-режиме |
+| 6 | Сеть и структурированная конкурентность (G), инструменты (H) | Долгоживущая служба с отменой и ограничением ресурсов; отдельная компиляция, пакеты, LSP/диагностика по критериям этапов |
+
+Этот порядок выражает **зависимости**, а не запрещает совместимые исправления.
+Самостоятельные библиотеки математики проходят свою приёмку параллельно, не
+создавая новых привилегированных правил ядра компилятора. SIMD/GPU, высшая
+гомологическая алгебра, HoTT, амплитуэдры и другие исследовательские области
+не являются условием выпуска универсального DLM v1.0.
+
+### Сквозные проверки универсальности
+
+- **Обработчик файлов:** перечисление → чтение → разбор → преобразование →
+  запись, типизированные ошибки и освобождение ресурсов.
+- **Сетевой сервер:** несколько клиентов, отмена, ограничение памяти,
+  длительная работа без утечек.
+- **Вычислительная библиотека:** точные и машинные операции, массивы,
+  общие алгоритмы, сравнение интерпретатора и native C, измерения стоимости.
+
+Завершение проверяется отдельно по каждому свойству: `Designed`,
+`Implemented`, `Validated`, `Proven`, `Open`. Число тестов и число выполненных
+математических критериев не заменяют доказательство корректности компилятора.
+После каждого патча указывать затронутый этап A–H либо математический ID,
+проверки, открытые ограничения и влияние на создание обычных программ.
+
+---
+
+## 0. Исходная стратегия (исторический контекст)
+
+Этот документ фиксирует первоначальную стратегию развития **DLM / ЯРД** после анализа текущего состояния проекта и материалов из `BOOKS.zip`.
 
 Главная цель дорожной карты — не просто перечислить будущие версии, а удержать архитектурную дисциплину проекта:
 
@@ -25,7 +177,7 @@ DLM должен оставаться языком, где программа н
 ---
 
 
-## 0.1. Актуализация после v0.31.2: сначала hardening, потом новая метаматематика
+## 0.1. Историческая актуализация после v0.31.2: сначала hardening, потом новая метаматематика
 
 После проверки `v0.31.2` курс ROADMAP уточнён. Reflection / Self-Reference Guard стабилизирован, но hotfix-цепочка `v0.31.0 -> v0.31.1 -> v0.31.2` показала главный практический риск: если safety-sensitive правила остаются локальными списками внутри `checker.rs`, легко забыть одну опасную форму и получить неправильный класс ошибки или soundness-дыру.
 
@@ -56,7 +208,43 @@ v0.37.0 — Meta-Level Stratification
 
 ---
 
-## 1. Текущее состояние проекта
+## 1. Текущее состояние проекта (v0.100.0)
+
+В `Cargo.toml` указан `0.100.0`. DLM — действующий Rust-прототип с
+проверкой программ, интерпретатором и C backend (`dlm build`) для
+поддерживаемого исполняемого подмножества языка. Есть функции, записи,
+сопоставление с образцом, Text, Nat/Int с машинной u128/i128-семантикой,
+базовые эффекты ввода-вывода, формальные утверждения и аудит.
+
+После v0.87 исполняемый IR передаёт проверенные типы и контракты;
+после v0.88 доступен ограниченный независимый replay Nat-равенств.
+В математических библиотеках v0.89–v0.97 присутствуют ограниченные
+F2/Fp-гомологии, конечная алгебра, рациональные матрицы, source/native
+многословные целые и дроби до 16384 бит по документированным профилям.
+Это вычислительные и runtime-checked результаты; они не означают полного
+proof kernel или поддержки всех теорий алгебраической топологии.
+
+Открыты: полный независимый proof replay и этап C; статическое владение и
+изменяемые плотные буферы (D/E); файлы, FFI, сеть, асинхронность и системная
+библиотека (F/G); пакеты и инструменты (H). Часть A/B ещё требует
+полного Resolved HIR/MIR и переноса разрешения ссылок в frontend. Подробные реализованные
+фрагменты и ограничения — в `docs/LAW_STATUS.md`.
+
+Актуальные команды проверки (наличие конкретного backend/компилятора и
+платформы проверять отдельно):
+
+```bash
+cargo test --workspace --locked --offline
+cargo run -p dlm_cli -- --help
+```
+
+Исторический baseline `v0.31.2` и промежуточные патчи сохранены в последующих
+разделах, но более не считаются текущей версией или активной очередью работ.
+
+### Исторический срез v0.31–v0.34
+
+Сохранён исходный текст о прежнем baseline; команды и статусы ниже относятся
+к этому историческому срезу.
 
 **DLM — Deductive Logic Machine** сейчас уже не просто черновой синтаксис языка. Это работающий Rust-прототип формального языка, где математические объекты, программы, доказательства, trust-уровни, provenance, validation state, theory context и derivation history представлены как части единой паспортной модели.
 
@@ -95,6 +283,7 @@ cargo run -p dlm_cli -- explain examples\valid\reflection_summary_axiom.dlm
 ```
 
 После успешной проверки `v0.33.0` архитектурный hardening продолжен этапом `v0.34.0 ID / Resolver Skeleton`.
+
 
 ---
 
@@ -2085,7 +2274,7 @@ basic stdlib exists;
 examples and docs complete enough for external users.
 ```
 
-Минимальные критерии v1.0:
+Исторические минимальные критерии формального ядра v1.0 (ID 1–15 сохранены для ссылок старых патчей):
 
 1. стабильный синтаксис MVP;
 2. стабильный passport model;
@@ -2102,6 +2291,21 @@ examples and docs complete enough for external users.
 13. property-based tests покрывают trust/passport/bridge laws;
 14. IR pipeline отделён от parser/checker монолита;
 15. diagnostics имеют Span и reason chains.
+
+**Дополнительные обязательные прикладные условия выпуска DLM v1.0**
+(критерии 1–15 сами по себе недостаточны для языка общего назначения):
+
+16. Пользовательские типы, обобщения, векторы и срезы применяются в обычных программах с проверяемым владением и измеримой стоимостью.
+17. Файлы, каталоги, типизированные ошибки и внешние ресурсы работают в интерпретаторе и поддерживаемом native backend; FFI имеет описанный ABI и lifetime.
+18. Один полноценный файловый преобразователь проходит интеграционные и отрицательные тесты без внеязыковых обходных путей.
+19. Одна долгоживущая сетевая служба проходит тесты отмены, ошибок, ресурсов и конкурентной нагрузки.
+20. Пользовательские проекты собираются воспроизводимо; доступны документация, пакеты/версии зависимостей и базовая диагностика для внешнего пользователя.
+21. На поддерживаемых платформах результаты интерпретатора и native backend сравниваются, а производительность и память измерены на опубликованных сценариях с одинаковой числовой семантикой.
+
+Стабилизация синтаксиса/библиотек и гарантий требуется только для явно
+объявленного профиля v1.0; исследовательские возможности могут оставаться
+экспериментальными. Собственная GUI-библиотека, GPU и вся высшая математика
+не являются обязательными условиями этого выпуска.
 
 ---
 
@@ -3274,3 +3478,336 @@ BackendLayoutReport -> DenseRuntimeDescriptor -> DenseRuntimeReport
 ```
 
 This is still an audit/runtime-descriptor layer, not a full runtime executor. It prepares Stage 2 closure by enforcing the law: semantic meaning stays above; execution payloads stay dense below.
+
+## v0.72 — Example Corpus Integrity / GPU Checkpoint Restore Completion
+
+Hardening release before further Stage 2 work. Every example is now checked in its intended mode by `example_corpus.rs`; the documented v0.21 GPU checkpoint/restore rules are enforced by checker and runtime. Negative examples may no longer pass because a feature is unimplemented. See `docs/EXAMPLE_CORPUS_INTEGRITY.md`.
+
+## v0.73 — Ordinary Mathematics Surface Wiring
+
+Stage 2 layers v0.55–v0.67 are wired into parser, checker and runtime. `fn` declarations, Bool literals, Option/Result, List/Sequence, products and bounded map/fold are usable from `.dlm`, and each goes through the corresponding core report. Next in Stage 2: recursion schemes with well-founded measures in syntax, records/sums in syntax, lambdas.
+
+## v0.74 — Well-Founded Recursion, Records and Sums
+
+Recursion schemes, records and sums are reachable from `.dlm`. Recursion is decided syntactically (`nat_decreasing`, `structural_subterm`) and published as core `RecursionScheme` reports; fuel is an explicit operational bound. Next in Stage 2: lambdas / first-class function values, lexicographic and mutual measures, pattern syntax. After Stage 2: proof kernel work (Stage 4).
+
+## v0.75 — Lambdas, Function Values, Higher-Order Functions, Lexicographic Measures
+
+Function types and lambdas are part of the ordinary surface, with a pure/total invariant for function values, lexical closures and lexicographic recursion measures. Stage 2 remaining: mutual recursion, pattern syntax, string literals. Next major track: Stage 4 proof kernel — expose statements, theorems and proofs in `.dlm` syntax on top of the ordinary surface.
+
+## v0.76 — Statements, Theorems and Proofs
+
+Stage 4 starts in syntax: `theorem` (computation / bounded exhaustion), `axiom` (Axiom-tainted), `conjecture` (open goal with test evidence), certificates via `dlm certify`. Next: symbolic proofs of unbounded statements on the existing core layers — Nat induction with base and step discharged by the kernel, and equational rewriting with lemma use.
+
+## v0.77 — Symbolic Proofs of Unbounded Statements
+
+`by normalize` / `by induction n` / `using` lemmas over a symbolic Nat kernel, routed through the core induction objects, with soundness fuzzing. Next: kernel-independent proof terms (re-checkable traces), inequality reasoning, induction over lists, and module-level lemma import.
+
+## v0.78 — Inequalities, List Induction, Runtime Cross-Check
+
+Inequality goals and hypotheses, `List<Nat>` variables with structural induction through core list induction objects, and a runtime cross-check of every symbolic theorem. Next: kernel-independent proof terms (re-checkable traces), strong induction, `List<T>` for other element types, module-level lemma import.
+
+## v0.79 — Step Induction, Generalized Hypotheses, Bool Cases
+
+`by induction n step s`, `generalizing`, Bool case split and Bool hypotheses, core step-induction objects, kernel cycle/depth guards (fixes a stack overflow on cyclic lemma rewriting). Next: kernel-independent proof terms (re-checkable traces), `List<T>` for other element types, module-level lemma import.
+
+## v0.80 — Modules, Theory Extension, Standard Library
+
+`import` with file resolution, `theory ... extends ...`, `private`, `check_program` / `run_program`, `--lib` / `DLM_PATH`, `lib/std` (`std.nat`, `std.list`), nested lemma patterns. Next: kernel-independent proof terms, mutual recursion and pattern syntax, more library modules (options, records, sorting), selective imports.
+
+## v0.81 — `dlm audit`, Projects, Mutual Recursion
+
+v1.0 criteria 9 (project-level checking) and 12 (`dlm audit` shows the trusted base) are implemented on top of passport histories. Stage 2 gains mutual recursion. Next: kernel-independent proof terms, pattern syntax, string literals, more library modules.
+
+## v0.82 — Multi-line Declarations, `let`, `match`
+
+Stage 2 gains pattern syntax and local bindings. Multi-line declarations make ordinary programs writable. The kernel gains bounded Nat case splitting. Next toward compilation: string literals and Text operations, `Int`, `fn main` with I/O, then a typed IR and a C backend checked against the interpreter.
+
+## v0.83 — Text, Line I/O, Arguments, `fn main`
+
+Text literals and operations, line-oriented stdin/stdout, program arguments and an entry point with exit status: complete command-line programs can be written and run. Next: `Int`, then the compiler track (typed IR from checked programs, proof erasure, C backend, differential testing against `dlm run`).
+
+## v0.84 — Compiler: IR and C Backend
+
+`dlm build`: checked program → name-resolved IR (statements, measures and fuel erased; closures converted) → C → native executable, verified differentially against `dlm run`. v1.0 criterion 14 (IR pipeline separated from parser/checker) is met for execution. Next: `Int`, memory management (reference counting or arena per call), compiling the remaining structural features, optimisation passes on the IR, and a self-hosted standard library build.
+
+## v0.85 — Int: Exact Signed Integers
+
+`Int` with `-`, unary `-`, Euclidean `div`/`mod`, `abs` and text conversions in the checker, the interpreter, the symbolic kernel (ring normalization, constant-difference comparisons, `strict_opaque` guard) and the C backend. Stage 2 now lacks only rationals and fixed-width integers. Next: memory management in compiled programs (reference counting or arenas), `std.int` and `std.text` libraries, IR optimisation passes, Int lemmas with sign hypotheses.
+
+## v0.86 — Compiled Runtime: Machine Values, Reclamation, Range Checks, Windows
+
+Native scalar functions, tagged small Nat/Int, call regions that free temporaries, self tail calls as loops, `fold` accumulator reclamation, the machine-range overflow report (`--check-overflow`, `--require-no-overflow`) and native Windows x64 via MinGW-w64.
+
+## v0.86.1 — Survivor Groups
+
+Survivors of a collection form a group that is kept whole without tracing while all its roots are reachable, so graphs returned through deep recursion are no longer traced at every level (closure chain of 40 000 levels: 90.7 s → 0.45 s). Next: interprocedural ranges for the overflow report, IR optimisation passes, `std.int` and `std.text`.
+
+## v0.87 — Semantics and Typed Core (stages A and B)
+
+Normative semantics of the executable surface with interpreter/compiler parity including runtime errors; expression ids and exact spans; Typed Core facts from the checker; typed and verified IR; contracts with independent properties; constant-stack self tail calls everywhere; defined stack exhaustion. The order of further work follows the laws (section 42): stage C (proof terms and an independent checker), stage D (ownership and resources), stage E (dense data and generics). Open items of stages A and B are listed in `docs/LAW_STATUS.md`.
+
+## v0.87.1 — Typed IR Verification Hardening (stage B)
+
+All compiled builtin type rules, sum elimination, effect inclusion, pure function values, active slots and
+initializer/global invariants are checked before code generation, with mutation tests for every builtin.
+Stage B remains open for resolved record schemas/identities, control-flow facts for match projections and file
+identities in spans. The next proof milestone remains stage C: structured proof objects checked independently
+of search, with explicit axioms and mutation rejection. This hardening patch does not claim that milestone.
+
+## v0.88 — Record Schemas (B) and Equational Replay Foundation (C)
+
+Checked record schemas, nominal IDs throughout nested executable types and schema-checked constructors/
+projections close the record obligation listed for B in v0.87.1. B still needs file IDs/source diagnostics,
+control-flow facts for match projections and further resolution/pass boundaries.
+
+C now has an initial executable fragment: structured Nat equational DAGs, a bounded independent replay kernel,
+explicit external axiom contexts, semantic certificate checking, artifact export/check commands and mutation
+tests. Other source proofs remain visibly legacy-trusted. Next in C: checked definition-unfolding witnesses,
+lemma instantiation/substitution, logical rules and Nat/list induction, then broader source elaboration. The
+stage is not complete. Ownership/resources (D) and dense generics (E) retain their dependency on this foundation.
+
+## v0.93 — Exact numeric foundation; deferred application requests
+
+Configurable-precision runtime integers/rationals and rational matrices extend
+0.92 without changing source Nat/Int. Ordinary `std.matrix_q` remains explicitly
+bounded; arbitrary-precision source/native layouts and independent Q witnesses
+are still open. See `docs/EXACT_RATIONAL_MATRICES.md` and the progress journal.
+
+The requested positive-geometric computations (associahedra, cosmological
+polytopes, amplituhedra and related objects) and formal symbolic huge-number
+work including BIG FOOT are recorded for later in
+`docs/FUTURE_MATH_APPLICATIONS.md`. Their definitions/prerequisites/acceptance
+criteria are separate; neither track is implemented by the current patch.
+Stages B/C and ownership/generic resource obligations retain their status.
+
+## v0.94 — Ordinary source exact arithmetic and native C
+
+`std.exact` exposes canonical radix-word integers/rationals to DLM source and
+the existing C backend, with configurable 1..1024-bit precision and explicit
+reservation budgets. No Nat/Int replacement or new compiler numeric builtin.
+`docs/SOURCE_EXACT_ARITHMETIC.md` defines the resource/trust boundary. Next
+numeric obligations: BigRational source matrices, efficient limb layouts,
+source precision extension and independently checked arithmetic/Q witnesses.
+Full proof-kernel and ownership milestones remain open; positive geometries
+and BIG FOOT stay deferred as requested.
+
+## v0.95 — Source BigRational matrices and exact Q result checking
+
+`std.matrix_bigq` extends source exact arithmetic to <=4-axis matrices and
+budgeted rank/kernel/determinant/inverse/general systems. A separate host
+Q rank/kernel witness checker uses exact identities without elimination;
+standalone export/check and external input binding are implemented. Inverse
+and affine-solution residuals have API checks. See the new scoped specifications.
+Next obligations: broader source axes/precision and efficient layouts, source
+witness synthesis, determinant/RREF/general exact proof terms, Q homology and
+symbolic algebra. Proof-kernel/ownership/generic and deferred application
+milestones retain their open status.
+
+## Current mathematical order — complete one section before the next
+
+Anton's instruction of 2026-10-29 replaces the previous practice of advancing
+from one bounded mathematical patch to another section. One mathematical
+section is active at a time; this restriction applies to mathematical library
+sections, not to compiler, memory, FFI, network or tooling work in stages A–H. The active section is **numeric foundations and
+exact arithmetic**. Its full acceptance inventory and current evidence are in
+`docs/MATHEMATICS_PROGRESS.md`, criteria N01–N16. At the 0.95.0 baseline, 3 criteria were closed and 13 remained open;
+at 0.97.0 there were 5/16 closed and 11/16 open; after 0.98.0 the current
+result is 6/16 closed and 10/16 open. Adding or updating this plan does not
+change runtime or proof assurance.
+
+Complete every acceptance criterion before starting the next mathematical
+section. Preserve unmet requirements; completing a small profile or patch does
+not close its parent section. Required compiler/kernel/resource work is tracked
+as a dependency of the active section and respects architectural stages A–H.
+Record the guarantee level, bounds and validation evidence before declaring
+closure. Criterion counts do not estimate relative effort or formal soundness.
+
+The following sections wait in this order: linear algebra, finite algebra,
+general algebra, computational topology, homological algebra, category theory,
+symbolic algebra, logic/formal proofs, sets/universes, then the remaining
+advanced theories. Before each section starts, fix its complete acceptance
+contract; later scope changes remain explicit. Existing implementations in
+waiting sections remain part of the project. Positive geometry and symbolic
+huge-number work including BIG FOOT retain their deferred status.
+
+After every patch, report the active section, criteria changed, validation,
+closed/remaining counts and outstanding closure conditions. A section reaches
+100% of its acceptance criteria only when all have passed. Earlier rough
+per-section percentages are not used as measured readiness.
+
+## v0.96 — Numeric criterion N05: scalar arithmetic operations
+
+Exact integer/rational powers, lcm and floor square roots with remainders are
+available in host APIs and ordinary DLM/C. See EXACT_SCALAR_OPERATIONS.md and
+the active progress inventory: N01/N02/N03/N05 are closed; 12/16 remain open.
+The source 16384-bit extension (N04) still requires division/text/root loop,
+input, storage and reservation work. Current source bounds remain 1024 bits.
+No later mathematical section starts; all numeric and architectural obligations
+retain their existing scope and required evidence.
+
+## v0.97 — Numeric criterion N04: shared precision ceiling
+
+Source/native `std.exact` supports 1..16384-bit magnitudes with compatible
+small-profile limits and explicit wider reservations. Word division, bounded
+gcd/text blocks, grouped output and word-fold roots cover the wide profile.
+The interpreter internally shares immutable function declarations as a scalar
+workload dependency. SOURCE_EXACT_PRECISION.md states limits and evidence.
+
+N01–N05 are closed; 11/16 numeric criteria remain open. N14 dense storage/
+performance, N15 scalar witnesses and N16 full acceptance retain their scope.
+Remaining numeric families and architectural/proof dependencies still block
+the next mathematical section.
+
+## v0.98 — Numeric criterion N06: exact rational complex numbers
+
+Host `ComplexQ` and ordinary `std.complex_q` implement Q(i), without new numeric
+tags or compiler/kernel rules. EXACT_COMPLEX_Q.md specifies constructors,
+canonical rational components, equality, arithmetic, conjugation, squared
+modulus, domains, intermediate precision and sequential budget consumption.
+N06 closes: 6/16 numeric criteria closed, 10/16 open (a checklist count, not an
+effort estimate). Acceptance is tracked in MATHEMATICS_PROGRESS.md. Intervals
+(N07), computable real/complex families, common numeric formats/resources, dense data, scalar
+witnesses and full platform acceptance remain within the active numeric
+section. The next mathematical section continues to wait for its full closure.
+
+## v0.101 — C-min accepted; numeric criterion N07: rational intervals
+
+Engineering: the six C-min conditions are validated by dedicated tests; the
+kernel proof codec accepts only canonical text and `proof-check` reports
+Invalid / unreadable / UnknownWithinBudget with exit codes 1 / 2 / 3. Next
+engineering stage: D (ownership, moves/borrows, resource cleanup on all paths).
+
+Mathematics: closed rational intervals in host APIs and ordinary DLM/C with
+inclusion, tightest endpoint arithmetic, hull/intersection, undecided
+comparison on overlap, explicit zero-divisor refusal and guaranteed square
+roots (EXACT_INTERVALS.md). N01–N07 are closed; 9/16 remain. Next in this
+section: computable reals (N08) built on these intervals.
+
+## v0.102 — D-min: owned byte buffers; numeric criterion N08: computable reals
+
+Engineering: stage D starts with the bounded criterion D-min (OWNERSHIP.md).
+`ByteBuf` has one owner; borrows and moves are checked on every control path,
+releases are planned by the checker, carried by Typed Core, inserted by
+lowering and verified in IR; the native runtime mutates in place and cleans up
+live buffers on runtime errors. Next engineering steps: external handles with
+explicit close/flush errors and borrows of parts (rest of D), then dense
+containers and generics (E), which also allow buffers inside data structures.
+
+Mathematics: computable reals as expression DAGs with guaranteed rational
+enclosures at requested precision, a fixed refinement schedule and honest
+undecided comparisons (COMPUTABLE_REALS.md). N01–N08 are closed; 8/16 remain.
+Next in this section: complex numbers with computable real components (N09).
+
+## v0.103 — borrowed buffer parameters; N09
+
+D: `&ByteBuf` call borrows, exclusive mutation in one call, copy/slice/append/eq/UTF-8 operations. Numeric:
+computable complex numbers (N09), 9/16. Next: N10; D handles/parts, then E.
+
+## v0.104 — TextBuf; N10
+
+D: owned text builder. Numeric: exp/log/sin/cos/pi with guaranteed enclosures (N10), 10/16. Next: N11.
+
+## v0.105 — N11, N12
+
+Numeric: explicit conversions with rounding modes, decided rounding of computable reals, portable format `dlm1`; 12/16. Next: N13.
+
+## v0.106 — N13, N15
+
+Numeric: error categories, budget threshold/chain contracts, scalar witnesses; 14/16. Next: N14, then N16.
+
+## v0.107 — N14
+
+Dense `BigNat` type (stage E dense data for numbers), native kernel for `std.exact`, `std.dense`, cost profile; 15/16. Next: N16.
+
+## v0.108 — N16
+
+Numeric section accepted, 16/16. Next: language stage D (external handles) and E.
+
+## v0.109 — D: external handles
+
+Linear `File` with explicit close errors, exit cleanup. Next in D: borrows of parts; then E.
+
+## v0.110 — E-min: generics
+
+Generic functions/records, monomorphization, `std.collections`. Next: type-argument inference, constraints.
+
+## v0.111 — E: inference and bounds
+
+Local type-argument inference, `Eq`/`Ord` bounds, `equal`/`less`. Next: user-defined type classes.
+
+## v0.112 — E: type classes
+
+Classes, concrete and generic instances, class bounds, `std.classes`. Next: superclasses/defaults, dense containers in data.
+
+## v0.113 — E: superclasses, defaults
+
+Superclass requirements, default methods, resource names in ownership diagnostics.
+
+## v0.114 — machine floats, numerical methods
+
+`Float`/`FloatVec` (binary64), `std.numerics`: roots, quadrature, RK4, minimization, interpolation, statistics, RNG, linear systems.
+
+## v0.115 — graphs, geometry, probability
+
+`NatVec`, native graph algorithms, `std.graphs`, `std.geometry`, `std.probability`.
+
+## v0.116 — numerical linear algebra
+
+LU, inverse, Cholesky, QR, least squares, Jacobi eigen/SVD, CSR + CG; `std.linalg`.
+
+## v0.117 — analysis and optimization
+
+FFT, convolution, simplex LP; AD, quadrature, adaptive ODE, splines, polynomial roots; Nelder–Mead, BFGS, LM.
+
+## v0.118 — number theory, F_p[x], permutation groups
+
+Primality, factorization, CRT, Tonelli–Shanks; F_p polynomials and Rabin test; Schreier–Sims; `std.number_theory`.
+
+## v0.119 — SAT, homology over Z, persistence
+
+CDCL solver, Smith normal form homology, Rips barcodes; `std.logic`, `std.topology`.
+
+## v0.120 — Gröbner bases, FinSet constructions
+
+Multivariate F_p polynomials, reduced Gröbner bases, ideal membership, elimination; FinSet limits/colimits.
+
+## v0.121 — SAT certificates, #SAT, ILP
+
+RUP certificates with an independent checker, exact model counting, branch-and-bound integer programming.
+
+## v0.122 — ordered maps
+
+Native `NatMap` / `TextMap` values with interpreter/C parity; `std.maps`.
+
+## v0.123 — sparse solvers, robust geometry, signals, statistics
+
+PCG/BiCGSTAB/GMRES, exact orient/incircle, Delaunay, k-d trees, 2-D FFT, STFT, DWT, IIR, SHA-256; PCA, Bayesian updates, MCMC, AR models.
+
+## v0.124 — big primes, BPSW, BVH
+
+BigNat powmod/modinv/BPSW/next prime/random/hex, RSA on BigNat, Lucas–Lehmer; 256-bit mulmod and BPSW for `nt_*`; BVH ray casting, winding numbers, AABB pairs.
+
+## v0.125 — loops, enums, file system
+
+Tail `loop` functions, `enum` declarations with exhaustiveness, interactive interpreter; file positioning, buffering, directories, atomic replacement; `std.files`.
+
+## v0.126 — recursive data, processes, TCP
+
+Recursive records and enums (generic), structural record measures; child processes; TCP client/server; `std.process`, `std.net`.
+
+## v0.127 — own GUI, stage G1
+
+Plan G1–G4 in docs/GUI.md. G1: raster images, PNG, `std.ui` (widgets, layout, rendering, hit testing, model/view/update, HTML over HTTP).
+
+## v0.128 — vector UI (G2), native windows (G3 core)
+
+Vector scene rasterizer and SVG, Cyrillic, vector widgets with states, incremental redraw, bounded UI invariant checking, X11/Win32 windows.
+
+## v0.129 — text of every script, scrolling widgets
+
+TrueType fonts with fallback, bidi/Arabic forms, Unicode escapes; Scroll/ListView/Table with wheel and keyboard; XIM and Win32 Unicode input. Next: GPU path, full shaping (HarfBuzz-level), animations, Wayland/Cocoa.
+
+## v0.131 — GPU presentation (G4 core)
+
+OpenGL drawing of vector scenes in native windows (Linux GLX, Windows WGL), MSAA, software fallback. Next: GPU compute kernels for data-parallel code, shader-based paths, glyph caches.

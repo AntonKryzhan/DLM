@@ -1,5 +1,69 @@
 # TEST_MATRIX.md — DLM / ЯРД MVP Test Matrix
 
+## v0.100 checked declaration identity (B)
+
+```text
+cargo test -p dlm_core --test declaration_identity --test typed_core --test record_schemas --test source_identity --test modules --test ir_verify --test mutual_recursion --locked --offline
+cargo test -p dlm_cli --test cli_declaration_identity --locked --offline
+cargo test --workspace --locked --offline --no-fail-fast
+```
+
+Acceptance: clone/reparse/concurrent declaration IDs; resolver propagation;
+nominal types resolved by the checker; legacy name/display maps cannot supply
+lowering facts; missing/swapped/stale declarations, duplicate IDs, changed
+contexts, failed checks and bad schema order are rejected. Independent function
+reordering retains ID-bound signatures. Inheritance, private helpers, named
+callbacks and lambdas preserve identity. Damaged IR declaration origins fail
+verification. The CLI example compares native/interpreted output `7`.
+`DECLARATION_IDENTITY.md` states the bounded handoff and remaining HIR work.
+
+## v0.99 source identity and physical diagnostics (A/B)
+
+```text
+cargo test -p dlm_core --test source_identity --test diagnostic_spans --test typed_core --test resolver_ids --locked --offline
+cargo test -p dlm_cli --test cli_source_locations --locked --offline
+cargo test --workspace --locked --offline
+```
+
+Acceptance: UTF-8 byte columns, CRLF, multiline expressions and masked literals;
+independent linked modules, dependency diagnostics and inherited source origins;
+checked facts/record schemas, generated match nodes, lambdas and initializers;
+unknown/duplicate file IDs, invalid spans and mismatched source origins rejected
+by `verify_ir`. CLI checks parse/check/build locations and an imported native
+program producing `42`. `SOURCE_IDENTITY.md` defines the guarantee boundary.
+
+## v0.88 record schemas and independent equational proof replay
+
+```text
+cargo test -p dlm_core --test record_schemas --test equational_kernel --locked --offline
+cargo test -p dlm_cli --test cli_proof_replay --locked --offline
+cargo test --workspace --locked --offline
+```
+
+Record tests: nested/inherited schemas, separate same-named declarations, field arity/order/types, projection
+layout/index/result, unknown/unresolved/cyclic IDs and metadata corruption. Both new examples must compile and
+agree with the interpreter in the C backend corpus.
+
+Proof tests: twelve Nat algebra laws plus equality composition, independent finite evaluation, serialization
+round trips, invalid rules/premises/goals/scopes, externally declared axioms and reordered proof tables, all
+budget classes, excessive DAG text expansion, parser mutations/fuzzing and certificate forgery after rehash.
+CLI export/check succeeds after source deletion and rejects a modified artifact or a legacy-only export.
+
+## v0.87.1 typed IR verification
+
+```text
+cargo test -p dlm_core --test ir_verify --locked --offline
+cargo test -p dlm_core --test typed_core --test compile_c --locked --offline
+cargo test --workspace --locked --offline
+```
+
+Six regression groups: all 54 compiled builtins (valid source lowering, corrupted result, each constrained
+operand and runtime arity); empty constructors; sum branch domains/results; lost direct/transitive effects;
+effectful function values/lambdas; typed initializer calls and exactly-once globals; active slot rebinding,
+malformed captures/frame sizes; nominal record construction, duplicate fields and non-record projection.
+The builtin table has an exhaustive coverage assertion. Result mutations keep the outer signature consistent
+when the operation is the function body. Record field schemas and match reachability remain open obligations.
+
 ## 1. Purpose
 
 This document defines programs that must pass or fail for MVP acceptance.
@@ -967,3 +1031,432 @@ Covers:
 - layout-container to runtime-representation matching;
 - taint-preserving downgrade;
 - stable descriptor/report exports.
+
+## v0.72 example corpus integrity tests
+
+```text
+cargo test -p dlm_core --test example_corpus
+cargo test -p dlm_core --test gpu_checkpoint_restore
+cargo test -p dlm_cli --test cli_version
+```
+
+Covers:
+
+- every valid example checks; every non-check-only valid example runs;
+- every invalid example is rejected in its intended mode (check / trusted-only / runtime);
+- no invalid example passes only because a builtin is unimplemented;
+- docs/MANIFEST.json lists every document;
+- GPU checkpoint/restore round trip, history law, non-live checkpoint, CPU/GPU checkpoint separation, aliases;
+- `dlm --version` matches the workspace version.
+
+## v0.73 ordinary surface tests
+
+```text
+cargo test -p dlm_core --test ordinary_surface
+cargo test -p dlm_core --lib ordinary
+cargo test -p dlm_core --test sequence_types
+cargo test -p dlm_core --test example_corpus
+```
+
+Covers:
+
+- fn declarations: verified contracts, effect/totality inference, downgrade, builtin shadowing, scoping;
+- recursion (direct, mutual via forward reference, through map) rejected;
+- Option/Result/List/Sequence/Product typing through the core reports; some/none and different lengths share a type;
+- static map/fold produce verified_bounded core traversal reports; unknown-length collections are runtime bounded;
+- taint flows through function bodies, collections and options; trusted-only rejects tainted functions;
+- runtime semantics: lazy if/and/or, monus/pred truncation, index → Option, Nat overflow is an error;
+- 15 corpus examples (4 valid, 11 invalid) checked in their intended mode.
+
+## v0.74 recursion / records / sums tests
+
+```text
+cargo test -p dlm_core --test ordinary_recursion_records
+cargo test -p dlm_core --lib ordinary
+```
+
+Covers accepted and rejected guard/decrease forms, verified/downgraded recursion schemes, fuel (explicit, default, maximum, runtime exhaustion), deep recursion on the runtime stack from a small test-thread stack, records (construction, projection, nesting, unknown/recursive records, namespace clashes), sums (injection, case typing, list typing), and taint through records, sums and recursive functions.
+
+## v0.75 higher-order tests
+
+```text
+cargo test -p dlm_core --test ordinary_higher_order
+cargo test -p dlm_core --lib ordinary
+```
+
+Covers function types, lambdas through the core LambdaTerm, closures and lexical scoping, the pure/total invariant for function values, exact function-type checking (calls, map, case), taint through function values, builtin shadowing by function bindings, recursion escape attempts (self as value, self inside lambda, shadowing lambda parameter), and accepted/rejected lexicographic measures.
+
+## v0.76 statement / theorem tests
+
+```text
+cargo test -p dlm_core --test ordinary_theorems
+cargo test -p dlm_cli --test cli_certify
+cargo test -p dlm_core --test example_corpus documented_dlm_blocks_check
+```
+
+Covers proofs by computation, bounded and finite exhaustion, axioms and conjectures; certificates audited against their theorems; counterexample reporting and order; the rule that unbounded statements are never proved by testing (core rejects a Goal as a statement); purity and independence from theory values; proof objects rejected as ordinary values; the case limit; policy blocking of axioms; statement syntax errors; the runtime evaluation API; CLI certificate output.
+
+## v0.87 Typed Core / semantics tests
+
+```text
+cargo test -p dlm_core --test typed_core
+cargo test -p dlm_cli --test cli_programs run_shows_output_before_errors_and_contracts_are_reported
+```
+
+Covers expression ids and exact physical spans (multi-line expressions, UTF-8 literal with escapes, `match`);
+IR types equal the checker's Typed Core facts for every node; every compilable example lowers to verified IR;
+the IR verifier rejects eight kinds of corrupted IR (wrong type, undefined slot, slot out of range, call arity,
+argument type, untyped node, mixed Nat/Int operands, non-Bool condition); contracts report independent
+properties (a theorem does not close an overflow obligation, a guard does; tail loop vs native recursion;
+effects through calls; scalar tail loops); compiled stack exhaustion is a defined failure; interpreter and
+compiler agree on output, runtime error message and exit status for 12 fixed cases (lazy branches,
+short-circuit, left-to-right failure order, failures inside calls) and 24 generated programs (about half fail
+at run time).
+
+## v0.86 / v0.86.1 compiled runtime tests
+
+```text
+cargo test -p dlm_core --test compile_c
+cargo test -p dlm_core --test machine_arithmetic
+cargo test -p dlm_cli --test cli_programs build_checks_machine_arithmetic_before_emission
+```
+
+v0.86: tagged/heap number boundaries, escaping and shared graphs, closure captures, stdin, 500 000 self tail
+calls, a C harness for region ownership and `fold` accumulators, scalar functions with 128-bit values and effect
+order; machine-range obligations (proofs do not discharge them, guarded bounds, exact boundaries, conservative
+calls, 696 closed cases checked against the interpreter); `--check-overflow` / `--require-no-overflow`.
+v0.86.1: linear tracing work for a graph returned through 20 000 calls and precise splitting of partly reachable
+groups (C harness); 10 generated programs with sharing through recursion, tail calls and `fold` compared with
+`dlm run`. For memory errors run the same tests with `CC` set to a wrapper that adds
+`-fsanitize=address,undefined`.
+
+## v0.85 Int tests
+
+```text
+cargo test -p dlm_core --test integers
+cargo test -p dlm_core --test compile_c int_programs
+```
+
+Covers parsing of binary and unary `-` (associativity, `a - -b`, `->`/`=>`), the no-mixing rule (Nat subtraction,
+Int + Nat, Nat literals in Int positions), exact arithmetic, Euclidean `div`/`mod` with the zero rules (identity
+checked on a grid), text conversions including the i128 minimum, overflow errors, Int theorems proved and
+cross-checked (`cases=11` per variable), false Int claims rejected, a 3000-statement kernel fuzz against the
+runtime (mutation-checked), and compiled Int programs compared with `dlm run` (output and overflow messages).
+
+## v0.84 compiler tests
+
+```text
+cargo test -p dlm_core --test compile_c
+cargo test -p dlm_cli --test cli_programs build_produces_a_native_executable
+```
+
+Differential: compiled examples, I/O programs and generated programs must match `dlm run` in output and exit
+status. Also covers overflow errors, deep recursion, statement erasure, unsupported constructs, closure captures and
+the `dlm build` CLI. Needs a C compiler (`$CC` or `cc`).
+
+## v0.83 text / I/O / main tests
+
+```text
+cargo test -p dlm_core --test text_io
+cargo test -p dlm_cli --test cli_programs
+```
+
+Covers literals and escapes, literals containing separators, parse errors, every Text builtin, Text theorems
+(folding, cross-check on sample texts, false claims rejected), `read_line` / `read_all` / `args`, `main` results and
+exit status, `main` validation, effect tracking, and the CLI (`--stdin`, `--stdin-file`, `-- args`, exit code).
+
+## v0.82 let / match / logical-line tests
+
+```text
+cargo test -p dlm_core --test patterns_let
+cargo test -p dlm_core --test symbolic_kernel_soundness case_split
+```
+
+Covers logical-line joining and spans, `let` (single evaluation, shadowing, closures, rendering, nested `in`),
+grouping parentheses, `match` over Nat/List/Option/Bool with proofs of equivalence to explicit definitions,
+recursion through patterns and `let` aliases, syntax errors (exhaustiveness, reachability, kinds, reserved names,
+parenthesization), and fuzzing of `let` / `match` / Nat case splitting against the runtime.
+
+## v0.81 audit / project / mutual tests
+
+```text
+cargo test -p dlm_core --test audit_project
+cargo test -p dlm_core --test mutual_recursion
+cargo test -p dlm_core --lib project
+cargo test -p dlm_cli --test cli_audit_project
+```
+
+Covers audit methods, transitive lemmas and axioms across modules, unused axioms, bridges and tainted values,
+fingerprint stability, project manifests (parsing, failing roots, policy override, the repository project), mutual
+groups (checking, proofs, runtime, deep recursion, measure/guard/kind/lambda rules, purity of the whole group,
+syntax, forward references) and the CLI commands.
+
+## v0.80 module tests
+
+```text
+cargo test -p dlm_core --test modules
+cargo test -p dlm_core --lib program
+cargo test -p dlm_cli --test cli_modules
+cargo test -p dlm_core --test example_corpus every_library_module_checks
+cargo test -p dlm_core --test symbolic_kernel_soundness nested
+```
+
+Covers dependency ordering, cycles, missing modules, module-name mismatches, theory clashes, inheritance of
+functions/lemmas with runtime execution of inherited (and private) code, axiom taint across modules, privacy across
+modules and chains, redeclaration, non-inherited values, unlinked imports, prefixed diagnostics, nested lemma
+patterns, the standard library under `--trusted-only`, CLI `--lib` / `DLM_PATH`, and fuzzing of nested lemmas.
+
+## v0.79 step / generalized induction tests
+
+```text
+cargo test -p dlm_core --test symbolic_advanced_induction
+cargo test -p dlm_core --test symbolic_kernel_soundness advanced
+```
+
+Covers step-s induction through the core step scheme, generalized hypotheses, Bool case split and Bool hypotheses,
+the necessity of each option, proof-clause option validation, rewrite-cycle termination, the depth guard, core
+step-induction objects, and fuzzing of all induction variants against the runtime.
+
+## v0.78 inequality / list / cross-check tests
+
+```text
+cargo test -p dlm_core --test symbolic_lists_inequalities
+cargo test -p dlm_core --test symbolic_kernel_soundness
+cargo test -p dlm_core --lib nonnegative_combination
+```
+
+Covers inequality goals with nonnegative combinations, `List<Nat>` theorems and structural induction through core list objects, cross-check events and skipping, a false axiom caught by the cross-check, inequality and list fuzzing against the runtime, and a semantic check of the combination rule.
+
+## v0.77 symbolic proof tests
+
+```text
+cargo test -p dlm_core --test symbolic_proofs
+cargo test -p dlm_core --test symbolic_kernel_soundness
+cargo test -p dlm_core --lib symbolic
+```
+
+Covers polynomial normal forms, safe truncation rules, the rational-multiple step, `by normalize` / `by induction` / `using` in syntax, core induction objects in history, lemma eligibility and taint, residual reporting, proof-clause syntax, and soundness fuzzing of normalization and induction against runtime evaluation.
+
+## v0.100.1 cumulative integration and compatible complex APIs
+
+```sh
+cargo test -p dlm_core --test complex_q --test exact_complex_q --test source_complex_q
+cargo test -p dlm_cli --test cli_complex_q --test cli_complex_rational
+python3 tools/generate_complex097_oracle.py
+cargo test --workspace --locked --offline --no-fail-fast
+```
+
+The additional `complex_q.rs` cases retain 1944 independent host fixtures,
+118 interpreter/native vectors and 47 source precision-boundary checks.
+`source_complex_apis_coexist_at_wide_precision_and_text_limits` checks both
+record/function families in one program, old and new text forms, a 16384-bit
+component with failure at 16383, a valid 1025-bit profile with insufficient and
+sufficient work, invalid 16385-bit precision, the 65544-character parse limit
+and refusal one character above it. The host also parses that exact limit.
+Private block helpers stay private. Existing wide arithmetic, proof replay,
+source identity, checked declaration and complex API suites remain in the full
+workspace run. Full results and configuration are recorded in UPDATE.md.
+
+## v0.101 C-min acceptance and rational intervals
+
+```text
+cargo test -p dlm_core --test c_min_acceptance
+cargo test -p dlm_cli --test cli_c_min
+cargo test -p dlm_core --test interval_q
+cargo test -p dlm_cli --test cli_interval_q
+python3 tools/generate_interval_q101_oracle.py
+```
+
+`c_min_acceptance.rs` has one test per C-min condition (hand-written DAG checked
+from text; scopes/references/root and rehashed certificate tampering; external
+axiom context; 21 malformed artifacts, cycles and five budget kinds; audit of
+kernel-replay versus legacy-trusted evidence; a replayed theorem leaves machine
+obligations, overflow checks and the emitted C unchanged). `cli_c_min.rs` checks
+standalone replay with the empty axiom context and exit codes 1/2/3.
+`interval_q.rs`: 5055 independent fixtures with minimal precision and 4559
+boundaries on the host, inclusion/tightness on a 28-interval grid, guaranteed
+square roots, strict text, budgets; 233 fixtures (77 boundaries) in the
+interpreter and native C; raw records, errors and private helpers.
+
+## v0.102 D-min ownership and computable reals
+
+```text
+cargo test -p dlm_core --test ownership
+cargo test -p dlm_core --test creal
+cargo test -p dlm_cli --test cli_creal_ownership
+python3 tools/generate_creal102_oracle.py
+```
+
+`ownership.rs`: nine buffer programs agree between the interpreter and native C
+and release all 11 buffers in scope (trace), with a fixed number of inserted
+releases per function; six runtime-error programs fail identically in both
+executors and release their live buffers at exit; 26 negative lifetime scenarios
+are rejected with `E0943`; physical diagnostic positions. `creal.rs`: 343
+independent fixtures on the host with 340 precision boundaries, enclosure/width
+and refinement checks, domain errors, undecided comparisons, grammar and
+validation; 88 fixtures (30 boundaries) in the interpreter and native C; raw
+records, budgets, private helpers and host/source text round-trip.
+`cli_creal_ownership.rs`: run/build of both examples (zero buffers left at exit)
+and `dlm check` reporting an ownership error with its position.
+
+## v0.103 borrowed buffers and computable complex numbers
+
+```text
+cargo test -p dlm_core --test ownership --test ccomplex --test ir_verify
+cargo test -p dlm_cli --test cli_creal_ownership
+python3 tools/generate_ccomplex103_oracle.py
+```
+
+## v0.104 elementary functions and TextBuf
+
+```text
+cargo test -p dlm_core --test elementary --test ownership --test ir_verify
+python3 tools/generate_elementary104_oracle.py   # needs mpmath
+```
+
+## v0.105 numeric conversions and portable format
+
+```text
+cargo test -p dlm_core --test convert
+python3 tools/generate_convert105_oracle.py   # needs mpmath
+```
+
+## v0.106 numeric contracts and scalar witnesses
+
+```text
+cargo test -p dlm_core --test numeric_contract --test scalar_witness
+```
+
+## v0.107 dense numbers and cost profile
+
+```text
+cargo test -p dlm_core --lib dense_nat
+cargo test -p dlm_core --test dense_profile --test ir_verify
+```
+
+## v0.108 numeric acceptance
+
+```text
+DLM_REQUIRE_SANITIZERS=1 DLM_REQUIRE_WINDOWS=1 cargo test -p dlm_core --release --test numeric_acceptance
+tools/numeric_acceptance.sh
+```
+
+## v0.109 file handles
+
+```text
+cargo test -p dlm_core --test files --test ownership --test ir_verify
+```
+
+## v0.110 generics
+
+```text
+cargo test -p dlm_core --test generics
+```
+
+## v0.112 type classes
+
+```text
+cargo test -p dlm_core --test type_classes --test generics
+```
+
+## v0.114 machine floats
+
+```text
+cargo test -p dlm_core --test floats --test ir_verify
+```
+
+## v0.115 graphs, geometry, probability
+
+```text
+cargo test -p dlm_core --test graphs --test ir_verify
+```
+
+## v0.116 numerical linear algebra
+
+```text
+cargo test -p dlm_core --test linalg --test ir_verify
+```
+
+## v0.117 analysis and optimization
+
+```text
+cargo test -p dlm_core --test analysis --test ir_verify
+```
+
+## v0.118 number theory and groups
+
+```text
+cargo test -p dlm_core --test number --test ir_verify
+```
+
+## v0.119 SAT and topology
+
+```text
+cargo test -p dlm_core --test logic_topology --test ir_verify
+```
+
+## v0.120 Gröbner bases and FinSet
+
+```text
+cargo test -p dlm_core --test groebner --test ir_verify
+```
+
+## v0.121 SAT certificates and ILP
+
+```text
+cargo test -p dlm_core --test proofs_ilp --test ir_verify
+```
+
+## v0.122 ordered maps
+
+```text
+cargo test -p dlm_core --test maps --test ir_verify
+```
+
+## v0.123 sparse solvers, geometry, signals, statistics
+
+```text
+cargo test -p dlm_core --test kernels --test ir_verify
+```
+
+## v0.124 big primes, BPSW, BVH
+
+```text
+cargo test -p dlm_core --test bignum_bvh --test ir_verify
+```
+
+## v0.125 loops, enums, file system
+
+```text
+cargo test -p dlm_core --test apps --test files --test ir_verify
+```
+
+## v0.126 recursive data, processes, TCP
+
+```text
+cargo test -p dlm_core --test os_records --test apps --test ir_verify
+```
+
+## v0.127 own GUI G1
+
+```text
+cargo test -p dlm_core --test gui --test ir_verify --test example_corpus
+```
+
+## v0.128 vector UI, windows
+
+```text
+cargo test -p dlm_core --test gui_vector --test gui --test ir_verify
+```
+
+## v0.129 fonts, lists, Unicode input
+
+```text
+cargo test -p dlm_core --test gui_text --test gui_vector --test gui --test ir_verify
+```
+
+## v0.131 GPU presentation
+
+```text
+cargo test -p dlm_core --test gui_gpu --test gui_text --test gui_vector --test ir_verify
+```

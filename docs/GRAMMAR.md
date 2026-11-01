@@ -284,3 +284,54 @@ MVP intentionally excludes:
 - user-defined passport transformers;
 - implicit bridge search;
 - typeclass resolution.
+
+## 20. Implemented surface subset (v0.73)
+
+Sections 1–19 describe the target v1.0 grammar. The parser currently implements this subset for ordinary
+mathematics. See `docs/ORDINARY_SURFACE.md`.
+
+```ebnf
+fn_decl    = "fn" , ident , "(" , [ param , { "," , param } ] , ")" , "->" , type_expr ,
+             [ "decreasing" , ( ident | "(" , ident , { "," , ident } , ")" ) , [ "fuel" , integer ] ] ,
+             "=" , expr ;                                                                        (* one line *)
+lambda      = "fun" , "(" , param , { "," , param } , "," , expr , ")" ;                          (* v0.75 *)
+statement   = ( "theorem" , ident , [ "(" , param , { "," , param } , ")" ] , [ "below" , integer ]
+              | "axiom" , ident , [ "(" , param , { "," , param } , ")" ]
+              | "conjecture" , ident , "(" , param , { "," , param } , ")" , "tested" , integer ) ,
+              ":" , expr , [ proof_clause ] ;                                                    (* v0.76 *)
+import_line = "import" , module_path ;                                                         (* v0.80: resolved to a file *)
+theory_head = "theory" , ident , [ "extends" , ident ] , "{" ;                                   (* v0.80 *)
+text_literal = '"' , { char | escape } , '"' ;  escape = "\\" , ( "n" | "t" | "r" | "0" | "\\" | '"' ) ;   (* v0.83 *)
+let_expr   = "let" , ident , "=" , expr , "in" , expr ;                                         (* v0.82 *)
+match_expr = "match" , expr , "{" , arm , { "," , arm } , "}" ;                                    (* v0.82 *)
+arm        = pattern , "=>" , expr ;
+pattern    = "_" | ident | integer | "succ(" , ident , ")" | "[]" | "cons(" , ident , "," , ident , ")"
+           | "none" | "some(" , ident , ")" | "true" | "false" ;
+group      = "(" , expr , ")" ;                                                                    (* v0.82 *)
+additive   = term , { ( "+" | "-" ) , term } ;          (* v0.85: left-associative; `-` only on Int *)
+negation   = "-" , term ;                               (* v0.85: unary, Int; `-7` is an Int constant *)
+mutual_block = "mutual" , "{" , fn_decl , fn_decl , { fn_decl } , "}" ;                    (* v0.81; one decl per line *)
+declaration = [ "private" ] , ( fn_decl | record_decl | statement ) ;                           (* v0.80 *)
+proof_clause = "by" , ( "normalize" | "induction" , ident , [ "step" , integer ] , [ "generalizing" , ident , { "," , ident } ] ) ,
+               [ "using" , ident , { "," , ident } ] ;          (* v0.77; v0.78: Nat or List<Nat>; v0.79: step 1..4 (Nat), generalizing *)
+record_decl = "record" , Upper_ident , "(" , param , { "," , param } , ")" ;                     (* v0.74 *)
+param      = ident , ":" , type_expr ;
+type_expr  = "Nat" | "Int" | "Bool" | "Text"                                                      (* v0.85: Int *)
+           | ( "Option" | "List" | "Sequence" ) , "<" , type_expr , ">"
+           | "Result" , "<" , type_expr , "," , type_expr , ">"
+           | ( "Product" | "Pair" ) , "<" , type_expr , "," , type_expr , ">"
+           | "ProductType" , "<" , type_expr , "*" , type_expr , ">"
+           | "Sum" , "<" , type_expr , "," , type_expr , ">" | "SumType" , "<" , type_expr , "+" , type_expr , ">"
+           | "Record" , "<" , Upper_ident , ">" | Upper_ident
+           | "Fn" , "<" , type_expr , { "," , type_expr } , "," , type_expr , ">" ;                (* v0.75 *)
+literal    = integer | "true" | "false" ;
+type_arg   = ident | ident , "(" , type_arg , { "," , type_arg } , ")" ;   (* none(Nat), empty_list(Option(Nat)) *)
+```
+
+Differences from the target grammar:
+
+- no `effects` clause: effects are inferred from the body and recorded in the function contract;
+- no generic parameters, no block bodies, no `fn ...;` forward declarations;
+- recursion requires `decreasing` and a syntactically decreasing, guarded recursive call (`E0935`); a function may call
+  only itself and previously declared functions;
+- `type` lines are still accepted and ignored by the MVP parser; `axiom` lines are statements since v0.76.

@@ -2,6 +2,7 @@ use std::fmt;
 
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use crate::passport::{
+    ordinary_type_name,
     Capability, CapabilitySet, ConstructionMode, CostClass, HistoryChain, LocationContext, Passport,
     Provenance, TheoryContext, TrustLevel, TypeKind, ValidationState,
 };
@@ -403,6 +404,7 @@ fn checked_items(
 fn ordinary_sequence_value_type(passport: &Passport, line: usize) -> Result<String, Diagnostic> {
     match &passport.ty {
         TypeKind::Nat
+        | TypeKind::TypedValue { .. }
         | TypeKind::Bool
         | TypeKind::Bytes
         | TypeKind::Text
@@ -428,7 +430,7 @@ fn ordinary_sequence_value_type(passport: &Passport, line: usize) -> Result<Stri
         | TypeKind::ResultValue { .. }
         | TypeKind::ListValue { .. }
         | TypeKind::SequenceValue { .. }
-        | TypeKind::SequenceIndex { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::SequenceIndex { .. } => Ok(ordinary_type_name(&passport.ty)),
         TypeKind::Theorem { .. }
         | TypeKind::StaticProof(_)
         | TypeKind::ProofTerm { .. }

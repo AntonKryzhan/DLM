@@ -1,13 +1,14 @@
 use std::collections::BTreeMap;
 
 use crate::ast::{BridgeKind, Module, ModuleItem, TheoryItem};
-use crate::diagnostics::{Diagnostic, DiagnosticKind};
-use crate::ids::{BridgeId, IdAllocator, ModuleId, TheoryId, ValueId};
+use crate::diagnostics::{Diagnostic, DiagnosticKind, SourceFile};
+use crate::ids::{BridgeId, DeclId, IdAllocator, ModuleId, TheoryId, ValueId};
 
 #[derive(Debug, Clone)]
 pub struct ResolvedModule {
     pub id: ModuleId,
     pub name: String,
+    pub source: SourceFile,
     pub imports: Vec<ResolvedImport>,
     pub theories: Vec<ResolvedTheory>,
     pub bridges: Vec<ResolvedBridge>,
@@ -31,6 +32,8 @@ pub struct ResolvedValue {
     pub id: ValueId,
     pub theory: TheoryId,
     pub name: String,
+    /// Source function/record identity, separate from resolver-local ValueId.
+    pub declaration: Option<DeclId>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -135,27 +138,38 @@ impl Resolver {
                 };
 
                 for theory_item in &theory.items {
-                    if let TheoryItem::Let(let_decl) = theory_item {
-                        if symbols.value_id(theory_id, &let_decl.name).is_some() {
-                            diagnostics.push(Diagnostic::error(
-                                DiagnosticKind::NameError,
-                                Some(let_decl.line),
-                                format!(
-                                    "duplicate value '{}' in theory '{}'",
-                                    let_decl.name, theory.name
-                                ),
-                            ));
-                            continue;
-                        }
-
-                        let value_id = self.ids.alloc_value();
-                        symbols.insert_value(theory_id, let_decl.name.clone(), value_id);
-                        resolved_theory.values.push(ResolvedValue {
-                            id: value_id,
-                            theory: theory_id,
-                            name: let_decl.name.clone(),
-                        });
+                    // v0.73: functions share the theory value namespace with let bindings.
+                    let (binding_name, binding_line) = match theory_item {
+                        TheoryItem::Let(let_decl) => (&let_decl.name, let_decl.line),
+                        TheoryItem::Fn(fn_decl) => (&fn_decl.name, fn_decl.line),
+                        TheoryItem::Record(record) => (&record.name, record.line),
+                        TheoryItem::Statement(statement) => (&statement.name, statement.line),
+                        TheoryItem::Expr(_) => continue,
+                    };
+                    if symbols.value_id(theory_id, binding_name).is_some() {
+                        diagnostics.push(Diagnostic::error(
+                            DiagnosticKind::NameError,
+                            Some(binding_line),
+                            format!(
+                                "duplicate value '{}' in theory '{}'",
+                                binding_name, theory.name
+                            ),
+                        ));
+                        continue;
                     }
+
+                    let value_id = self.ids.alloc_value();
+                    symbols.insert_value(theory_id, binding_name.clone(), value_id);
+                    resolved_theory.values.push(ResolvedValue {
+                        id: value_id,
+                        theory: theory_id,
+                        name: binding_name.clone(),
+                        declaration: match theory_item {
+                            TheoryItem::Fn(decl) => Some(decl.id),
+                            TheoryItem::Record(decl) => Some(decl.id),
+                            _ => None,
+                        },
+                    });
                 }
             }
         }
@@ -207,12 +221,13 @@ impl Resolver {
         }
 
         if !diagnostics.is_empty() {
-            return Err(diagnostics);
+            return Err(diagnostics.into_iter().map(|d| d.in_source(&module.source)).collect());
         }
 
         Ok(ResolvedModule {
             id: self.ids.alloc_module(),
             name: module.name.clone(),
+            source: module.source.clone(),
             imports: module
                 .imports
                 .iter()

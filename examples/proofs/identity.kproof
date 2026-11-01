@@ -1,0 +1,31 @@
+DLM-KERNEL-PROOF v1
+rules nat-semiring-v1
+var n
+term nat 1
+term var 0
+term nat 0
+term add 1 2
+term mul 0 3
+term mul 3 0
+term mul 0 0
+term mul 0 2
+term mul 2 3
+term mul 0 1
+term add 9 7
+proof refl 0
+proof refl 1
+proof refl 2
+proof add 1 2
+proof law add_zero 1
+proof trans 3 4
+proof mul 0 5
+proof law one_mul 1
+proof trans 6 7
+proof refl 1
+proof refl 1
+proof trans 8 10
+proof sym 9
+proof trans 11 12
+goal 4 1
+root 13
+END-DLM-KERNEL-PROOF

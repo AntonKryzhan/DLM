@@ -24,6 +24,7 @@ pub struct CertificateAuditReport {
     pub axiom_tainted: bool,
     pub trace_len: usize,
     pub diagnostics: Vec<String>,
+    pub independently_checked: bool,
 }
 
 impl CertificateAuditReport {
@@ -42,7 +43,7 @@ pub fn export_certificate_text(
 
 pub fn export_certificate_text_unchecked(certificate: &ProofCertificate) -> String {
     let mut out = String::new();
-    push_line(&mut out, "DLM-PROOF-CERTIFICATE v1");
+    push_line(&mut out, if certificate.kernel.is_some() { "DLM-PROOF-CERTIFICATE v2" } else { "DLM-PROOF-CERTIFICATE v1" });
     push_field(&mut out, "theory", &certificate.theory);
     push_field(&mut out, "theorem", &certificate.theorem_name);
     push_field(&mut out, "proposition", &certificate.proposition);
@@ -52,10 +53,12 @@ pub fn export_certificate_text_unchecked(certificate: &ProofCertificate) -> Stri
     push_field(&mut out, "fingerprint", &certificate.fingerprint);
     push_field(&mut out, "axiom_tainted", &certificate.is_axiom_tainted().to_string());
     push_field(&mut out, "trace_len", &certificate.trace_len.to_string());
+    push_field(&mut out, "proof_evidence", if certificate.kernel.is_some() { "kernel-replay" } else { "legacy-trusted" });
     push_line(&mut out, "trace:");
     for (index, step) in certificate.trace.iter().enumerate() {
         push_line(&mut out, &format!("  {index}: {step}"));
     }
+    if let Some(proof) = &certificate.kernel { out.push_str(&proof.to_text()); }
     out
 }
 
@@ -95,6 +98,7 @@ pub fn audit_certificate_against_theorem(
         axiom_tainted: certificate.is_axiom_tainted(),
         trace_len: certificate.trace_len,
         diagnostics,
+        independently_checked: status.is_verified() && certificate.kernel.is_some(),
     }
 }
 
@@ -108,6 +112,7 @@ pub fn render_certificate_audit_report(report: &CertificateAuditReport) -> Strin
     push_field(&mut out, "fingerprint", &report.fingerprint);
     push_field(&mut out, "axiom_tainted", &report.axiom_tainted.to_string());
     push_field(&mut out, "trace_len", &report.trace_len.to_string());
+    push_field(&mut out, "independently_checked", &report.independently_checked.to_string());
     if report.diagnostics.is_empty() {
         push_line(&mut out, "diagnostics: []");
     } else {
@@ -120,6 +125,7 @@ pub fn render_certificate_audit_report(report: &CertificateAuditReport) -> Strin
 }
 
 fn validate_exportable_certificate(certificate: &ProofCertificate, line: usize) -> Result<(), Diagnostic> {
+    certificate.verify_kernel_evidence(line)?;
     if certificate.trace_len != certificate.trace.len() {
         return Err(Diagnostic::error(
             DiagnosticKind::ProofCertificateAuditError,

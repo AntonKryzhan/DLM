@@ -342,6 +342,327 @@ pub fn require_induction_proof(passport: &Passport, line: usize) -> Result<Strin
     }
 }
 
+/// v0.78: base case of structural list induction, `P([])`.
+pub fn list_base_case_proposition(proposition_family: &str) -> String {
+    format!("{proposition_family}([])")
+}
+
+/// v0.78: step case of structural list induction.
+pub fn list_step_case_proposition(element: &str, proposition_family: &str) -> String {
+    format!("forall h:{element}, t:List<{element}>. {proposition_family}(t) -> {proposition_family}(cons(h, t))")
+}
+
+/// v0.78: conclusion of structural list induction.
+pub fn list_induction_conclusion(element: &str, proposition_family: &str) -> String {
+    format!("forall xs:List<{element}>. {proposition_family}(xs)")
+}
+
+/// v0.78: `InductionScheme<List<element>, P>`.
+pub fn list_induction_scheme(
+    theory: &str,
+    element: impl Into<String>,
+    proposition_family: impl Into<String>,
+    line: usize,
+) -> Result<Passport, Diagnostic> {
+    let element = require_non_empty(element.into(), "list element type", line)?;
+    let proposition_family = require_non_empty(proposition_family.into(), "proposition family", line)?;
+    Ok(Passport {
+        ty: TypeKind::ListInductionScheme { element: element.clone(), proposition_family: proposition_family.clone() },
+        construction: ConstructionMode::ProofFinite,
+        capabilities: induction_capabilities(),
+        cost: CostClass::ProofRequired,
+        trust: TrustLevel::Builtin,
+        provenance: Provenance::BuiltinKnown,
+        validation: ValidationState::StaticChecked,
+        theory: TheoryContext::new(theory),
+        history: HistoryChain::from_event(format!("induction:list:scheme:List<{element}>:{proposition_family}")),
+        location: LocationContext::local(),
+    })
+}
+
+pub fn require_list_induction_scheme(passport: &Passport, line: usize) -> Result<(String, String), Diagnostic> {
+    match &passport.ty {
+        TypeKind::ListInductionScheme { element, proposition_family } => Ok((element.clone(), proposition_family.clone())),
+        other => Err(Diagnostic::error(
+            DiagnosticKind::InductionError,
+            Some(line),
+            "list induction requires an InductionScheme<List<T>,P> passport",
+        )
+        .with_help(format!("received passport type: {other}"))),
+    }
+}
+
+/// v0.78: base case `P([])` of a list induction scheme.
+pub fn list_induction_base_case(theory: &str, scheme: &Passport, proof: &Passport, line: usize) -> Result<Passport, Diagnostic> {
+    let (_, proposition_family) = require_list_induction_scheme(scheme, line)?;
+    let expected = list_base_case_proposition(&proposition_family);
+    require_static_proof_of_exact(proof, &expected, line)?;
+    Ok(Passport {
+        ty: TypeKind::InductionBaseCase { proposition: expected.clone() },
+        construction: ConstructionMode::ProofFinite,
+        capabilities: induction_capabilities(),
+        cost: CostClass::ProofRequired,
+        trust: join_trust(scheme.trust, proof.trust),
+        provenance: scheme.provenance.max(proof.provenance),
+        validation: join_validation(scheme.validation, proof.validation),
+        theory: TheoryContext::new(theory),
+        history: HistoryChain::merge2(&scheme.history, &proof.history, format!("induction:list:base:{expected}")),
+        location: LocationContext::local(),
+    })
+}
+
+/// v0.78: step case `P(t) -> P(cons(h, t))` of a list induction scheme.
+pub fn list_induction_step_case(theory: &str, scheme: &Passport, proof: &Passport, line: usize) -> Result<Passport, Diagnostic> {
+    let (element, proposition_family) = require_list_induction_scheme(scheme, line)?;
+    let expected = list_step_case_proposition(&element, &proposition_family);
+    require_static_proof_of_exact(proof, &expected, line)?;
+    Ok(Passport {
+        ty: TypeKind::InductionStepCase { proposition: expected.clone() },
+        construction: ConstructionMode::ProofFinite,
+        capabilities: induction_capabilities(),
+        cost: CostClass::ProofRequired,
+        trust: join_trust(scheme.trust, proof.trust),
+        provenance: scheme.provenance.max(proof.provenance),
+        validation: join_validation(scheme.validation, proof.validation),
+        theory: TheoryContext::new(theory),
+        history: HistoryChain::merge2(&scheme.history, &proof.history, format!("induction:list:step:{expected}")),
+        location: LocationContext::local(),
+    })
+}
+
+/// v0.78: `InductionProof<forall xs:List<T>. P(xs)>` from a base and a step case
+/// of the same list scheme.
+pub fn list_induction_proof(
+    theory: &str,
+    scheme: &Passport,
+    base_case: &Passport,
+    step_case: &Passport,
+    line: usize,
+) -> Result<Passport, Diagnostic> {
+    let (element, proposition_family) = require_list_induction_scheme(scheme, line)?;
+    for (case, expected, label) in [
+        (base_case, list_base_case_proposition(&proposition_family), "base"),
+        (step_case, list_step_case_proposition(&element, &proposition_family), "step"),
+    ] {
+        let found = match &case.ty {
+            TypeKind::InductionBaseCase { proposition } if label == "base" => proposition,
+            TypeKind::InductionStepCase { proposition } if label == "step" => proposition,
+            other => {
+                return Err(Diagnostic::error(
+                    DiagnosticKind::InductionError,
+                    Some(line),
+                    format!("list induction requires a {label} case passport"),
+                )
+                .with_help(format!("received passport type: {other}")))
+            }
+        };
+        if found != &expected {
+            return Err(Diagnostic::error(
+                DiagnosticKind::InductionError,
+                Some(line),
+                format!("{label} case proves `{found}`, but scheme requires `{expected}`"),
+            ));
+        }
+    }
+    let conclusion = list_induction_conclusion(&element, &proposition_family);
+    Ok(Passport {
+        ty: TypeKind::InductionProof { proposition: conclusion.clone() },
+        construction: ConstructionMode::ProofFinite,
+        capabilities: induction_capabilities(),
+        cost: CostClass::ProofRequired,
+        trust: join_trust(join_trust(scheme.trust, base_case.trust), step_case.trust),
+        provenance: scheme.provenance.max(base_case.provenance).max(step_case.provenance),
+        validation: join_validation(join_validation(scheme.validation, base_case.validation), step_case.validation),
+        theory: TheoryContext::new(theory),
+        history: HistoryChain::merge_many(
+            vec![&scheme.history, &base_case.history, &step_case.history],
+            format!("induction:list:proof:{conclusion}"),
+        ),
+        location: LocationContext::local(),
+    })
+}
+
+/// v0.79: `n + offset` in induction propositions (`n` for offset 0).
+fn nat_offset(offset: u32) -> String {
+    if offset == 0 {
+        "n".to_string()
+    } else {
+        format!("n+{offset}")
+    }
+}
+
+/// v0.79: base case `P(index)` of a step-`s` Nat induction.
+pub fn nat_step_base_case_proposition(proposition_family: &str, index: u32) -> String {
+    format!("{proposition_family}({index})")
+}
+
+/// v0.79: step case `forall n:Nat. P(n) and .. and P(n+s-1) -> P(n+s)`.
+pub fn nat_step_step_case_proposition(proposition_family: &str, step: u32) -> String {
+    let premises = (0..step).map(|i| format!("{proposition_family}({})", nat_offset(i))).collect::<Vec<_>>().join(" and ");
+    format!("forall n:Nat. {premises} -> {proposition_family}({})", nat_offset(step))
+}
+
+/// v0.79: `InductionScheme<Nat,step=s,P>` for `2 <= s`.
+pub fn nat_step_induction_scheme(
+    theory: &str,
+    proposition_family: impl Into<String>,
+    step: u32,
+    line: usize,
+) -> Result<Passport, Diagnostic> {
+    let proposition_family = require_non_empty(proposition_family.into(), "proposition family", line)?;
+    if step < 2 {
+        return Err(Diagnostic::error(
+            DiagnosticKind::InductionError,
+            Some(line),
+            format!("step induction needs step >= 2, got {step}; use the Nat induction scheme for step 1"),
+        ));
+    }
+    Ok(Passport {
+        ty: TypeKind::NatStepInductionScheme { proposition_family: proposition_family.clone(), step },
+        construction: ConstructionMode::ProofFinite,
+        capabilities: induction_capabilities(),
+        cost: CostClass::ProofRequired,
+        trust: TrustLevel::Builtin,
+        provenance: Provenance::BuiltinKnown,
+        validation: ValidationState::StaticChecked,
+        theory: TheoryContext::new(theory),
+        history: HistoryChain::from_event(format!("induction:nat_step:scheme:step={step}:{proposition_family}")),
+        location: LocationContext::local(),
+    })
+}
+
+fn require_nat_step_induction_scheme(passport: &Passport, line: usize) -> Result<(String, u32), Diagnostic> {
+    match &passport.ty {
+        TypeKind::NatStepInductionScheme { proposition_family, step } => Ok((proposition_family.clone(), *step)),
+        other => Err(Diagnostic::error(
+            DiagnosticKind::InductionError,
+            Some(line),
+            "step induction requires an InductionScheme<Nat,step=s,P> passport",
+        )
+        .with_help(format!("received passport type: {other}"))),
+    }
+}
+
+/// v0.79: base case `P(index)`, `index < step`.
+pub fn nat_step_induction_base_case(
+    theory: &str,
+    scheme: &Passport,
+    index: u32,
+    proof: &Passport,
+    line: usize,
+) -> Result<Passport, Diagnostic> {
+    let (proposition_family, step) = require_nat_step_induction_scheme(scheme, line)?;
+    if index >= step {
+        return Err(Diagnostic::error(
+            DiagnosticKind::InductionError,
+            Some(line),
+            format!("base case {index} is outside the scheme bases 0..{step}"),
+        ));
+    }
+    let expected = nat_step_base_case_proposition(&proposition_family, index);
+    require_static_proof_of_exact(proof, &expected, line)?;
+    Ok(Passport {
+        ty: TypeKind::InductionBaseCase { proposition: expected.clone() },
+        construction: ConstructionMode::ProofFinite,
+        capabilities: induction_capabilities(),
+        cost: CostClass::ProofRequired,
+        trust: join_trust(scheme.trust, proof.trust),
+        provenance: scheme.provenance.max(proof.provenance),
+        validation: join_validation(scheme.validation, proof.validation),
+        theory: TheoryContext::new(theory),
+        history: HistoryChain::merge2(&scheme.history, &proof.history, format!("induction:nat_step:base:{expected}")),
+        location: LocationContext::local(),
+    })
+}
+
+/// v0.79: step case of a step-`s` scheme.
+pub fn nat_step_induction_step_case(theory: &str, scheme: &Passport, proof: &Passport, line: usize) -> Result<Passport, Diagnostic> {
+    let (proposition_family, step) = require_nat_step_induction_scheme(scheme, line)?;
+    let expected = nat_step_step_case_proposition(&proposition_family, step);
+    require_static_proof_of_exact(proof, &expected, line)?;
+    Ok(Passport {
+        ty: TypeKind::InductionStepCase { proposition: expected.clone() },
+        construction: ConstructionMode::ProofFinite,
+        capabilities: induction_capabilities(),
+        cost: CostClass::ProofRequired,
+        trust: join_trust(scheme.trust, proof.trust),
+        provenance: scheme.provenance.max(proof.provenance),
+        validation: join_validation(scheme.validation, proof.validation),
+        theory: TheoryContext::new(theory),
+        history: HistoryChain::merge2(&scheme.history, &proof.history, format!("induction:nat_step:step:{expected}")),
+        location: LocationContext::local(),
+    })
+}
+
+/// v0.79: `InductionProof<forall n:Nat. P(n)>` from the bases `P(0) .. P(s-1)`
+/// in order and the step case of the same scheme.
+pub fn nat_step_induction_proof(
+    theory: &str,
+    scheme: &Passport,
+    base_cases: &[Passport],
+    step_case: &Passport,
+    line: usize,
+) -> Result<Passport, Diagnostic> {
+    let (proposition_family, step) = require_nat_step_induction_scheme(scheme, line)?;
+    if base_cases.len() != step as usize {
+        return Err(Diagnostic::error(
+            DiagnosticKind::InductionError,
+            Some(line),
+            format!("step-{step} induction needs {step} base cases, got {}", base_cases.len()),
+        ));
+    }
+    for (index, base) in base_cases.iter().enumerate() {
+        let expected = nat_step_base_case_proposition(&proposition_family, index as u32);
+        match &base.ty {
+            TypeKind::InductionBaseCase { proposition } if proposition == &expected => {}
+            other => {
+                return Err(Diagnostic::error(
+                    DiagnosticKind::InductionError,
+                    Some(line),
+                    format!("base case {index} must be BaseCase<{expected}>"),
+                )
+                .with_help(format!("received passport type: {other}")))
+            }
+        }
+    }
+    let expected_step = nat_step_step_case_proposition(&proposition_family, step);
+    match &step_case.ty {
+        TypeKind::InductionStepCase { proposition } if proposition == &expected_step => {}
+        other => {
+            return Err(Diagnostic::error(
+                DiagnosticKind::InductionError,
+                Some(line),
+                format!("step case must be StepCase<{expected_step}>"),
+            )
+            .with_help(format!("received passport type: {other}")))
+        }
+    }
+    let conclusion = nat_induction_conclusion(&proposition_family);
+    let mut trust = scheme.trust;
+    let mut provenance = scheme.provenance;
+    let mut validation = scheme.validation;
+    for part in base_cases.iter().chain(std::iter::once(step_case)) {
+        trust = join_trust(trust, part.trust);
+        provenance = provenance.max(part.provenance);
+        validation = join_validation(validation, part.validation);
+    }
+    let mut sources = vec![&scheme.history];
+    sources.extend(base_cases.iter().map(|b| &b.history));
+    sources.push(&step_case.history);
+    Ok(Passport {
+        ty: TypeKind::InductionProof { proposition: conclusion.clone() },
+        construction: ConstructionMode::ProofFinite,
+        capabilities: induction_capabilities(),
+        cost: CostClass::ProofRequired,
+        trust,
+        provenance,
+        validation,
+        theory: TheoryContext::new(theory),
+        history: HistoryChain::merge_many(sources, format!("induction:nat_step:proof:step={step}:{conclusion}")),
+        location: LocationContext::local(),
+    })
+}
+
 fn require_static_proof_of_exact(
     proof: &Passport,
     expected: &str,

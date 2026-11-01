@@ -819,3 +819,289 @@ Adds `ComputationBudgetContract`, `BudgetUseReport`, and `TerminationBudgetRepor
 ## v0.71.0 — Dense Runtime Descriptor Boundary
 
 Implemented `dense_runtime.rs` with explicit dense runtime descriptors and reports. Runtime representations now distinguish scalar values, tagged values, dense vectors, slice views, GPU regions, remote regions, and audit-only descriptors. Ownership is explicit and target-aware. The layer rejects mismatched layout containers, scalar boxing of dense data, invalid stride/alignment, zero-sized payloads, and hot payloads that try to carry full passports or per-element passport metadata.
+
+## v0.72.0 — Example Corpus Integrity / GPU Checkpoint Restore Completion
+
+GPU checkpoint/restore mirrors the CPU `MemoryCheckpoint` layer. The checker validates the argument type before the capability so that wrong-type arguments report `DistributedResourceError` with the value passport. Restored regions receive the same capability set as a freshly allocated `DistributedGpuMemory` region; checkpoints receive only `can_symbolic_print` and `can_restore_gpu_memory_checkpoint`. `example_corpus.rs` keeps two explicit lists (`CHECK_ONLY_VALID`, `RUNTIME_FAILURE_INVALID`) and verifies both directions so they cannot go stale.
+
+## v0.73.0 — Ordinary Mathematics Surface Wiring
+
+The checker submodule `checker/ordinary_surface.rs` is dispatched before the legacy builtin match. User functions are checked in the legacy fallback arm, so builtins always win and a `fn` may not shadow one. Parameters live in a `RefCell` frame stack because `infer_expr` takes `&self`. `true`/`false` parse as zero-argument calls, so no new `ExprKind` variant is needed and existing AST walkers are unaffected. Function totality evidence (`StaticProof<total_structural(f)>`) is produced only after the structural non-recursion check. The runtime mirrors the dispatch and evaluates `if_then_else`, `and`, `or` lazily.
+
+Found and not changed: `crates/dlm_core/src/reflection.rs` (v0.31 module-level reflection guard) is not declared in `lib.rs` and is therefore not compiled; the reflection rules that are enforced live inline in `checker.rs`.
+
+## v0.74.0 — Well-Founded Recursion, Records and Sums
+
+The well-foundedness check (`MeasureCtx` in `checker/ordinary_surface.rs`) is purely syntactic and runs before the body is typed. During body typing the declaration is kept in `pending_fn`, so recursive calls are typed against the declared signature. The derived `StaticProof<well_founded(...)>` feeds both the function contract (when the body is total) and `recursion::recursion_scheme`.
+
+Stack: profiling showed about 80 KB per recursion level in debug builds. Most of it came from the huge legacy `eval_call` frame and from one big ordinary dispatch function. Ordinary/user-function dispatch moved into `eval_expr` ahead of the legacy table, ordinary groups became separate `#[inline(never)]` functions, and the `eval_expr` arm bodies were extracted. The result is about 10 KB per level. The runtime runs on its own 1 GiB virtual stack; `check_stack_budget` compares the current stack address with the thread base and fails before the last 64 MiB.
+
+## v0.75.0 — Lambdas and Function Values
+
+`ExprKind::Lambda` is the only new expression variant. `reflection.rs` is still not compiled (see v0.73 note) and was not updated.
+
+Purity/totality of lambdas uses the same `effects_of` as `fn` declarations. Because function values are pure and total by construction, a call of a function-typed binding contributes no effect, which keeps higher-order functions verified without effect polymorphism.
+
+`function_arg` gives `map`/`fold`/`case` one entry point. A bare declared-fn name keeps the fn's real contract; any other expression gets a synthesized pure/total contract carrying the value's taint, so tainted function values are rejected by traversals exactly like tainted declared fns.
+
+The runtime pushes a `<lambda>` entry onto `call_names` for closure calls, so the direct-recursion test used by the measure re-check stays correct. Closures capture the top local frame by value. Theory-level values are looked up at call time, which is equivalent because theory scopes only grow and checked code cannot reference later bindings.
+
+## v0.76.0 — Statements, Theorems and Proofs
+
+`checker/statements.rs` builds the core objects in order: `statement_passport` → `goal_passport` → `open_proof_context` → `close_proof_with_static_proof` / `close_proof_by_axiom` → `certificate_from_closure` → `verify_certificate_against_theorem`. The static proof's evidence passport carries the body's taint and a `proof:<method>:cases=N` event. The proposition text comes from `ordinary::statement_proposition`, shared with the runtime, so checker and runtime agree on the proposition.
+
+Evaluation uses a fresh `Runtime` that sees only the theory's functions and records (not its values) and runs on the runtime thread (`on_runtime_thread`, shared with `run_module`).
+
+The core certificate trace (`open/exact/close`) does not include the evidence method. `dlm certify` prints it from the theorem passport history rather than changing the certificate format.
+
+## v0.77.0 — Symbolic Kernel
+
+`symbolic.rs` is independent of the checker: it takes `FnDecl`s, lemma rules and an expression. Atom keys are built only from normalized arguments, so syntactically different but equal arguments share an atom. Undecided `if_then_else` branches are normalized with recursive unfolding disabled, which keeps normal forms small and normalization finite; the step budget is a second guard. The induction hypothesis is normalized before it is installed as a ground rule, so the rule cannot rewrite itself.
+
+`checker/statements.rs` keeps a per-theory lemma registry. It is filled by closed theorems, symbolic theorems and axioms; bounded theorems and conjectures are excluded by construction. The induction proof passes through the core layer with a synthetic proposition family `P_name`, and the family instantiation is recorded in history before the `StaticProof` of the readable statement is formed.
+
+## v0.78.0 — Facts, Lists, Cross-Check
+
+`Kernel::fact` maps `nat_eq`, `>` and `not(>)` to `Fact::Eq` / `Fact::Ge` over normalized polynomials. `nonnegative_combination` tries the multipliers `0`, `1` and every ratio of matching coefficients; this is a finite candidate set, so the check is cheap and incomplete. Equational residuals keep the v0.77 `lhs = rhs` form.
+
+A symbolic list is `Sym::List { items, rest }`: a known prefix and an optional opaque tail key. Operations reduce on the prefix and leave atoms keyed by the tail (`length(t)`, `map(t,f)`, `fold(t,acc,f)`), so the induction hypothesis about `t` matches them as a ground rule.
+
+The cross-check reuses `Checker::evaluate` with a fixed bound and is recorded after the kernel evidence in the `StaticProof` history; it never contributes to trust. List induction uses separate core objects rather than reusing the Nat scheme, so a Nat scheme cannot close a list proof.
+
+## v0.79.0 — Step / Generalized Induction
+
+`prove_by_induction_with` builds the induction values once (bases, hypotheses, step) and runs every Bool case with
+its own kernels. For each hypothesis, an equation installs a ground rule. With `generalizing`, it also installs a
+local `LemmaRule` whose `fixed` bindings carry the induction value and the non-generalized variables. Local rules
+share `rewrite_with_lemmas` with `using` lemmas. The active-rewrite stack (rule name plus argument keys) blocks
+re-entry, which cuts cycles without making the kernel less sound: the call is just left unrewritten.
+
+Bool hypotheses become `truths`: an `Opaque` result of `normalize` whose key is a truth becomes `true`. Keys are
+structural, so a key determines its type.
+
+`prove_by_normalization` / `prove_by_induction_with` run on a scoped thread with `KERNEL_STACK_BYTES`. Direct
+`Kernel::normalize` calls run on the caller's stack. A debug-build test thread (2 MiB) does not fit
+`MAX_SYMBOLIC_DEPTH`, so the depth test gives it the kernel stack.
+
+## v0.80.0 — Programs
+
+`check_module(module)` is `check_program(Program::single(module))`. Imported modules are checked by the same
+`Checker`, so their tables stay available for `extends`. Their `inferred` and `certificates` are cleared, and their
+diagnostics are moved into the root report with a prefix.
+
+Inheritance copies tables (`functions`, `records`, statement passports from the scope, `lemmas`) and records the
+inherited names. Privacy is a pre-scan of the derived theory's own syntax (free identifiers, called names, type
+names, `using` lemmas) against the `hidden` map. Hidden definitions stay in the tables, so inherited bodies, the
+symbolic kernel and the runtime can still use them. Redeclaring any inherited name, hidden ones included, is an
+error, because inherited bodies resolve names in the derived theory.
+
+The syntactic lemma matcher runs in `normalize_call` before argument normalization, for declared functions only. It
+is limited to lemmas with a nested call that contains a pattern variable. Everything else keeps the v0.77 semantic
+matcher.
+
+## v0.81.0 — Audit / Mutual Groups
+
+`audit_check_report` works on `CheckReport.inferred` only. Statements are recognised by passport type (`Theorem`
+named like the entry, `Goal` with a `conjecture:<name>:tested:` event). Methods come from evidence events with
+the `:theorem=<own name>` suffix, so merged lemma histories do not leak their methods. Lemma and axiom events are
+deliberately taken from the whole history, so they are transitive.
+
+A mutual group is checked at its first member. `pending_group` types calls to members that are not checked yet.
+`check_well_founded_in` extends the v0.74 measure walk with the other members' measured positions. Calls to
+not-yet-checked members are dropped from the effect analysis and verified after the group, and a failing group is
+removed from the function table. Forward references outside a group are detected syntactically before checking.
+
+## v0.82.0 — Logical Lines, Let, Match
+
+`logical_lines` runs before the line-based module parser. A joined line keeps its first line number, and a
+single-line logical line keeps its indentation, so columns are unchanged for single-line code. A closing `}` never
+continues a line whose brackets are balanced. This preserves the v0.32 diagnostic for `let n =` followed by `}`.
+
+`match` needs no new AST node: the parser desugars it. `ExprKind::Let` is the only new expression form. The runtime
+adds a `let` binding to the current frame instead of pushing a frame, because frames are parallel to `call_names`
+for the recursion checks. At theory level it pushes a `<let>` frame. The recursion walk keeps a stack of `let`
+aliases with the measured position they decrease.
+
+Case splitting reads the residual text of a failed obligation (`nat_eq(n,c)`, `gt(c + n,d)`, ...) and re-runs the
+obligation with fresh kernels per case. Hypotheses are not involved, so it is used by `by normalize` only.
+
+## v0.83.0 — Text Literals
+
+The parser stays line-based. `mask_text_literals` runs on every physical line before logical-line joining and
+replaces each literal with `__text_N`. The decoded texts sit in a thread-local table that is reset by `parse_module`
+and `parse_expr`, so every splitting helper sees no quotes, commas or `//` from inside literals. The kernel keys a
+literal by its Rust debug form and decodes it back for folding (`text_literal` accepts only keys that round-trip).
+The runtime keeps a stdin cursor for `read_line` / `read_all`, so `read_nat` keeps its v0.13 whole-input meaning.
+
+## v0.84.0 — Compiler
+
+The IR is untyped: every value is a uniform heap object in C, so lowering only resolves names and makes order and
+captures explicit. Lowering runs the checker first and refuses unchecked programs. Pass 1 assigns function ids
+per theory, with inheritance, and collects statements and records. Pass 2 lowers root theory items into
+synthetic `<initN>` functions, so they get frames for `let` and closures. Pass 3 lowers function bodies.
+
+C functions all have the signature `DV *f(DV **env, DV **args)`. Every call site, builtin and binary operator
+evaluates its operands into fresh per-site temporaries with the comma operator, which gives left-to-right order. A
+frame owns `s[]` (slots) and `t[]` (temporaries). Record field-name arrays have static storage, because records
+outlive frames.
+
+The differential tests need a C compiler. The checker now always runs on its own large-stack thread, because a
+deeply nested generated program overflowed the 2 MiB test thread inside `infer_expr`.
+
+## v0.85.0 — Int
+
+`a - b` and `-a` are parsed into the calls `__sub` / `__neg`, so every later stage handles them as builtins. The
+parser finds the last top-level `+` or `-` that is binary (a `-` after an operator, a comma, an opening parenthesis
+or at the start is unary), which gives left associativity for the shared level.
+
+Literals stay Nat; only a negated literal is an Int constant. This keeps every existing program and proof
+unchanged and makes all Int/Nat conversions visible (`int(n)`, `abs(i)`).
+
+In the symbolic kernel `Sym::Int(Poly)` reuses the polynomial normal form, but none of the Nat positivity
+reasoning: an Int comparison is decided only when the difference is a constant, and Int sides produce no
+hypothesis facts. The second hazard is untyped irreducible terms (`Opaque`), which the Nat path silently treats as
+non-negative atoms; `strict_opaque` turns this off whenever the functions, lemmas or goal mention Int. `abs` picks
+the sign of its argument whose rendering is smaller, which identifies `abs(x)` with `abs(-x)` soundly.
+
+The C runtime keeps Int as its own tag (`DV_INT`), so a Nat and an Int with the same magnitude never compare
+equal by accident, and uses the GCC/Clang overflow builtins for exact arithmetic.
+
+## v0.86.0 — Compiled runtime
+
+Scalar functions: types are reconstructed by unification over the IR; a function is emitted with native
+`nat_t`/`int_t`/`int` parameters only when every slot and expression has a known numeric or Bool kind and the
+body uses only scalar operations and calls to other scalar functions. Any conflict disables the specialization
+for the whole program. A boxed wrapper `f{id}` keeps the uniform ABI for function values.
+
+Tagged numbers: the two low bits of a value word mark small Nat (01) and Int (10, 11 for negatives); heap objects
+are 16-byte aligned. `dv_tag`, `dv_nat_value` and `dv_int_value` hide the encoding.
+
+Regions: every generated function and initializer enters a region; allocations record their owner. The overflow
+report (`machine_arithmetic.rs`) is an interval analysis over the IR with guards `x > c` as refinements; it is
+independent of the proof kernel.
+
+## v0.86.1 — Survivor groups
+
+The v0.86.0 collector moved survivors to the caller block by block and traced them again at the caller's return.
+Ownership is now an allocation serial number: a region owns every block with serial `>= start` (process-lifetime
+allocations have serial 0), so promotion needs no per-block update. The survivors of one collection form a
+group (serial interval, member list, roots, `ext` = references to older blocks found while tracing). Values are
+immutable and acyclic, so if all roots of a group are reached again the members are exactly as reachable as
+before: the group is spliced in O(1), and `ext` is processed so that older blocks referenced from it survive.
+Reaching only some roots or an inner block forces a precise member-by-member trace of that group. Groups whose
+roots are not all reached are expanded only after all whole groups have been processed. Marks hold the epoch of
+the last collection, so whole groups are never walked to clear marks. References to older blocks are
+deduplicated per collection by the same mark.
+
+## v0.87.0 — Typed Core
+
+Expression identity is a process-wide counter (`ExprId::fresh`); clones keep the id, so all copies of a node
+refer to one checked fact, and equality of `Expr` ignores ids and spans to keep existing structural comparisons.
+Spans: the parser already tracked columns of the logical (joined, literal-masked) line; `logical_lines` now
+records where each physical line starts in the logical line, and `mask_text_literals_mapped` records each
+placeholder, so `span_of` maps a logical column back to the physical line and byte column. A thread-local span
+context holds the mapping while a module is parsed.
+
+The checker records types in `infer_expr`, which every sub-expression passes through; the recorded type is the
+surface type of the inferred passport. Named functions passed as values and lambdas that a builtin infers
+through a dedicated path may have no recorded type; lowering then uses the function's checked signature or the
+lambda's declared parameters and lowered body, which are themselves checked facts. `verify_ir` would reject any
+node still untyped.
+
+The IR verifier is deliberately structural: it does not compare the IR with the source semantics. The
+differential parity tests and the specification are the evidence for semantic agreement.
+
+Stack guard: the frame address is used instead of the address of a local because AddressSanitizer's fake stack
+places locals on the heap. GCC may turn an accumulating recursion such as `depth(k) + 1` into a loop at `-O2`;
+the guard then never triggers and the exact result is printed, which is the same observable result without the
+resource failure.
+## v0.88 — Checked record identities and independent equational replay
+
+`RecordFacts` crosses the checker/lowering boundary. Schemas resolve in declaration order to local `RecordId`s;
+source `Record(name)` types become compiler-only `RecordRef(id)` recursively. Inheritance reuses IDs, while
+different declarations with the same display name remain distinct. Backend projections consume schema IDs and
+field indices. `IrProgram::source_type` is a display adapter, not a semantic fallback.
+
+`proof_kernel.rs` checks flat backward DAGs iteratively and hash-conses structural terms for equality. The small
+producer and text codec live separately. Kernel replay never calls the symbolic prover. Axiom declarations own
+their binders/terms outside the proof object; the standalone CLI and certificate attachment use an empty context.
+All encountered axiom steps remain dependencies, including unused proof nodes. Size/work/depth/text limits and
+numeric capacity return `UnknownWithinBudget`, separately from an invalid rule or scope.
+
+Source theorem acceptance still runs the existing symbolic pipeline and runtime cross-check. A supported Nat
+artifact is then independently checked and matched to the full proposition. Legacy proofs are not relabeled.
+The audit reports both the existing trusted path and the new replay component. Full logical/inductive proof
+elaboration, source/IR preservation and native-code certification remain open.
+
+## v0.100.1 — Compatible cumulative Q(i) integration
+
+The separate ComplexRational implementation retains private canonical rational
+components and checked intermediate operations. Its source BigComplex/bigc_*
+API is added to StdComplexQ alongside the existing ComplexQ/complexq_* API;
+none of the existing declarations or display contracts is replaced. New CLI
+cases have their own target so the prior CLI regressions remain active.
+
+The separator scanner works in 16-character blocks. Its outer 8192-call fuel
+covers the 65544-character complex input bound at 16384-bit precision, while
+each component retains std.exact parsing and work rules. Regression cases
+parse the full bound and distinguish valid 1025-bit precision with too little
+work from invalid 16385-bit precision. The host and source work counters keep
+their existing distinct units. New results add no proof or optimizer authority.
+
+## v0.101 — Canonical kernel artifacts; rational intervals
+
+`KernelProof::from_text` keeps its line parser and then requires
+`to_text(proof) == text`. This is simpler and stricter than validating each
+spelling rule separately: every accepted artifact is the serializer's output, so
+a proof has exactly one text and one hash. `proof-check` keeps the structured
+`KernelError` instead of a string so the exit code can distinguish Invalid from
+UnknownWithinBudget.
+
+`IntervalQ` uses only checked `Rational` operations, so its precision rule is
+the one of the components: the operands and each listed intermediate value. The
+square root works on integers only: for `x = p/q` it takes `isqrt(p·q·4^k)` and
+divides by `q·2^k`, which avoids rational root approximations and makes the
+exact case (perfect squares at the resolution) fall out of the remainder. Host
+and source compute the same intermediate integers, so the minimal admissible
+precision is shared and tested on both layers. Source text scanning uses the
+16-character block scanner of `std.complex_q` for the long-input profile.
+
+## v0.102 — Ownership pass for ByteBuf; computable reals
+
+The ownership pass works on the AST after typing, because the surface language
+is a small expression tree (`Ident`, `Call`, `Let`, `Lambda`, operators) and
+`match` is already desugared into `let`/`if_then_else`. A buffer-producing
+expression is recognised syntactically (buffer builtins, functions returning
+`ByteBuf`, owners, conditionals and lets of those); this is complete because a
+buffer can never be stored in data, captured or passed to a function value, so
+no other expression can yield one. Moves into a call are marked pending until
+all arguments are walked, which models the left-to-right evaluation followed by
+the transfer of ownership at entry. Instead of rejecting conditionals that
+consume an owner on one branch only, the pass releases it at the end of the
+other branch; recursive functions with a base case that does not consume their
+buffer are therefore written naturally. The plan is recorded in Typed Core by
+`ExprId` and parameter name, so lowering does not rerun the analysis and the IR
+verifier can check every release.
+
+The C runtime keeps buffer storage outside the call regions: the region object
+is a fixed header pointing to `malloc`ed storage, so region survivors stay
+immutable while bytes change in place, and the GC needs no new edges. Live
+storage is linked into a list that the existing `atexit` cleanup frees, which
+covers termination by a runtime error. Releases always follow the evaluation of
+the scope's value, so a call they wrap is never a tail call and region reuse of
+tail calls cannot drop a live owner's header.
+
+Computable reals reuse `IntervalQ` operations unchanged; a refinement round is a
+plain interval evaluation of the DAG at one square-root resolution, which makes
+the host and the source library produce identical intervals and the minimal
+precision of a request a computable property of the oracle. Retrying the whole
+program at a doubled resolution keeps the schedule simple and deterministic; the
+retry reasons (a divisor or radicand interval touching zero, a width above
+`2^-n`) are exactly the cases where a finer resolution can help.
+
+## v0.103 — Call borrows; complex programs
+
+`&ByteBuf` is recorded in `FnDecl::borrowed` (the parameter type stays `ByteBuf`), so typing, Typed Core and IR
+types are unchanged; only the ownership shape and `IrFunction::borrowed` differ. Complex operations are program
+constructors (`CRealBuilder`), so N09 reuses the N08 schedule and error control instead of a second
+approximation algorithm, and host/source equality is checked on program text.

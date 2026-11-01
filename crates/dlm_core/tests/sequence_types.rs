@@ -77,16 +77,39 @@ fn option_and_result_values_can_be_finite_collection_items_when_explicitly_typed
     let some = option_some(&option, &nat, 2).unwrap();
     let some_passport = option_value_passport("Core", &some, &[&nat]);
 
-    let list = list_type(some_passport.ty.to_string(), &[&some_passport], 3).unwrap();
+    // v0.73: collection item types are canonical ordinary types, not value descriptors.
+    assert_eq!(ordinary_type_name(&some_passport.ty), "Option<Nat>");
+    let list = list_type(ordinary_type_name(&some_passport.ty), &[&some_passport], 3).unwrap();
     let value = list_value(&list, &[&some_passport], 4).unwrap();
     assert_eq!(value.len, 1);
 
     let result = result_type("Nat", "Nat", &[&nat], 5).unwrap();
     let ok = result_ok(&result, &nat, 6).unwrap();
     let ok_passport = result_value_passport("Core", &ok, &[&nat]);
-    let seq = sequence_type(ok_passport.ty.to_string(), &[&ok_passport], 7).unwrap();
+    assert_eq!(ordinary_type_name(&ok_passport.ty), "Result<Nat,Nat>");
+    let seq = sequence_type(ordinary_type_name(&ok_passport.ty), &[&ok_passport], 7).unwrap();
     let seq_value = sequence_value(&seq, &[&ok_passport], 8).unwrap();
     assert_eq!(seq_value.len, 1);
+}
+
+#[test]
+fn option_branches_and_list_lengths_do_not_change_the_ordinary_type() {
+    let nat = Passport::literal_nat("Core");
+    let option = option_type("Nat", &[&nat], 1).unwrap();
+    let some = option_value_passport("Core", &option_some(&option, &nat, 2).unwrap(), &[&nat]);
+    let none = option_value_passport("Core", &option_none(&option, 3).unwrap(), &[]);
+    assert_eq!(ordinary_type_name(&some.ty), ordinary_type_name(&none.ty));
+
+    let list = list_type("Option<Nat>", &[], 4).unwrap();
+    let mixed = list_value(&list, &[&some, &none], 5).expect("some/none share Option<Nat>");
+    assert_eq!(mixed.len, 2);
+
+    let nats = list_type("Nat", &[], 6).unwrap();
+    let short = list_value_passport("Core", &list_value(&nats, &[&nat], 7).unwrap(), &[&nat]);
+    let long = list_value_passport("Core", &list_value(&nats, &[&nat, &nat], 8).unwrap(), &[&nat]);
+    assert_eq!(ordinary_type_name(&short.ty), "List<Nat>");
+    let lists = list_type("List<Nat>", &[], 9).unwrap();
+    assert_eq!(list_value(&lists, &[&short, &long], 10).expect("lengths do not change type").len, 2);
 }
 
 #[test]

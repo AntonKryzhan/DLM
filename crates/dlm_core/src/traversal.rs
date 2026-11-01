@@ -5,6 +5,7 @@ use crate::function_contract::{
     FunctionContractReport, FunctionContractStatus, FunctionPurity, FunctionTotality,
 };
 use crate::passport::{
+    ordinary_type_name,
     Capability, CapabilitySet, ConstructionMode, CostClass, HistoryChain, LocationContext, Passport,
     Provenance, TheoryContext, TrustLevel, TypeKind, ValidationState,
 };
@@ -163,6 +164,73 @@ pub fn fold_list(
         fuel,
         line,
     )
+}
+
+/// v0.73: map over a collection passport produced by `list_value_passport` /
+/// `sequence_value_passport` (or the `.dlm` surface constructors).
+///
+/// Length, item type and taint are read from the passport itself, so the
+/// surface checker does not need to reconstruct a `ListValueReport`.
+pub fn map_collection_passport(
+    collection: &Passport,
+    contract: &FunctionContractReport,
+    output_item_type: impl Into<String>,
+    fuel: usize,
+    line: usize,
+) -> Result<MapTraversalReport, Diagnostic> {
+    let (kind, item, len) = static_collection_shape(collection, "map", line)?;
+    let (trust, provenance, axiom, oracle, unsafe_taint) = collection_taint(collection);
+    map_collection(kind, &item, len, trust, provenance, axiom, oracle, unsafe_taint, contract, output_item_type, fuel, line)
+}
+
+/// v0.73: fold over a collection passport; see [`map_collection_passport`].
+pub fn fold_collection_passport(
+    collection: &Passport,
+    initial_accumulator: &Passport,
+    accumulator_type: impl Into<String>,
+    step_contract: &FunctionContractReport,
+    fuel: usize,
+    line: usize,
+) -> Result<FoldTraversalReport, Diagnostic> {
+    let (kind, item, len) = static_collection_shape(collection, "fold", line)?;
+    let (trust, provenance, axiom, oracle, unsafe_taint) = collection_taint(collection);
+    fold_collection(
+        kind,
+        &item,
+        len,
+        trust,
+        provenance,
+        axiom,
+        oracle,
+        unsafe_taint,
+        initial_accumulator,
+        accumulator_type,
+        step_contract,
+        fuel,
+        line,
+    )
+}
+
+fn collection_taint(collection: &Passport) -> (TrustLevel, Provenance, bool, bool, bool) {
+    (
+        collection.trust,
+        collection.provenance,
+        collection.trust >= TrustLevel::Axiom,
+        collection.trust >= TrustLevel::Oracle || collection.provenance == Provenance::OracleInput,
+        collection.trust >= TrustLevel::Unsafe || collection.provenance == Provenance::UnsafeExternal,
+    )
+}
+
+fn static_collection_shape(collection: &Passport, what: &str, line: usize) -> Result<(&'static str, String, usize), Diagnostic> {
+    match &collection.ty {
+        TypeKind::ListValue { item, len } => Ok(("List", item.clone(), *len)),
+        TypeKind::SequenceValue { item, len } => Ok(("Sequence", item.clone(), *len)),
+        other => Err(traversal_error(
+            line,
+            format!("{what} traversal requires a statically shaped ListValue/SequenceValue, got {other}"),
+            "collections of statically unknown length are traversed at runtime under the same verified contract, but cannot produce a static traversal report",
+        )),
+    }
 }
 
 pub fn require_verified_bounded_map(report: &MapTraversalReport, line: usize) -> Result<(), Diagnostic> {
@@ -522,6 +590,7 @@ fn validate_contract_domain(
 fn ordinary_traversal_value_type(passport: &Passport, line: usize) -> Result<String, Diagnostic> {
     match &passport.ty {
         TypeKind::Nat
+        | TypeKind::TypedValue { .. }
         | TypeKind::Bool
         | TypeKind::Bytes
         | TypeKind::Text
@@ -550,7 +619,7 @@ fn ordinary_traversal_value_type(passport: &Passport, line: usize) -> Result<Str
         | TypeKind::SequenceIndex { .. }
         | TypeKind::MapTraversal { .. }
         | TypeKind::FoldTraversal { .. }
-        | TypeKind::TraversalReport { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::TraversalReport { .. } => Ok(ordinary_type_name(&passport.ty)),
         TypeKind::Theorem { .. }
         | TypeKind::StaticProof(_)
         | TypeKind::ProofTerm { .. }

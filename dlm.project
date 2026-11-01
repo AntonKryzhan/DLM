@@ -1,0 +1,5 @@
+# DLM repository project: the standard library and every valid example.
+name = DLM
+lib = lib
+roots = lib/std, examples/valid
+policy = research

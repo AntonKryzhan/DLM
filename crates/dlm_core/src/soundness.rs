@@ -19,6 +19,12 @@ pub struct SoundnessSummary {
     pub values_checked: usize,
     pub static_proofs: usize,
     pub kernel_checked_proofs: usize,
+    /// v0.76: theorems proved by computation or exhaustion.
+    pub proved_theorems: usize,
+    /// v0.76: theorems admitted by `axiom`.
+    pub axiom_theorems: usize,
+    /// v0.76: open goals (conjectures with test evidence).
+    pub open_goals: usize,
     pub proof_terms: usize,
     pub propositions: usize,
     pub provability_claims: usize,
@@ -108,6 +114,9 @@ impl SoundnessSummary {
                 }
             }
             TypeKind::ProofTerm { .. } => self.proof_terms += 1,
+            TypeKind::Theorem { .. } if passport.trust >= TrustLevel::Axiom => self.axiom_theorems += 1,
+            TypeKind::Theorem { .. } => self.proved_theorems += 1,
+            TypeKind::Goal { .. } => self.open_goals += 1,
             TypeKind::Prop { .. } => self.propositions += 1,
             TypeKind::Provable { .. } => self.provability_claims += 1,
             TypeKind::ConsistencyClaim { .. } => self.consistency_claims += 1,
@@ -232,6 +241,9 @@ impl SoundnessSummary {
         out.push_str(&format!("  module: {}\n", self.module_name));
         out.push_str(&format!("  values checked: {}\n", self.values_checked));
         out.push_str(&format!("  static proofs: {}\n", self.static_proofs));
+        out.push_str(&format!("  proved theorems: {}\n", self.proved_theorems));
+        out.push_str(&format!("  axiom-admitted theorems: {}\n", self.axiom_theorems));
+        out.push_str(&format!("  open goals (conjectures): {}\n", self.open_goals));
         out.push_str(&format!("  proof terms: {}\n", self.proof_terms));
         out.push_str(&format!("  propositions: {}\n", self.propositions));
         out.push_str(&format!("  provability claims: {}\n", self.provability_claims));

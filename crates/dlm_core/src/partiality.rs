@@ -2,6 +2,7 @@ use std::fmt;
 
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use crate::passport::{
+    ordinary_type_name,
     Capability, CapabilitySet, ConstructionMode, CostClass, HistoryChain, LocationContext, Passport,
     Provenance, TheoryContext, TrustLevel, TypeKind, ValidationState,
 };
@@ -389,6 +390,7 @@ fn result_value(result: &ResultTypeReport, kind: ResultValueKind, value: &Passpo
 fn ordinary_partiality_value_type(passport: &Passport, line: usize) -> Result<String, Diagnostic> {
     match &passport.ty {
         TypeKind::Nat
+        | TypeKind::TypedValue { .. }
         | TypeKind::Bool
         | TypeKind::Bytes
         | TypeKind::Text
@@ -414,7 +416,7 @@ fn ordinary_partiality_value_type(passport: &Passport, line: usize) -> Result<St
         | TypeKind::ResultValue { .. }
         | TypeKind::ListValue { .. }
         | TypeKind::SequenceValue { .. }
-        | TypeKind::SequenceIndex { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::SequenceIndex { .. } => Ok(ordinary_type_name(&passport.ty)),
         TypeKind::Theorem { .. }
         | TypeKind::StaticProof(_)
         | TypeKind::ProofTerm { .. }

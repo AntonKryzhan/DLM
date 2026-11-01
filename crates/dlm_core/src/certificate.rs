@@ -2,6 +2,7 @@ use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use crate::passport::{Passport, Provenance, TrustLevel, TypeKind};
 use crate::proof_context::{ProofClosure, ProofClosureStatus, TacticStep};
 use crate::tactic::TacticScriptReport;
+use crate::proof_kernel::{check_kernel_proof, KernelBudget, KernelContext, KernelProof};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProofCertificateStatus {
@@ -26,6 +27,9 @@ pub struct ProofCertificate {
     pub fingerprint: String,
     pub trace_len: usize,
     pub trace: Vec<String>,
+    /// Independently replayable evidence for the supported equational fragment.
+    /// None preserves the legacy, trusted proof path; it is not a replay proof.
+    pub kernel: Option<KernelProof>,
 }
 
 impl ProofCertificate {
@@ -34,7 +38,7 @@ impl ProofCertificate {
     }
 
     pub fn recomputed_fingerprint(&self) -> String {
-        compute_certificate_fingerprint(
+        let base = compute_certificate_fingerprint(
             &self.theory,
             &self.theorem_name,
             &self.proposition,
@@ -42,11 +46,41 @@ impl ProofCertificate {
             self.trust,
             self.provenance,
             &self.trace,
-        )
+        );
+        match &self.kernel {
+            None => base,
+            Some(proof) => {
+                let hash = feed(feed(FNV_OFFSET, base.as_bytes()), proof.to_text().as_bytes());
+                format!("dlm-cert-v2-{hash:016x}")
+            }
+        }
     }
 
     pub fn fingerprint_is_stable(&self) -> bool {
         self.fingerprint == self.recomputed_fingerprint()
+    }
+
+    pub fn with_kernel(mut self, proof: KernelProof, line: usize) -> Result<Self, Diagnostic> {
+        self.kernel = Some(proof);
+        self.verify_kernel_evidence(line)?;
+        self.fingerprint = self.recomputed_fingerprint();
+        Ok(self)
+    }
+
+    pub fn verify_kernel_evidence(&self, line: usize) -> Result<(), Diagnostic> {
+        if let Some(proof) = &self.kernel {
+            let fail = |message: String| Diagnostic::error(DiagnosticKind::ProofCertificateError, Some(line), message);
+            if self.status != ProofCertificateStatus::Checked {
+                return Err(fail("admitted certificate cannot claim independently checked evidence".to_string()));
+            }
+            let budget = KernelBudget::default();
+            // A certificate cannot declare its own trusted assumptions.
+            check_kernel_proof(proof, &KernelContext::default(), budget).map_err(|e| fail(e.to_string()))?;
+            if proof.proposition(budget).map_err(|e| fail(e.to_string()))? != self.proposition {
+                return Err(fail("kernel proof proposition differs from the certificate identity".to_string()));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -93,6 +127,7 @@ pub fn certificate_from_closure(
         fingerprint,
         trace_len: trace.len(),
         trace,
+        kernel: None,
     })
 }
 
@@ -156,6 +191,9 @@ pub fn verify_certificate_against_theorem(
             "certificate trace length does not match embedded trace",
         ));
     }
+
+    // Bound and check structured evidence before serializing it for a hash.
+    certificate.verify_kernel_evidence(line)?;
 
     if !certificate.fingerprint_is_stable() {
         return Err(Diagnostic::error(

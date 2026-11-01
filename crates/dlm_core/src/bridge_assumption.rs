@@ -113,9 +113,7 @@ pub fn boundary_assumption_from_bridge_profile(
         BoundaryAssumptionKind::SoundnessBridge
     } else if profile.kind == "reflection" || profile.is_reflective {
         BoundaryAssumptionKind::ReflectionBridge
-    } else if profile.kind == "unsafe" {
-        BoundaryAssumptionKind::UnsafeBridge
-    } else if profile.taint >= TrustLevel::Unsafe {
+    } else if profile.kind == "unsafe" || profile.taint >= TrustLevel::Unsafe {
         BoundaryAssumptionKind::UnsafeBridge
     } else if profile.taint >= TrustLevel::Axiom {
         BoundaryAssumptionKind::AxiomDependency

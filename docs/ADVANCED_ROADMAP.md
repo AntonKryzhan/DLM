@@ -1,5 +1,11 @@
 # DLM/ЯРД Advanced Roadmap
 
+**Исторический перечень исследовательских возможностей.** Обозначения `v0.9`,
+`v1.1`–`v3.x` ниже относятся к раннему плану, а не к очереди выпусков после
+текущей v0.98.0. Фактический порядок работ и критерии выпуска определяются
+`../ROADMAP.md`, `LAW_STATUS.md` и законом 42. GPU/remote, hot-swap и
+распределённые доказательства не блокируют прикладной v1.0.
+
 This document records advanced features discussed after the MVP compiler reached typed infinity and explicit equality modes.
 
 These features are not part of the current `v0.x` MVP unless explicitly stated.
@@ -236,3 +242,13 @@ Added the first mathematical universe hierarchy layer:
 - `HistoryChain` events for universe, set and class formation.
 
 See `UNIVERSE_HIERARCHY.md`.
+
+## Deferred mathematical application tracks (after 0.92 discussion)
+
+`FUTURE_MATH_APPLICATIONS.md` records two requested future directions:
+positive geometries (associahedra, cosmological polytopes, amplituhedra) and
+formal symbolic huge-number descriptions including the BIG FOOT question.
+These are planned research/application milestones with explicit prerequisites,
+not new builtins or implemented theories. Current numeric work proceeds through
+exact rational matrices, source/backend integration and checkable results;
+proof-kernel/resource dependencies remain open.

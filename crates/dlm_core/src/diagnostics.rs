@@ -1,4 +1,8 @@
 use std::fmt;
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use crate::ids::FileId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Severity {
@@ -64,10 +68,17 @@ pub enum DiagnosticKind {
     BackendCapabilityError,
     BackendLayoutError,
     DenseRuntimeError,
+    /// v0.102: a `ByteBuf` owner is used after a move, moved twice, consumed on
+    /// one branch only, captured, stored in a container or left as an rvalue.
+    OwnershipError,
+    /// v0.84: a checked program uses a construct the compiler does not support.
+    CompileError,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourceSpan {
+    /// Compilation-local source identity; never a stable package identifier.
+    pub file_id: FileId,
     pub start_line: usize,
     pub start_col: usize,
     pub end_line: usize,
@@ -77,6 +88,7 @@ pub struct SourceSpan {
 impl SourceSpan {
     pub fn line(line: usize) -> Self {
         Self {
+            file_id: FileId::ROOT,
             start_line: line,
             start_col: 0,
             end_line: line,
@@ -87,6 +99,7 @@ impl SourceSpan {
     pub fn line_col(line: usize, col: usize, len: usize) -> Self {
         let width = len.max(1);
         Self {
+            file_id: FileId::ROOT,
             start_line: line,
             start_col: col.max(1),
             end_line: line,
@@ -96,11 +109,17 @@ impl SourceSpan {
 
     pub fn new(start_line: usize, start_col: usize, end_line: usize, end_col: usize) -> Self {
         Self {
+            file_id: FileId::ROOT,
             start_line,
             start_col,
             end_line,
             end_col,
         }
+    }
+
+    pub fn with_file(mut self, file_id: FileId) -> Self {
+        self.file_id = file_id;
+        self
     }
 
     pub fn line_only(&self) -> bool {
@@ -113,6 +132,29 @@ impl SourceSpan {
 
     pub fn primary_line(&self) -> usize {
         self.start_line
+    }
+}
+
+/// A source file in one compilation. Anonymous, in-memory modules have no path.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceFile {
+    pub id: FileId,
+    pub path: Option<PathBuf>,
+}
+
+impl Default for SourceFile {
+    fn default() -> Self {
+        Self { id: FileId::ROOT, path: None }
+    }
+}
+
+impl SourceFile {
+    pub fn named(id: FileId, path: impl Into<PathBuf>) -> Self {
+        Self { id, path: Some(path.into()) }
+    }
+
+    pub fn line_span(&self, line: usize) -> SourceSpan {
+        SourceSpan::line(line).with_file(self.id)
     }
 }
 
@@ -138,6 +180,7 @@ pub struct Diagnostic {
     pub kind: DiagnosticKind,
     pub line: Option<usize>,
     pub span: Option<SourceSpan>,
+    pub source_path: Option<Arc<PathBuf>>,
     pub message: String,
     pub help: Option<String>,
 }
@@ -149,6 +192,7 @@ impl Diagnostic {
             kind,
             line,
             span: line.map(SourceSpan::line),
+            source_path: None,
             message: message.into(),
             help: None,
         }
@@ -160,6 +204,7 @@ impl Diagnostic {
             kind,
             line: Some(span.primary_line()),
             span: Some(span),
+            source_path: None,
             message: message.into(),
             help: None,
         }
@@ -168,6 +213,28 @@ impl Diagnostic {
     pub fn with_span(mut self, span: SourceSpan) -> Self {
         self.line = Some(span.primary_line());
         self.span = Some(span);
+        self
+    }
+
+    /// Keep an inner error's precise location when it propagates through
+    /// enclosing expressions. Legacy, line-only errors acquire this span.
+    pub(crate) fn at_expr(self, span: SourceSpan) -> Self {
+        if self.span.is_none_or(|s| s.line_only()) {
+            self.with_span(span)
+        } else {
+            self
+        }
+    }
+
+    pub(crate) fn in_source(mut self, source: &SourceFile) -> Self {
+        if let Some(span) = &mut self.span {
+            if span.line_only() {
+                span.file_id = source.id;
+            }
+        }
+        if self.source_path.is_none() && self.span.is_none_or(|s| s.file_id == source.id) {
+            self.source_path = source.path.clone().map(Arc::new);
+        }
         self
     }
 
@@ -240,11 +307,21 @@ impl fmt::Display for Diagnostic {
             DiagnosticKind::BackendCapabilityError => "E0940 BackendCapabilityError",
             DiagnosticKind::BackendLayoutError => "E0941 BackendLayoutError",
             DiagnosticKind::DenseRuntimeError => "E0942 DenseRuntimeError",
+            DiagnosticKind::OwnershipError => "E0943 OwnershipError",
+            DiagnosticKind::CompileError => "E0950 CompileError",
         };
-        match (self.span, self.line) {
-            (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,
-            (None, Some(line)) => writeln!(f, "{severity}[{code}] at line {line}: {}", self.message)?,
-            (None, None) => writeln!(f, "{severity}[{code}]: {}", self.message)?,
+        if let Some(path) = &self.source_path {
+            match self.span {
+                Some(span) if !span.line_only() => writeln!(f, "{severity}[{code}] at {}:{}:{}: {}", path.display(), span.start_line, span.start_col, self.message)?,
+                Some(span) => writeln!(f, "{severity}[{code}] at {}:{}: {}", path.display(), span.start_line, self.message)?,
+                None => writeln!(f, "{severity}[{code}] at {}: {}", path.display(), self.message)?,
+            }
+        } else {
+            match (self.span, self.line) {
+                (Some(span), _) => writeln!(f, "{severity}[{code}] at {span}: {}", self.message)?,
+                (None, Some(line)) => writeln!(f, "{severity}[{code}] at line {line}: {}", self.message)?,
+                (None, None) => writeln!(f, "{severity}[{code}]: {}", self.message)?,
+            }
         }
         if let Some(help) = &self.help {
             writeln!(f, "  help: {help}")?;

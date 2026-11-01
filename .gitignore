@@ -16,3 +16,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.zip
+
+# Python caches
+__pycache__/

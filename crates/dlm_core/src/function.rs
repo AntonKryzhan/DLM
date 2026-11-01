@@ -402,7 +402,7 @@ fn value_domain_from_passport(passport: &Passport, _line: usize) -> Result<Strin
         TypeKind::LogicalFormula { .. } | TypeKind::QuantifiedFormula { .. } => "Prop".to_string(),
         TypeKind::FunctionType { domain, codomain } => format!("FunctionType<{}->{}>", domain, codomain),
         TypeKind::LambdaTerm { domain, .. } => format!("LambdaTerm<{}>", domain),
-        other => other.to_string(),
+        other => crate::passport::ordinary_type_name(other),
     };
     Ok(domain)
 }

@@ -13,3 +13,8 @@ theory Core {
     print_symbolic(c_next)
     print_symbolic(o_next)
 }
+
+theory Meta {
+    let code = quote(Core.c)
+    print_symbolic(code)
+}

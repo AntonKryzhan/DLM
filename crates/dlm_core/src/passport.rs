@@ -168,6 +168,16 @@ pub enum TypeKind {
     NatInductionScheme {
         proposition_family: String,
     },
+    /// v0.79: Nat induction with `step` bases and hypotheses.
+    NatStepInductionScheme {
+        proposition_family: String,
+        step: u32,
+    },
+    /// v0.78: structural induction over `List<element>`.
+    ListInductionScheme {
+        element: String,
+        proposition_family: String,
+    },
     InductionBaseCase {
         proposition: String,
     },
@@ -467,6 +477,9 @@ pub enum TypeKind {
     MemoryCheckpoint {
         memory_mib: Option<u128>,
     },
+    GpuMemoryCheckpoint {
+        memory_mib: Option<u128>,
+    },
     RemoteCheckpoint {
         inner: Box<TypeKind>,
         source_arch: NodeArch,
@@ -477,6 +490,12 @@ pub enum TypeKind {
     Remote {
         inner: Box<TypeKind>,
         target_arch: NodeArch,
+    },
+    /// v0.73: an ordinary surface value whose concrete shape is not statically
+    /// known (function parameter, function result, traversal result). It is a
+    /// value of `of_type`, never a proof, theorem, truth claim or runtime witness.
+    TypedValue {
+        of_type: String,
     },
     Result(Box<TypeKind>),
     StaticProof(String),
@@ -532,6 +551,12 @@ impl fmt::Display for TypeKind {
             TypeKind::RewriteCertificate { from, to } => write!(f, "RewriteCertificate<{from}->{to}>"),
             TypeKind::NatInductionScheme { proposition_family } => {
                 write!(f, "InductionScheme<Nat,{proposition_family}>")
+            }
+            TypeKind::NatStepInductionScheme { proposition_family, step } => {
+                write!(f, "InductionScheme<Nat,step={step},{proposition_family}>")
+            }
+            TypeKind::ListInductionScheme { element, proposition_family } => {
+                write!(f, "InductionScheme<List<{element}>,{proposition_family}>")
             }
             TypeKind::InductionBaseCase { proposition } => write!(f, "BaseCase<{proposition}>"),
             TypeKind::InductionStepCase { proposition } => write!(f, "StepCase<{proposition}>"),
@@ -700,11 +725,16 @@ impl fmt::Display for TypeKind {
                 Some(value) => write!(f, "MemoryCheckpoint<{value}MiB>"),
                 None => write!(f, "MemoryCheckpoint"),
             },
+            TypeKind::GpuMemoryCheckpoint { memory_mib } => match memory_mib {
+                Some(value) => write!(f, "GpuMemoryCheckpoint<{value}MiB>"),
+                None => write!(f, "GpuMemoryCheckpoint"),
+            },
             TypeKind::RemoteCheckpoint { inner, source_arch } => {
                 write!(f, "RemoteCheckpoint<{inner}@{source_arch}>")
             }
             TypeKind::PortableCode { inner } => write!(f, "PortableCode<{inner}>"),
             TypeKind::Remote { inner, target_arch } => write!(f, "Remote<{inner}@{target_arch}>"),
+            TypeKind::TypedValue { of_type } => write!(f, "Value<{of_type}>"),
             TypeKind::Result(inner) => write!(f, "Result<{inner}>"),
             TypeKind::StaticProof(predicate) => write!(f, "StaticProof<{predicate}>"),
             TypeKind::RuntimeWitness(predicate) => write!(f, "RuntimeWitness<{predicate}>"),
@@ -737,6 +767,27 @@ pub enum CostClass {
     Uncomputable,
     OracleRequired,
     UnsafeUnknown,
+}
+
+/// v0.73: canonical ordinary *type* of a value passport.
+///
+/// Stage 2 value descriptors (`OptionValue`, `ListValue`, `ProductTerm`, ...)
+/// carry value-level details such as the option branch or the list length.
+/// Typing must not depend on those details: `some(1)` and `none(Nat)` are both
+/// `Option<Nat>`, and lists of different length are both `List<Nat>`.
+/// Base and non-descriptor types keep their `Display` form unchanged.
+pub fn ordinary_type_name(ty: &TypeKind) -> String {
+    match ty {
+        TypeKind::OptionValue { item, .. } => format!("Option<{item}>"),
+        TypeKind::ResultValue { result_type, .. } => format!("Result<{result_type}>"),
+        TypeKind::ListValue { item, .. } => format!("List<{item}>"),
+        TypeKind::SequenceValue { item, .. } => format!("Sequence<{item}>"),
+        TypeKind::ProductTerm { product_type, .. } => format!("ProductType<{product_type}>"),
+        TypeKind::SumInjection { sum_type, .. } => format!("SumType<{sum_type}>"),
+        TypeKind::RecordTerm { name, .. } => format!("Record<{name}>"),
+        TypeKind::TypedValue { of_type } => of_type.clone(),
+        other => other.to_string(),
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -779,6 +830,10 @@ pub struct HistoryChain {
     events: Vec<String>,
 }
 
+/// Largest merged history; longer ones keep their first and last
+/// `HISTORY_LIMIT / 2` events around one `history:elided:N` event.
+pub const HISTORY_LIMIT: usize = 1024;
+
 impl HistoryChain {
     pub fn empty() -> Self {
         Self { events: Vec::new() }
@@ -817,6 +872,17 @@ impl HistoryChain {
             events.extend(source.events.iter().cloned());
         }
         events.push(event.into());
+        // v0.104: histories of values built from many shared sources grow
+        // exponentially with nesting depth; keep the first and the latest
+        // events and record how many were elided (bounded audit trail).
+        if events.len() > HISTORY_LIMIT {
+            let keep = HISTORY_LIMIT / 2;
+            let elided = events.len() - 2 * keep;
+            let tail = events.split_off(events.len() - keep);
+            events.truncate(keep);
+            events.push(format!("history:elided:{elided}"));
+            events.extend(tail);
+        }
         Self { events }
     }
 
@@ -952,6 +1018,7 @@ pub enum Capability {
     CanAllocateGpuMemory,
     CanUseGpuMemory,
     CanCheckpointGpuMemory,
+    CanRestoreGpuMemoryCheckpoint,
     CanLaunchGpuKernel,
     CanCompileGpuKernel,
     CanCopyCpuToGpu,
@@ -1060,6 +1127,7 @@ impl CapabilitySet {
                 Capability::CanAllocateGpuMemory => "can_allocate_gpu_memory",
                 Capability::CanUseGpuMemory => "can_use_gpu_memory",
                 Capability::CanCheckpointGpuMemory => "can_checkpoint_gpu_memory",
+                Capability::CanRestoreGpuMemoryCheckpoint => "can_restore_gpu_memory_checkpoint",
                 Capability::CanLaunchGpuKernel => "can_launch_gpu_kernel",
                 Capability::CanCompileGpuKernel => "can_compile_gpu_kernel",
                 Capability::CanCopyCpuToGpu => "can_copy_cpu_to_gpu",
@@ -2873,6 +2941,57 @@ impl Passport {
             validation: source.validation,
             theory: TheoryContext::new(theory),
             history: HistoryChain::from_source(&source.history, event),
+            location: LocationContext::local(),
+        }
+    }
+
+    pub fn gpu_memory_checkpoint(theory: &str, source: &Passport) -> Self {
+        let memory_mib = match &source.ty {
+            TypeKind::DistributedGpuMemory { memory_mib } => *memory_mib,
+            _ => None,
+        };
+        // A GPU checkpoint is a restorable snapshot, not live VRAM: it carries no
+        // use/launch/copy/peer capabilities and no decimal printing capability.
+        Self {
+            ty: TypeKind::GpuMemoryCheckpoint { memory_mib },
+            construction: ConstructionMode::Definable,
+            capabilities: CapabilitySet::from([
+                Capability::CanSymbolicPrint,
+                Capability::CanRestoreGpuMemoryCheckpoint,
+            ]),
+            cost: source.cost.max(CostClass::SmallFinite),
+            trust: source.trust,
+            provenance: source.provenance,
+            validation: source.validation,
+            theory: TheoryContext::new(theory),
+            history: HistoryChain::from_source(&source.history, "checkpoint:gpu_memory"),
+            location: LocationContext::local(),
+        }
+    }
+
+    pub fn restored_gpu_memory_region(theory: &str, source: &Passport) -> Self {
+        let memory_mib = match &source.ty {
+            TypeKind::GpuMemoryCheckpoint { memory_mib } => *memory_mib,
+            _ => None,
+        };
+        Self {
+            ty: TypeKind::DistributedGpuMemory { memory_mib },
+            construction: ConstructionMode::Definable,
+            capabilities: CapabilitySet::from([
+                Capability::CanSymbolicPrint,
+                Capability::CanUseGpuMemory,
+                Capability::CanCheckpointGpuMemory,
+                Capability::CanLaunchGpuKernel,
+                Capability::CanCopyCpuToGpu,
+                Capability::CanCopyGpuToCpu,
+                Capability::CanGpuPeerTransfer,
+            ]),
+            cost: source.cost.max(CostClass::SmallFinite),
+            trust: source.trust,
+            provenance: source.provenance,
+            validation: source.validation,
+            theory: TheoryContext::new(theory),
+            history: HistoryChain::from_source(&source.history, "checkpoint:restore_gpu_memory"),
             location: LocationContext::local(),
         }
     }

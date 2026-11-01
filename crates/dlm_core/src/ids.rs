@@ -30,6 +30,24 @@ define_id!(ValueId, "value#");
 define_id!(TypeId, "type#");
 define_id!(BridgeId, "bridge#");
 define_id!(ProofId, "proof#");
+define_id!(RecordId, "record#");
+define_id!(DeclId, "decl#");
+
+impl DeclId {
+    /// Process-local source identity. Clones retain it; reparsing allocates
+    /// a new identity. Stable export symbols remain separate.
+    pub fn fresh() -> Self {
+        static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let mut current = NEXT.load(std::sync::atomic::Ordering::Relaxed);
+        loop {
+            let next = current.checked_add(1).expect("DLM compiler declaration ID space exhausted");
+            match NEXT.compare_exchange_weak(current, next, std::sync::atomic::Ordering::Relaxed, std::sync::atomic::Ordering::Relaxed) {
+                Ok(_) => return Self(current),
+                Err(actual) => current = actual,
+            }
+        }
+    }
+}
 
 impl FileId {
     pub const ROOT: Self = Self(0);

@@ -1,0 +1,24 @@
+name: Native compiler
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --workspace --locked
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: mingw-w64-ucrt-x86_64-gcc
+      - name: Build and test native Windows executables
+        shell: pwsh
+        run: |
+          $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;$env:PATH"
+          ./tools/build_windows.ps1

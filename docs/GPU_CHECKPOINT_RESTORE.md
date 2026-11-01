@@ -1,5 +1,8 @@
 # DLM/ЯРД v0.21 — GPU Memory Checkpoint / Restore
 
+> Implementation status: specified in v0.21, enforced by checker and runtime since v0.72.0
+> (`crates/dlm_core/tests/gpu_checkpoint_restore.rs`, see `docs/EXAMPLE_CORPUS_INTEGRITY.md`).
+
 This layer adds passport-aware checkpointing for GPU memory regions.
 
 ## New types

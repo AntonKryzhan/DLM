@@ -66,3 +66,10 @@ verified_well_founded
 
 Axiom/Oracle/Unsafe taint is preserved and visible. A tainted recursion scheme
 cannot be silently upgraded to clean checked recursion.
+
+## v0.74 surface syntax
+
+Recursion schemes are now reachable from `.dlm` through `fn ... decreasing <param> [fuel N] = ...`. The checker
+decides `nat_decreasing` / `structural_subterm` syntactically (decreasing argument under a positivity/non-emptiness
+guard), passes the derived `StaticProof<well_founded(...)>` to `recursion_scheme`, and publishes the report as
+`Theory.f.recursion`. See `docs/ORDINARY_SURFACE.md`.

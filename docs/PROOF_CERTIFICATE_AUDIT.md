@@ -51,3 +51,11 @@ diagnostics: []
 - Tampered traces fail audit.
 - Axiom-admitted certificates remain visibly axiom-tainted.
 - `export_certificate_text_unchecked` is only for forensic rendering and does not imply validity.
+# v0.88 clarification: audit strength
+
+`CertificateAuditReport::independently_checked` distinguishes successful kernel replay from a successful
+legacy certificate audit. The existing `Verified` status alone describes identity/trust/fingerprint validation
+under the legacy contract. Kernel evidence, when present, is always replayed and bound to the proposition.
+An invalid artifact is rejected even with a recomputed fingerprint; absence of an artifact retains the visible
+`legacy-trusted` strength. See `EQUATIONAL_REPLAY.md`.
+

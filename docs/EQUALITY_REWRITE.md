@@ -68,3 +68,9 @@ The source term must match exactly. This first foundation deliberately avoids im
 - No term-pattern matcher.
 
 The patch is a semantic foundation for future proof automation.
+
+## v0.77 note
+
+Surface rewriting with lemmas (`by normalize using lemma`) is implemented by the symbolic kernel
+(`crates/dlm_core/src/symbolic.rs`) over normalized Nat polynomials. It does not yet produce `RewriteCertificate`
+objects of this layer; the evidence is recorded in the theorem history and certificate.

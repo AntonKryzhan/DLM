@@ -623,6 +623,18 @@ can_gpu_peer_transfer
 `copy_to_gpu(value, region)` requires `value.can_serialize_for_migration` and `region.can_copy_cpu_to_gpu`.
 It returns `GpuValue<T>`, not `T`.
 
+## v0.21 GPU checkpoint capabilities (enforced since v0.72)
+
+`checkpoint_gpu_memory(region)` returns `GpuMemoryCheckpoint<memory_mib>` with only:
+
+```text
+can_symbolic_print
+can_restore_gpu_memory_checkpoint
+```
+
+`restore_gpu_memory(snapshot)` returns a `DistributedGpuMemory<memory_mib>` with the full live-region capability set.
+A checkpoint is never live VRAM and a CPU `MemoryCheckpoint` never restores into GPU memory.
+
 `copy_from_gpu(gpu_value)` requires `gpu_value.can_copy_gpu_to_cpu` and returns a local value with the capabilities appropriate for the inner type.
 
 

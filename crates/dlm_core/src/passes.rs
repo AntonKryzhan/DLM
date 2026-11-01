@@ -132,7 +132,7 @@ pub fn run_frontend_passes(module: &Module) -> Result<FrontendPassOutput, PassPi
         Err(diagnostics) => {
             report.push(PassReport::failed(
                 PassId::NameResolution,
-                diagnostics,
+                diagnostics.into_iter().map(|d| d.in_source(&module.source)).collect(),
                 "name resolution rejected the module",
             ));
             Err(report)

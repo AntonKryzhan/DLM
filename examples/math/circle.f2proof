@@ -1,0 +1,34 @@
+DLM-F2-HOMOLOGY v1
+boundaries 2
+matrix 0 3 -
+matrix 3 3 110101011
+groups 2
+group 0
+matrix 3 1 100
+rank 0
+matrix 0 3 -
+matrix 0 0 -
+matrix 0 0 -
+rank 2 0 1
+matrix 3 3 101011000
+matrix 3 3 010110111
+matrix 3 3 110100011
+rank 3 0 1 2
+matrix 3 3 100010001
+matrix 3 3 010001111
+matrix 3 3 111100010
+group 1
+matrix 3 1 111
+rank 2 0 1
+matrix 3 3 101011000
+matrix 3 3 010110111
+matrix 3 3 110100011
+rank 0
+matrix 3 0 -
+matrix 3 3 100010001
+matrix 3 3 100010001
+rank 1 0
+matrix 3 1 100
+matrix 3 3 100110101
+matrix 3 3 100110101
+end

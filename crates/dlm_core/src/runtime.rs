@@ -3,9 +3,73 @@ use std::collections::BTreeMap;
 use crate::ast::*;
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 
+mod ordinary_surface;
+pub use ordinary_surface::{BYTE_BUFFER_MAX, MAX_CALL_DEPTH};
+
+/// v0.76: result of [`Runtime::evaluate_statement`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StatementEvaluation {
+    /// Number of evaluated assignments.
+    pub cases: u128,
+    /// First assignment for which the statement evaluated to `false`.
+    pub counterexample: Option<Vec<(String, String)>>,
+}
+
+fn small_nat_lists(element_bound: u64) -> Vec<RuntimeValue> {
+    let mut lists: Vec<Vec<RuntimeValue>> = vec![Vec::new()];
+    let mut frontier: Vec<Vec<RuntimeValue>> = vec![Vec::new()];
+    for _ in 0..3 {
+        let mut next = Vec::new();
+        for prefix in &frontier {
+            for element in 0..u128::from(element_bound) {
+                let mut list = prefix.clone();
+                list.push(RuntimeValue::NatExact(element));
+                next.push(list);
+            }
+        }
+        lists.extend(next.iter().cloned());
+        frontier = next;
+    }
+    lists.into_iter().map(RuntimeValue::List).collect()
+}
+
+/// Run `f` on a dedicated thread with [`RUNTIME_STACK_BYTES`] of stack.
+fn on_runtime_thread<T: Send>(f: impl FnOnce() -> Result<T, Diagnostic> + Send) -> Result<T, Diagnostic> {
+    std::thread::scope(|scope| {
+        let spawned = std::thread::Builder::new()
+            .name("dlm-runtime".to_string())
+            .stack_size(RUNTIME_STACK_BYTES)
+            .spawn_scoped(scope, f);
+        match spawned {
+            Ok(handle) => match handle.join() {
+                Ok(result) => result,
+                Err(panic) => std::panic::resume_unwind(panic),
+            },
+            Err(err) => Err(Diagnostic::error(
+                DiagnosticKind::RuntimeError,
+                None,
+                format!("cannot start runtime thread: {err}"),
+            )),
+        }
+    })
+}
+
+/// v0.74: stack reserved for the runtime thread (virtual; committed lazily).
+pub const RUNTIME_STACK_BYTES: usize = 1 << 30;
+
+/// v0.74: part of the runtime stack kept in reserve. When less than this
+/// remains, a function call fails with a runtime error instead of letting the
+/// process abort on stack overflow.
+/// v0.114: largest `FloatVec` length.
+pub const FLOAT_VEC_MAX: usize = crate::float::VEC_MAX;
+
+pub const RUNTIME_STACK_RESERVE_BYTES: usize = 64 << 20;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RuntimeValue {
     NatExact(u128),
+    /// v0.85: exact signed integer.
+    IntExact(i128),
     NatSymbolic(String),
     Bool(bool),
     Text(String),
@@ -25,6 +89,18 @@ pub enum RuntimeValue {
     ProofTerm(String),
     StaticProof(String),
     Bytes(Vec<u8>),
+    /// v0.107: dense natural number, canonical 32-bit limbs (`crate::dense_nat`).
+    BigNat(Vec<u32>),
+    /// v0.109: an open file handle (index into the runtime's file table).
+    File(usize),
+    /// v0.114: IEEE-754 binary64 (bits), and a dense float vector.
+    Float(u64),
+    FloatVec(Vec<u64>),
+    /// v0.115: dense natural-number vector.
+    NatVec(Vec<u128>),
+    /// v0.122: sorted association vectors.
+    NatMap(Vec<(u128, u128)>),
+    TextMap(Vec<(String, u128)>),
     Term(String),
     RuntimeWitness(String),
     Node { arch: String, cores: u128, memory_mib: u128 },
@@ -36,9 +112,22 @@ pub enum RuntimeValue {
     GpuValue { inner: Box<RuntimeValue>, memory_mib: u128 },
     GpuKernel { inner: Box<RuntimeValue> },
     MemoryCheckpoint { memory_mib: u128 },
+    GpuMemoryCheckpoint { memory_mib: u128 },
     RemoteCheckpoint { arch: String, inner: Box<RuntimeValue> },
     PortableCode { inner: Box<RuntimeValue> },
     Remote { arch: String, inner: Box<RuntimeValue> },
+    /// v0.73 ordinary surface values.
+    OptionValue(Option<Box<RuntimeValue>>),
+    ResultValue { is_ok: bool, value: Box<RuntimeValue> },
+    List(Vec<RuntimeValue>),
+    Sequence(Vec<RuntimeValue>),
+    Pair(Box<RuntimeValue>, Box<RuntimeValue>),
+    FnRef(String),
+    /// v0.74 sum and record values.
+    SumValue { is_left: bool, value: Box<RuntimeValue> },
+    Record { name: String, fields: Vec<(String, RuntimeValue)> },
+    /// v0.75: lambda value with its captured local frame.
+    Closure { params: Vec<String>, body: Box<Expr>, env: BTreeMap<String, RuntimeValue> },
 }
 
 #[derive(Debug, Clone, Default)]
@@ -47,6 +136,35 @@ pub struct RunReport {
     pub theory_count: usize,
     pub values_evaluated: usize,
     pub output: Vec<String>,
+    /// v0.83: value of `main()` when the root module declares one.
+    pub main: Option<RuntimeValue>,
+}
+
+impl RunReport {
+    /// v0.83: process exit status: a Nat `main()` result (saturated at 255),
+    /// otherwise 0.
+    pub fn exit_code(&self) -> i32 {
+        match &self.main {
+            Some(RuntimeValue::NatExact(n)) => i32::try_from((*n).min(255)).unwrap_or(255),
+            _ => 0,
+        }
+    }
+}
+
+/// v0.87: a runtime error and the output printed before it.
+#[derive(Debug, Clone)]
+pub struct RunFailure {
+    pub diagnostic: Diagnostic,
+    pub output: Vec<String>,
+}
+
+/// v0.87: observable behaviour of a run: printed lines (in order), the
+/// runtime error that ended it, if any, and the exit status.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Observation {
+    pub output: Vec<String>,
+    pub error: Option<String>,
+    pub exit_code: i32,
 }
 
 #[derive(Default)]
@@ -55,11 +173,85 @@ pub struct Runtime {
     output: Vec<String>,
     stdin: String,
     bridges: Vec<BridgeDecl>,
+    /// v0.73: declared `fn` items per theory.
+    functions: ordinary_surface::RuntimeFunctionTable,
+    /// v0.73: parameter frames of active function calls.
+    locals: Vec<BTreeMap<String, RuntimeValue>>,
+    /// v0.74: names of active function calls, parallel to `locals`.
+    call_names: Vec<String>,
+    /// v0.74: active call depth per function name (recursion fuel accounting).
+    fn_depth: BTreeMap<String, u64>,
+    /// v0.74: declared record types per theory.
+    records: BTreeMap<String, BTreeMap<String, RecordDecl>>,
+    /// v0.74: address near the bottom of the runtime thread stack (0 = unknown).
+    stack_base: usize,
+    /// v0.83: byte offset of the unread part of `stdin` (`read_line` / `read_all`).
+    stdin_cursor: usize,
+    /// v0.83: program arguments (`args()`).
+    args: Vec<String>,
+    /// v0.109: file handles (`file_*`), indexed by `RuntimeValue::File`.
+    files: Vec<ordinary_surface::FileSlot>,
+    /// v0.125: `dlm run --interactive`: stdin is read on demand and output
+    /// lines are written as they are produced (long-running loops).
+    interactive: bool,
+    /// v0.126: TCP listeners and connections (`net_*`).
+    net: crate::os::NetTable,
+    /// v0.126: background child processes (`proc_spawn` ...).
+    procs: crate::os::ProcTable,
+    /// v0.128: native windows (`win_*`).
+    windows: crate::window::WindowTable,
+    /// v0.129: loaded TrueType fonts (`file_font_load`), read by the `vx_*` renderers.
+    fonts: crate::font::FontTable,
+    /// Closed slots are reused so repeated open/close does not retain old file state.
+    free_files: Vec<usize>,
 }
 
 impl Runtime {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// v0.83: program arguments returned by `args()`.
+    pub fn with_args(mut self, args: Vec<String>) -> Self {
+        self.args = args;
+        self
+    }
+
+    /// v0.125: read stdin on demand and stream output (`dlm run --interactive`).
+    pub fn interactive(mut self) -> Self {
+        self.interactive = true;
+        self
+    }
+
+    fn emit(&mut self, text: &str) {
+        if self.interactive {
+            use std::io::Write;
+            let mut out = std::io::stdout().lock();
+            let _ = writeln!(out, "{text}");
+            let _ = out.flush();
+        } else {
+            self.output.push(text.to_string());
+        }
+    }
+
+    /// v0.125: in interactive mode, pull stdin into the buffer: one more line
+    /// (`all = false`) or everything up to the end of input.
+    fn pull_stdin(&mut self, all: bool) {
+        use std::io::{BufRead, Read};
+        if !self.interactive {
+            return;
+        }
+        if self.stdin_cursor > 0 {
+            self.stdin.drain(..self.stdin_cursor.min(self.stdin.len()));
+            self.stdin_cursor = 0;
+        }
+        let stdin = std::io::stdin();
+        let mut lock = stdin.lock();
+        if all {
+            let _ = lock.read_to_string(&mut self.stdin);
+        } else if !self.stdin[self.stdin_cursor.min(self.stdin.len())..].contains('\n') {
+            let _ = lock.read_line(&mut self.stdin);
+        }
     }
 
     pub fn with_stdin(stdin: impl Into<String>) -> Self {
@@ -69,7 +261,223 @@ impl Runtime {
         }
     }
 
-    pub fn run_module(mut self, module: &Module) -> Result<RunReport, Diagnostic> {
+    /// Execute a checked module.
+    ///
+    /// v0.74: execution runs on a dedicated thread with a large stack so that
+    /// well-founded recursion up to its declared fuel does not overflow the
+    /// caller's (possibly small) stack. The stack is reserved virtually and
+    /// committed lazily. If the thread cannot be spawned, a runtime error is
+    /// returned.
+    pub fn run_module(self, module: &Module) -> Result<RunReport, Diagnostic> {
+        self.run_program(&crate::program::Program::single(module.clone()))
+    }
+
+    /// v0.80: execute the root module of a program. Imported modules only
+    /// contribute declarations (fns, records, statements) to theories that
+    /// extend them; their values and expressions are not executed.
+    pub fn run_program(mut self, program: &crate::program::Program) -> Result<RunReport, Diagnostic> {
+        on_runtime_thread(move || {
+            for dependency in program.dependencies() {
+                for item in &dependency.items {
+                    if let ModuleItem::Theory(theory) = item {
+                        self.declare_theory(theory);
+                    }
+                }
+            }
+            self.run_module_on_current_thread(program.root())
+        })
+    }
+
+    /// v0.80: copy the declarations of `theory.extends` into `theory`.
+    fn inherit_declarations(&mut self, theory: &TheoryDecl) {
+        let Some(base) = &theory.extends else { return };
+        let functions = self.functions.get(base).cloned().unwrap_or_default();
+        self.functions.entry(theory.name.clone()).or_default().extend(functions);
+        let records = self.records.get(base).cloned().unwrap_or_default();
+        self.records.entry(theory.name.clone()).or_default().extend(records);
+        let statements: Vec<(String, RuntimeValue)> = self
+            .scopes
+            .get(base)
+            .map(|scope| {
+                scope
+                    .iter()
+                    .filter(|(_, v)| matches!(v, RuntimeValue::StaticProof(_) | RuntimeValue::Proposition(_)))
+                    .map(|(n, v)| (n.clone(), v.clone()))
+                    .collect()
+            })
+            .unwrap_or_default();
+        self.scopes.entry(theory.name.clone()).or_default().extend(statements);
+    }
+
+    /// v0.80: register the declarations of an imported theory without
+    /// executing it.
+    fn declare_theory(&mut self, theory: &TheoryDecl) {
+        self.inherit_declarations(theory);
+        self.scopes.entry(theory.name.clone()).or_default();
+        for item in &theory.items {
+            match item {
+                TheoryItem::Fn(fn_decl) => self.register_function(&theory.name, fn_decl),
+                TheoryItem::Record(record) => {
+                    self.records.entry(theory.name.clone()).or_default().insert(record.name.clone(), record.clone());
+                }
+                TheoryItem::Statement(statement) => {
+                    let proposition = crate::ordinary::statement_proposition(statement);
+                    let value = match statement.kind {
+                        StatementItemKind::Conjecture => RuntimeValue::Proposition(proposition),
+                        StatementItemKind::Theorem | StatementItemKind::Axiom => RuntimeValue::StaticProof(proposition),
+                    };
+                    self.scopes.entry(theory.name.clone()).or_default().insert(statement.name.clone(), value);
+                }
+                TheoryItem::Let(_) | TheoryItem::Expr(_) => {}
+            }
+        }
+    }
+
+    /// v0.76: evaluate a pure Bool statement for every assignment of its
+    /// variables (Nat in `0..bound`, Bool in `{false, true}`), stopping at the
+    /// first counterexample. Used by the checker for proof by computation
+    /// (no variables) and proof by exhaustion (bounded variables). Only the
+    /// given functions and records are visible; theory values are not.
+    pub fn evaluate_statement(
+        mut self,
+        theory: &str,
+        functions: &[FnDecl],
+        records: &[RecordDecl],
+        variables: &[FnParam],
+        bound: u64,
+        body: &Expr,
+    ) -> Result<StatementEvaluation, Diagnostic> {
+        let line = body.line;
+        let mut domains: Vec<Vec<RuntimeValue>> = Vec::with_capacity(variables.len());
+        for variable in variables {
+            domains.push(match variable.ty.as_str() {
+                "Nat" => (0..u128::from(bound)).map(RuntimeValue::NatExact).collect(),
+                "Bool" => vec![RuntimeValue::Bool(false), RuntimeValue::Bool(true)],
+                // v0.78: all lists of length <= 3 with elements below
+                // min(bound, 3). Used by the symbolic-proof cross-check only;
+                // the checker never proves list statements by enumeration.
+                "List<Nat>" => small_nat_lists(bound.min(3)),
+                // v0.85: Int in -(bound-1) ..= bound-1.
+                "Int" => {
+                    let b = i128::from(bound);
+                    (-(b - 1).max(0)..=(b - 1).max(0)).map(RuntimeValue::IntExact).collect()
+                }
+                // v0.83: sample texts for the cross-check of symbolic proofs.
+                "Text" => ["", "a", "ab c", "12", "\"x\"\n"].iter().map(|t| RuntimeValue::Text(t.to_string())).collect(),
+                other => {
+                    return Err(Diagnostic::error(
+                        DiagnosticKind::RuntimeError,
+                        Some(line),
+                        format!("variable '{}' of type {other} cannot be enumerated; only Nat and Bool can", variable.name),
+                    ))
+                }
+            });
+        }
+        on_runtime_thread(move || {
+            let base_marker = 0u8;
+            self.stack_base = std::ptr::addr_of!(base_marker) as usize;
+            for function in functions {
+                self.functions.entry(theory.to_string()).or_default().insert(function.name.clone(), std::sync::Arc::new(function.clone()));
+            }
+            for record in records {
+                self.records.entry(theory.to_string()).or_default().insert(record.name.clone(), record.clone());
+            }
+            let mut indices = vec![0usize; domains.len()];
+            let mut cases: u128 = 0;
+            loop {
+                if domains.iter().any(Vec::is_empty) {
+                    break;
+                }
+                let assignment: Vec<(String, RuntimeValue)> = variables
+                    .iter()
+                    .zip(&domains)
+                    .zip(&indices)
+                    .map(|((variable, domain), index)| (variable.name.clone(), domain[*index].clone()))
+                    .collect();
+                self.locals.push(assignment.iter().cloned().collect());
+                self.call_names.push("<statement>".to_string());
+                let value = self.eval_expr(body, theory);
+                self.call_names.pop();
+                self.locals.pop();
+                cases += 1;
+                let describe = || {
+                    assignment
+                        .iter()
+                        .map(|(name, value)| (name.clone(), value.display_atom()))
+                        .collect::<Vec<_>>()
+                };
+                match value {
+                    Ok(RuntimeValue::Bool(true)) => {}
+                    Ok(RuntimeValue::Bool(false)) => {
+                        return Ok(StatementEvaluation { cases, counterexample: Some(describe()) });
+                    }
+                    Ok(other) => {
+                        return Err(Diagnostic::error(
+                            DiagnosticKind::RuntimeError,
+                            Some(line),
+                            format!("statement evaluated to {} instead of a Bool", other.display_atom()),
+                        ))
+                    }
+                    Err(diag) => {
+                        let at: Vec<String> = describe().into_iter().map(|(n, v)| format!("{n} = {v}")).collect();
+                        let message = if at.is_empty() { diag.message.clone() } else { format!("{} (at {})", diag.message, at.join(", ")) };
+                        return Err(Diagnostic { message, ..diag });
+                    }
+                }
+                // odometer
+                let mut position = indices.len();
+                loop {
+                    if position == 0 {
+                        return Ok(StatementEvaluation { cases, counterexample: None });
+                    }
+                    position -= 1;
+                    indices[position] += 1;
+                    if indices[position] < domains[position].len() {
+                        break;
+                    }
+                    indices[position] = 0;
+                }
+            }
+            Ok(StatementEvaluation { cases, counterexample: None })
+        })
+    }
+
+    fn run_module_on_current_thread(mut self, module: &Module) -> Result<RunReport, Diagnostic> {
+        self.execute_module(module)
+    }
+
+    /// v0.87: run the root module of `program` and report the observable
+    /// behaviour (law 30) even when execution fails: the output produced
+    /// before the failure, the failure message and the exit status (1 on a
+    /// runtime error, as in compiled programs).
+    pub fn observe_program(self, program: &crate::program::Program) -> Observation {
+        match self.run_program_partial(program) {
+            Ok(report) => Observation { exit_code: report.exit_code(), output: report.output, error: None },
+            Err(failure) => Observation { output: failure.output, error: Some(failure.diagnostic.message), exit_code: 1 },
+        }
+    }
+
+    /// v0.87: `run_program`, keeping the output printed before a runtime
+    /// error.
+    pub fn run_program_partial(mut self, program: &crate::program::Program) -> Result<RunReport, Box<RunFailure>> {
+        let observed = on_runtime_thread(move || {
+            for dependency in program.dependencies() {
+                for item in &dependency.items {
+                    if let ModuleItem::Theory(theory) = item {
+                        self.declare_theory(theory);
+                    }
+                }
+            }
+            Ok(self
+                .execute_module(program.root())
+                .map_err(|diagnostic| Box::new(RunFailure { diagnostic, output: std::mem::take(&mut self.output) })))
+        });
+        observed.unwrap_or_else(|diagnostic| Err(Box::new(RunFailure { diagnostic, output: Vec::new() })))
+    }
+
+    fn execute_module(&mut self, module: &Module) -> Result<RunReport, Diagnostic> {
+        let base_marker = 0u8;
+        self.stack_base = std::ptr::addr_of!(base_marker) as usize;
         self.bridges = module.items.iter().filter_map(|item| match item {
             ModuleItem::Bridge(bridge) => Some(bridge.clone()),
             _ => None,
@@ -85,15 +493,25 @@ impl Runtime {
             }
         }
 
+        // v0.83: entry point `fn main()` of the root module, after the theory
+        // items have run.
+        let mut main = None;
+        if let Some((theory, decl)) = crate::program::main_function(module) {
+            let call = Expr::new(ExprKind::Call { name: "main".to_string(), args: Vec::new() }, decl.line);
+            main = Some(self.eval_expr(&call, &theory)?);
+        }
+
         Ok(RunReport {
             module_name: module.name.clone(),
             theory_count,
             values_evaluated,
-            output: self.output,
+            output: std::mem::take(&mut self.output),
+            main,
         })
     }
 
     fn run_theory(&mut self, theory: &TheoryDecl, values_evaluated: &mut usize) -> Result<(), Diagnostic> {
+        self.inherit_declarations(theory);
         self.scopes.entry(theory.name.clone()).or_default();
 
         for item in &theory.items {
@@ -109,6 +527,26 @@ impl Runtime {
                 TheoryItem::Expr(expr) => {
                     let _ = self.eval_expr(expr, &theory.name)?;
                 }
+                TheoryItem::Fn(fn_decl) => {
+                    self.register_function(&theory.name, fn_decl);
+                }
+                TheoryItem::Statement(statement) => {
+                    // v0.76: statements are proved by the checker; at run time
+                    // a theorem/axiom name denotes its static proof object and
+                    // a conjecture its (unproved) proposition.
+                    let proposition = crate::ordinary::statement_proposition(statement);
+                    let value = match statement.kind {
+                        StatementItemKind::Conjecture => RuntimeValue::Proposition(proposition),
+                        StatementItemKind::Theorem | StatementItemKind::Axiom => RuntimeValue::StaticProof(proposition),
+                    };
+                    self.scopes.entry(theory.name.clone()).or_default().insert(statement.name.clone(), value);
+                }
+                TheoryItem::Record(record) => {
+                    self.records
+                        .entry(theory.name.clone())
+                        .or_default()
+                        .insert(record.name.clone(), record.clone());
+                }
             }
         }
 
@@ -117,16 +555,34 @@ impl Runtime {
 
     fn eval_expr(&mut self, expr: &Expr, ambient_theory: &str) -> Result<RuntimeValue, Diagnostic> {
         match &expr.kind {
-            ExprKind::IntLiteral(value) => {
-                let parsed = value.parse::<u128>().map_err(|_| {
-                    Diagnostic::error(
-                        DiagnosticKind::RuntimeError,
-                        Some(expr.line),
-                        format!("integer literal '{value}' is too large for MVP runtime exact evaluation"),
-                    ).with_help("The checker may accept symbolic/compressed numbers, but dlm run v0.13 only executes exact u128-sized Nat values.")
-                })?;
-                Ok(RuntimeValue::NatExact(parsed))
+            ExprKind::TextLiteral(text) => Ok(RuntimeValue::Text(text.clone())),
+            // v0.82: `let name = value in body`, evaluated once. The binding is
+            // added to the current frame (frames stay parallel to call names).
+            ExprKind::Let { name, value, body } => {
+                let value = self.eval_expr(value, ambient_theory)?;
+                let pushed = self.locals.is_empty();
+                if pushed {
+                    self.locals.push(BTreeMap::new());
+                    self.call_names.push("<let>".to_string());
+                }
+                let previous = self.locals.last_mut().expect("frame").insert(name.clone(), value);
+                let result = self.eval_expr(body, ambient_theory);
+                if pushed {
+                    self.locals.pop();
+                    self.call_names.pop();
+                } else if let Some(frame) = self.locals.last_mut() {
+                    match previous {
+                        Some(previous) => {
+                            frame.insert(name.clone(), previous);
+                        }
+                        None => {
+                            frame.remove(name);
+                        }
+                    }
+                }
+                result
             }
+            ExprKind::IntLiteral(value) => Self::eval_int_literal(value, expr),
             ExprKind::Ident(name) => self.lookup_ident(name, ambient_theory, expr.line),
             ExprKind::QualifiedIdent { theory, name } => {
                 if theory == ambient_theory {
@@ -139,60 +595,104 @@ impl Runtime {
                     ).with_help("Use quote(...) for syntax-level transfer; semantic transport is not executable in v0.13."))
                 }
             }
-            ExprKind::Power { base, exp } => {
-                let base = self.eval_expr(base, ambient_theory)?;
-                let exp = self.eval_expr(exp, ambient_theory)?;
-                match (base, exp) {
-                    (RuntimeValue::NatExact(base), RuntimeValue::NatExact(exp)) => {
-                        let exp: u32 = exp.try_into().map_err(|_| {
-                            Diagnostic::error(
-                                DiagnosticKind::RuntimeError,
-                                Some(expr.line),
-                                "power exponent is too large for MVP runtime exact evaluation",
-                            )
-                        })?;
-                        base.checked_pow(exp)
-                            .map(RuntimeValue::NatExact)
-                            .ok_or_else(|| Diagnostic::error(
-                                DiagnosticKind::RuntimeError,
-                                Some(expr.line),
-                                "power result overflows MVP runtime exact Nat range",
-                            ).with_help("Use dlm check for symbolic/compressed reasoning; dlm run v0.13 executes only u128-sized exact Nat values."))
-                    }
-                    (lhs, rhs) => Ok(RuntimeValue::NatSymbolic(format!("({} ^ {})", lhs.display_atom(), rhs.display_atom()))),
+            ExprKind::Lambda { params, body } => Ok(self.make_closure(params, body)),
+            ExprKind::Power { base, exp } => self.eval_power(base, exp, ambient_theory, expr),
+            ExprKind::Add { lhs, rhs } => self.eval_add(lhs, rhs, ambient_theory, expr),
+            ExprKind::CompareGt { lhs, rhs } => self.eval_compare_gt(lhs, rhs, ambient_theory, expr),
+            ExprKind::Call { name, args } => {
+                // v0.74: ordinary operations and user functions are dispatched
+                // before the legacy builtin table, whose very large stack frame
+                // would otherwise be paid on every level of recursion. The
+                // checker forbids user functions that shadow builtins, so the
+                // order is unobservable for checked programs.
+                if let Some(result) = self.eval_ordinary_call(name, args, ambient_theory, expr.line) {
+                    return result;
                 }
-            }
-            ExprKind::Add { lhs, rhs } => {
-                let lhs = self.eval_expr(lhs, ambient_theory)?;
-                let rhs = self.eval_expr(rhs, ambient_theory)?;
-                match (lhs, rhs) {
-                    (RuntimeValue::NatExact(lhs), RuntimeValue::NatExact(rhs)) => lhs.checked_add(rhs)
-                        .map(RuntimeValue::NatExact)
-                        .ok_or_else(|| Diagnostic::error(
-                            DiagnosticKind::RuntimeError,
-                            Some(expr.line),
-                            "addition result overflows MVP runtime exact Nat range",
-                        ).with_help("Use symbolic values for checking; dlm run v0.13 executes only u128-sized exact Nat values.")),
-                    (lhs, rhs) => Ok(RuntimeValue::NatSymbolic(format!("({} + {})", lhs.display_atom(), rhs.display_atom()))),
+                if let Some(result) = self.eval_user_fn_call(name, args, ambient_theory, expr.line) {
+                    return result;
                 }
+                self.eval_call(name, args, ambient_theory, expr.line)
             }
-            ExprKind::CompareGt { lhs, rhs } => {
-                let lhs = self.eval_expr(lhs, ambient_theory)?;
-                let rhs = self.eval_expr(rhs, ambient_theory)?;
-                match (lhs, rhs) {
-                    (RuntimeValue::NatExact(lhs), RuntimeValue::NatExact(rhs)) => Ok(RuntimeValue::Bool(lhs > rhs)),
-                    _ => Err(Diagnostic::error(
+        }
+    }
+
+    // v0.74: arm bodies of `eval_expr` live in separate functions so that
+    // recursive evaluation pays only a small `eval_expr` frame per level.
+    #[inline(never)]
+    fn eval_int_literal(value: &str, expr: &Expr) -> Result<RuntimeValue, Diagnostic> {
+        let parsed = value.parse::<u128>().map_err(|_| {
+            Diagnostic::error(
+                DiagnosticKind::RuntimeError,
+                Some(expr.line),
+                format!("integer literal '{value}' is too large for MVP runtime exact evaluation"),
+            ).with_help("The checker may accept symbolic/compressed numbers, but dlm run v0.13 only executes exact u128-sized Nat values.")
+        })?;
+        Ok(RuntimeValue::NatExact(parsed))
+    }
+
+    #[inline(never)]
+    fn eval_power(&mut self, base: &Expr, exp: &Expr, ambient_theory: &str, expr: &Expr) -> Result<RuntimeValue, Diagnostic> {
+        let base = self.eval_expr(base, ambient_theory)?;
+        let exp = self.eval_expr(exp, ambient_theory)?;
+        match (base, exp) {
+            (RuntimeValue::NatExact(base), RuntimeValue::NatExact(exp)) => {
+                let exp: u32 = exp.try_into().map_err(|_| {
+                    Diagnostic::error(
                         DiagnosticKind::RuntimeError,
                         Some(expr.line),
-                        "comparison is not executable for symbolic values in dlm run v0.13",
-                    )),
-                }
+                        "power exponent is too large for MVP runtime exact evaluation",
+                    )
+                })?;
+                base.checked_pow(exp)
+                    .map(RuntimeValue::NatExact)
+                    .ok_or_else(|| Diagnostic::error(
+                        DiagnosticKind::RuntimeError,
+                        Some(expr.line),
+                        "power result overflows MVP runtime exact Nat range",
+                    ).with_help("Use dlm check for symbolic/compressed reasoning; dlm run v0.13 executes only u128-sized exact Nat values."))
             }
-            ExprKind::Call { name, args } => self.eval_call(name, args, ambient_theory, expr.line),
+            (lhs, rhs) => Ok(RuntimeValue::NatSymbolic(format!("({} ^ {})", lhs.display_atom(), rhs.display_atom()))),
+        }
+    }
+
+    #[inline(never)]
+    fn eval_add(&mut self, lhs: &Expr, rhs: &Expr, ambient_theory: &str, expr: &Expr) -> Result<RuntimeValue, Diagnostic> {
+        let lhs = self.eval_expr(lhs, ambient_theory)?;
+        let rhs = self.eval_expr(rhs, ambient_theory)?;
+        match (lhs, rhs) {
+            (RuntimeValue::IntExact(lhs), RuntimeValue::IntExact(rhs)) => lhs.checked_add(rhs).map(RuntimeValue::IntExact).ok_or_else(|| {
+                Diagnostic::error(DiagnosticKind::RuntimeError, Some(expr.line), "Int addition overflows the exact Int range")
+            }),
+            (RuntimeValue::NatExact(lhs), RuntimeValue::NatExact(rhs)) => lhs.checked_add(rhs)
+                .map(RuntimeValue::NatExact)
+                .ok_or_else(|| Diagnostic::error(
+                    DiagnosticKind::RuntimeError,
+                    Some(expr.line),
+                    "addition result overflows MVP runtime exact Nat range",
+                ).with_help("Use symbolic values for checking; dlm run v0.13 executes only u128-sized exact Nat values.")),
+            (lhs, rhs) => Ok(RuntimeValue::NatSymbolic(format!("({} + {})", lhs.display_atom(), rhs.display_atom()))),
+        }
+    }
+
+    #[inline(never)]
+    fn eval_compare_gt(&mut self, lhs: &Expr, rhs: &Expr, ambient_theory: &str, expr: &Expr) -> Result<RuntimeValue, Diagnostic> {
+        let lhs = self.eval_expr(lhs, ambient_theory)?;
+        let rhs = self.eval_expr(rhs, ambient_theory)?;
+        match (lhs, rhs) {
+            (RuntimeValue::NatExact(lhs), RuntimeValue::NatExact(rhs)) => Ok(RuntimeValue::Bool(lhs > rhs)),
+            (RuntimeValue::IntExact(lhs), RuntimeValue::IntExact(rhs)) => Ok(RuntimeValue::Bool(lhs > rhs)),
+            _ => Err(Diagnostic::error(
+                DiagnosticKind::RuntimeError,
+                Some(expr.line),
+                "comparison is not executable for symbolic values in dlm run v0.13",
+            )),
         }
     }
 
     fn eval_call(&mut self, name: &str, args: &[Expr], ambient_theory: &str, line: usize) -> Result<RuntimeValue, Diagnostic> {
+        if let Some(result) = self.eval_ordinary_call(name, args, ambient_theory, line) {
+            return result;
+        }
         match name {
             "print_decimal" => {
                 if args.len() != 1 {
@@ -202,7 +702,12 @@ impl Runtime {
                 match value {
                     RuntimeValue::NatExact(n) => {
                         let text = n.to_string();
-                        self.output.push(text.clone());
+                        self.emit(&text);
+                        Ok(RuntimeValue::Text(text))
+                    }
+                    RuntimeValue::IntExact(i) => {
+                        let text = i.to_string();
+                        self.emit(&text);
                         Ok(RuntimeValue::Text(text))
                     }
                     other => Err(Diagnostic::error(
@@ -219,7 +724,7 @@ impl Runtime {
                 let value = self.eval_expr(&args[0], ambient_theory)?;
                 match value {
                     RuntimeValue::Text(text) => {
-                        self.output.push(text.clone());
+                        self.emit(&text);
                         Ok(RuntimeValue::Text(text))
                     }
                     other => Err(Diagnostic::error(
@@ -901,6 +1406,32 @@ impl Runtime {
                     ).with_help(format!("runtime value was: {}", other.display_atom()))),
                 }
             }
+            "checkpoint_gpu_memory" | "gpu_checkpoint_memory" | "checkpoint_vram" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), format!("{name} expects one DistributedGpuMemory argument")));
+                }
+                match self.eval_expr(&args[0], ambient_theory)? {
+                    RuntimeValue::DistributedGpuMemory { memory_mib } => Ok(RuntimeValue::GpuMemoryCheckpoint { memory_mib }),
+                    other => Err(Diagnostic::error(
+                        DiagnosticKind::DistributedResourceError,
+                        Some(line),
+                        "checkpoint_gpu_memory can execute only DistributedGpuMemory values",
+                    ).with_help(format!("runtime value was: {}", other.display_atom()))),
+                }
+            }
+            "restore_gpu_memory" | "restore_gpu_checkpoint" | "restore_vram" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), format!("{name} expects one GpuMemoryCheckpoint argument")));
+                }
+                match self.eval_expr(&args[0], ambient_theory)? {
+                    RuntimeValue::GpuMemoryCheckpoint { memory_mib } => Ok(RuntimeValue::DistributedGpuMemory { memory_mib }),
+                    other => Err(Diagnostic::error(
+                        DiagnosticKind::DistributedResourceError,
+                        Some(line),
+                        "restore_gpu_memory can execute only GpuMemoryCheckpoint values",
+                    ).with_help(format!("runtime value was: {}", other.display_atom()))),
+                }
+            }
             "compile_portable" | "portable_code" | "make_portable" => {
                 if args.len() != 1 {
                     return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), format!("{name} expects one value")));
@@ -1191,13 +1722,57 @@ impl Runtime {
                 }
                 let value = self.eval_expr(&args[0], ambient_theory)?;
                 let text = value.display_atom();
-                self.output.push(text.clone());
+                self.emit(&text);
                 Ok(RuntimeValue::Text(text))
+            }
+            "args" => {
+                if !args.is_empty() {
+                    return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), "args expects no arguments"));
+                }
+                Ok(RuntimeValue::List(self.args.iter().map(|a| RuntimeValue::Text(a.clone())).collect()))
+            }
+            // v0.83: `read_line()` returns the next line of stdin without its
+            // line ending, or `none` at the end; `read_all()` the unread rest.
+            "read_line" | "read_all" => {
+                if !args.is_empty() {
+                    return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), format!("{name} expects no arguments")));
+                }
+                self.pull_stdin(name == "read_all");
+                let rest = &self.stdin[self.stdin_cursor.min(self.stdin.len())..];
+                if name == "read_all" {
+                    let text = rest.to_string();
+                    self.stdin_cursor = self.stdin.len();
+                    return Ok(RuntimeValue::Text(text));
+                }
+                if rest.is_empty() {
+                    return Ok(RuntimeValue::OptionValue(None));
+                }
+                let (text, consumed) = match rest.find('\n') {
+                    Some(end) => (&rest[..end], end + 1),
+                    None => (rest, rest.len()),
+                };
+                let text = text.strip_suffix('\r').unwrap_or(text).to_string();
+                self.stdin_cursor += consumed;
+                Ok(RuntimeValue::OptionValue(Some(Box::new(RuntimeValue::Text(text)))))
+            }
+            "print_line" => {
+                if args.len() != 1 {
+                    return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), "print_line expects one argument"));
+                }
+                match self.eval_expr(&args[0], ambient_theory)? {
+                    RuntimeValue::Text(text) => {
+                        self.emit(&text);
+                        Ok(RuntimeValue::Text(text))
+                    }
+                    other => Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), "print_line expects a Text value")
+                        .with_help(format!("runtime value was: {}", other.display_atom()))),
+                }
             }
             "read_nat" => {
                 if !args.is_empty() {
                     return Err(Diagnostic::error(DiagnosticKind::RuntimeError, Some(line), "read_nat expects no arguments"));
                 }
+                self.pull_stdin(true);
                 let text = self.stdin.trim();
                 if text.is_empty() {
                     return Err(Diagnostic::error(
@@ -1546,11 +2121,13 @@ impl Runtime {
                 ))?;
                 Ok(RuntimeValue::NatExact(parsed))
             }
-            other => Err(Diagnostic::error(
-                DiagnosticKind::RuntimeError,
-                Some(line),
-                format!("unknown runtime builtin '{other}'"),
-            )),
+            other => self
+                .eval_user_fn_call(other, args, ambient_theory, line)
+                .unwrap_or_else(|| Err(Diagnostic::error(
+                    DiagnosticKind::RuntimeError,
+                    Some(line),
+                    format!("unknown runtime builtin '{other}'"),
+                ))),
         }
     }
 
@@ -1587,10 +2164,7 @@ impl Runtime {
     }
 
     fn lookup_ident(&self, name: &str, ambient_theory: &str, line: usize) -> Result<RuntimeValue, Diagnostic> {
-        self.scopes
-            .get(ambient_theory)
-            .and_then(|scope| scope.get(name))
-            .cloned()
+        self.lookup_local_or_function(name, ambient_theory)
             .ok_or_else(|| Diagnostic::error(
                 DiagnosticKind::RuntimeError,
                 Some(line),
@@ -1616,9 +2190,10 @@ impl Runtime {
 }
 
 impl RuntimeValue {
-    fn display_atom(&self) -> String {
+    pub fn display_atom(&self) -> String {
         match self {
             RuntimeValue::NatExact(n) => n.to_string(),
+            RuntimeValue::IntExact(i) => i.to_string(),
             RuntimeValue::NatSymbolic(text) => text.clone(),
             RuntimeValue::Bool(value) => value.to_string(),
             RuntimeValue::Text(value) => format!("\"{value}\""),
@@ -1638,6 +2213,13 @@ impl RuntimeValue {
             RuntimeValue::ProofTerm(rule) => format!("proof_term<{rule}>"),
             RuntimeValue::StaticProof(predicate) => format!("StaticProof<{predicate}>"),
             RuntimeValue::Bytes(bytes) => format!("<{} bytes>", bytes.len()),
+            RuntimeValue::File(_) => "<file>".to_string(),
+            RuntimeValue::Float(bits) => crate::float::text(f64::from_bits(*bits)),
+            RuntimeValue::NatMap(m) => format!("nmap{{{}}}", m.iter().map(|(k, v)| format!("{k}: {v}")).collect::<Vec<_>>().join(", ")),
+            RuntimeValue::TextMap(m) => format!("tmap{{{}}}", m.iter().map(|(k, v)| format!("\"{k}\": {v}")).collect::<Vec<_>>().join(", ")),
+            RuntimeValue::NatVec(v) => format!("nvec[{}]", v.iter().map(u128::to_string).collect::<Vec<_>>().join(", ")),
+            RuntimeValue::FloatVec(v) => format!("fvec[{}]", v.iter().map(|b| crate::float::text(f64::from_bits(*b))).collect::<Vec<_>>().join(", ")),
+            RuntimeValue::BigNat(limbs) => format!("bignat({})", crate::dense_nat::to_decimal(limbs)),
             RuntimeValue::Term(value) => format!("term({value})"),
             RuntimeValue::RuntimeWitness(value) => format!("witness({value})"),
             RuntimeValue::Node { arch, cores, memory_mib } => format!("node<{arch}>{{cores={cores}, memory_mib={memory_mib}}}"),
@@ -1656,9 +2238,37 @@ impl RuntimeValue {
             RuntimeValue::GpuValue { inner, memory_mib } => format!("gpu_value<memory_mib={memory_mib}>({})", inner.display_atom()),
             RuntimeValue::GpuKernel { inner } => format!("gpu_kernel({})", inner.display_atom()),
             RuntimeValue::MemoryCheckpoint { memory_mib } => format!("memory_checkpoint<memory_mib={memory_mib}>"),
+            RuntimeValue::GpuMemoryCheckpoint { memory_mib } => format!("gpu_memory_checkpoint<memory_mib={memory_mib}>"),
             RuntimeValue::RemoteCheckpoint { arch, inner } => format!("remote_checkpoint[{arch}]({})", inner.display_atom()),
             RuntimeValue::PortableCode { inner } => format!("portable_code({})", inner.display_atom()),
             RuntimeValue::Remote { arch, inner } => format!("remote[{arch}]({})", inner.display_atom()),
+            RuntimeValue::OptionValue(Some(value)) => format!("some({})", value.display_atom()),
+            RuntimeValue::OptionValue(None) => "none".to_string(),
+            RuntimeValue::ResultValue { is_ok, value } => {
+                format!("{}({})", if *is_ok { "ok" } else { "err" }, value.display_atom())
+            }
+            RuntimeValue::List(items) => format!(
+                "[{}]",
+                items.iter().map(RuntimeValue::display_atom).collect::<Vec<_>>().join(", ")
+            ),
+            RuntimeValue::Sequence(items) => format!(
+                "seq[{}]",
+                items.iter().map(RuntimeValue::display_atom).collect::<Vec<_>>().join(", ")
+            ),
+            RuntimeValue::Pair(lhs, rhs) => format!("({}, {})", lhs.display_atom(), rhs.display_atom()),
+            RuntimeValue::FnRef(name) => format!("fn:{name}"),
+            RuntimeValue::SumValue { is_left, value } => {
+                format!("{}({})", if *is_left { "inl" } else { "inr" }, value.display_atom())
+            }
+            RuntimeValue::Closure { params, .. } => format!("fun({})", params.join(", ")),
+            RuntimeValue::Record { name, fields } => format!(
+                "{name}{{{}}}",
+                fields
+                    .iter()
+                    .map(|(field, value)| format!("{field}: {}", value.display_atom()))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
         }
     }
 }

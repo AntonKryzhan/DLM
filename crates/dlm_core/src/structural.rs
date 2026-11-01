@@ -3,6 +3,7 @@ use std::fmt;
 
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use crate::passport::{
+    ordinary_type_name,
     Capability, CapabilitySet, ConstructionMode, CostClass, HistoryChain, LocationContext, Passport,
     Provenance, TheoryContext, TrustLevel, TypeKind, ValidationState,
 };
@@ -90,6 +91,7 @@ pub struct RecordFieldValue {
 pub struct RecordTypeReport {
     pub name: String,
     pub fields: Vec<RecordFieldDecl>,
+    pub enum_variants: Vec<(String, usize)>,
     pub max_trust: TrustLevel,
     pub max_provenance: Provenance,
     pub has_axiom_taint: bool,
@@ -323,6 +325,7 @@ pub fn record_type(
     Ok(RecordTypeReport {
         name,
         fields,
+        enum_variants: Vec::new(),
         max_trust,
         max_provenance,
         has_axiom_taint,
@@ -628,6 +631,7 @@ pub fn export_record_projection(report: &RecordProjectionReport) -> String {
 fn structural_value_type(passport: &Passport, line: usize) -> Result<String, Diagnostic> {
     match &passport.ty {
         TypeKind::Nat
+        | TypeKind::TypedValue { .. }
         | TypeKind::Bool
         | TypeKind::Bytes
         | TypeKind::Text
@@ -647,7 +651,7 @@ fn structural_value_type(passport: &Passport, line: usize) -> Result<String, Dia
         | TypeKind::ResultValue { .. }
         | TypeKind::ListValue { .. }
         | TypeKind::SequenceValue { .. }
-        | TypeKind::SequenceIndex { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::SequenceIndex { .. } => Ok(ordinary_type_name(&passport.ty)),
         TypeKind::FunctionType { .. }
         | TypeKind::LambdaTerm { .. }
         | TypeKind::ApplicationTerm { .. }
@@ -656,7 +660,7 @@ fn structural_value_type(passport: &Passport, line: usize) -> Result<String, Dia
         | TypeKind::SumType { .. }
         | TypeKind::RecordType { .. }
         | TypeKind::OptionType { .. }
-        | TypeKind::ResultType { .. } => Ok(passport.ty.to_string()),
+        | TypeKind::ResultType { .. } => Ok(ordinary_type_name(&passport.ty)),
         TypeKind::Theorem { .. }
         | TypeKind::StaticProof(_)
         | TypeKind::ProofTerm { .. }
