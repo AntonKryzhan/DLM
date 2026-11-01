@@ -1460,114 +1460,114 @@ dlm run --trusted-only --lib lib examples/valid/creal_demo.dlm
 `buf_from_text`, `buf_to_text` ([OWNERSHIP.md](docs/OWNERSHIP.md)). `std.ccomplex`: complex numbers with
 computable real parts ([COMPUTABLE_COMPLEX.md](docs/COMPUTABLE_COMPLEX.md)); N01–N09 closed.
 
-### v0.131.0 — Hardware-accelerated (GPU) presentation
+### v0.104.0 — Elementary functions; TextBuf
 
-`win_gpu`, `win_present_scene`, `win_read`: vector scenes drawn by OpenGL (GLX/WGL loaded at run time, MSAA, stencil-then-cover fills, gradients, clips, images), software fallback ([GUI.md](docs/GUI.md)).
+Computable-real nodes `exp`, `log`, `sin`, `cos`, `pi` ([ELEMENTARY_FUNCTIONS.md](docs/ELEMENTARY_FUNCTIONS.md));
+owned text builder `TextBuf` (`tbuf_new/push/len/finish`). N01–N10 closed.
+### v0.105.0 — Numeric conversions; portable format
 
-### v0.129.0 — TrueType text of every script, lists and scrolling
-
-`file_font_load`/`file_font_find`, `vx_text_fonts` (font fallback, fit width), simplified bidi and Arabic joining, `\u{..}` escapes; `Scroll`/`ListView`/`Table`, `Select`/`Wheel` events; XIM/Unicode window input, wheel ([GUI.md](docs/GUI.md)).
-
-### v0.128.0 — Vector UI and native windows
-
-`vx_*` vector scenes (anti-aliased, HiDPI, SVG, incremental), Cyrillic font, `std.vector` (vector widgets, states, `check_ui`), `win_*` + `run_window` (X11, Win32) ([GUI.md](docs/GUI.md)).
-
-### v0.127.0 — Own GUI, stage G1
-
-Raster images `gx_*`, PNG, `std.ui` widgets/layout/rendering/events, browser backend; recursion into record lists via `map`/`fold` ([GUI.md](docs/GUI.md)).
-
-### v0.126.0 — Recursive data, processes, TCP
-
-Recursive records, recursive and generic `enum` with structural measures; `proc_run/spawn/poll/wait/kill/env`; `net_*` TCP; `std.process`, `std.net` ([OS.md](docs/OS.md)).
-
-### v0.125.0 — Loops, enums, file system
-
-`fn f(...) -> T loop` (tail loops in constant stack), `enum` with exhaustive matches, `dlm run --interactive`; `file_seek/tell/size/truncate/set_buffered`, directories, rename/copy/atomic write; `std.files` ([APPS.md](docs/APPS.md), [FILES.md](docs/FILES.md)).
-
-### v0.124.0 — BigNat primes, BPSW, BVH
-
-`bn_powmod`, `bn_modinv`, `bn_is_prime`, `bn_next_prime`, `bn_random`, hex; 256-bit `nt_mod_mul`, BPSW `nt_is_prime`; `bvh_raycast`, `bvh_winding`, `bvh_pairs`; `std.bigprime` ([BIGNUM.md](docs/BIGNUM.md)).
-
-### v0.123.0 — Sparse solvers, robust geometry, signals, statistics
-
-Krylov solvers, exact predicates, Delaunay, k-d trees, STFT/wavelets/IIR, SHA-256; `std.signal`, `std.statistics`, `std.spatial` ([KERNELS.md](docs/KERNELS.md)).
-
-### v0.122.0 — Ordered maps
-
-`NatMap`, `TextMap`, `km_*`, `tm_*`, `std.maps` ([MAPS.md](docs/MAPS.md)).
-
-### v0.121.0 — SAT certificates, model counting, integer programming
-
-`sat_proof`, `sat_check`, `sat_count`, `ilp_*` ([PROOFS_ILP.md](docs/PROOFS_ILP.md)).
-
-### v0.120.0 — Gröbner bases, FinSet
-
-`mv_*`, `gb_*`, `std.ideals`, `std.categories` ([GROEBNER.md](docs/GROEBNER.md)).
-
-### v0.119.0 — SAT, integral homology, persistence
-
-`sat_*`, `tp_*`, `std.logic`, `std.topology` ([LOGIC_TOPOLOGY.md](docs/LOGIC_TOPOLOGY.md)).
-
-### v0.118.0 — Number theory, finite fields, permutation groups
-
-`nt_*`, `pf_*`, `pm_*`, `std.number_theory` ([ALGEBRA.md](docs/ALGEBRA.md)).
-
-### v0.117.0 — Analysis and optimization
-
-FFT, LP simplex, `std.analysis`, `std.optimize` ([ANALYSIS.md](docs/ANALYSIS.md)).
-
-### v0.116.0 — Numerical linear algebra
-
-`la_*` (LU, Cholesky, QR, eigen, SVD, CG), `std.linalg` ([LINALG.md](docs/LINALG.md)).
-
-### v0.115.0 — Graphs, geometry, probability
-
-`NatVec`, native `gr_*`, `std.graphs`, `std.geometry`, `std.probability` ([GRAPHS.md](docs/GRAPHS.md)).
-
-### v0.114.0 — Machine floats
-
-`Float`, `FloatVec`, float literals, `std.numerics` ([FLOATS.md](docs/FLOATS.md)).
-
-### v0.113.0 — Superclasses and default methods
-
-`class C<T>: Super { ... fn m(...) -> R = default }` ([GENERICS.md](docs/GENERICS.md)).
-
-### v0.112.0 — Type classes
-
-`class`/`instance` with generic instances and class bounds, `std.classes` ([GENERICS.md](docs/GENERICS.md)).
-
-### v0.111.0 — Type-argument inference and bounds
-
-Omitted type arguments inferred locally; bounds `Eq`/`Ord`; `equal`, `less` ([GENERICS.md](docs/GENERICS.md)).
-
-### v0.110.0 — Generics
-
-Generic functions and records with explicit type arguments, `std.collections` ([GENERICS.md](docs/GENERICS.md)).
-
-### v0.109.0 — File handles
-
-Linear `File` resource with sticky errors and explicit close ([FILES.md](docs/FILES.md)).
-
-### v0.108.0 — Numeric acceptance
-
-N16: evidence map and cross-family acceptance ([NUMERIC_ACCEPTANCE.md](docs/NUMERIC_ACCEPTANCE.md)). Numeric section N01–N16 closed.
-
-### v0.107.0 — Dense numbers
-
-`BigNat` dense naturals, native kernel under `std.exact`, `std.dense`, cost profile ([DENSE_NUMBERS.md](docs/DENSE_NUMBERS.md)).
-N01–N15 closed.
+Explicit rounding conversions and `dlm1:` portable numeric texts ([NUMERIC_CONVERSIONS.md](docs/NUMERIC_CONVERSIONS.md),
+`std.convert`). N01–N12 closed.
 
 ### v0.106.0 — Numeric contracts; scalar witnesses
 
 Error categories and budget contracts ([NUMERIC_CONTRACTS.md](docs/NUMERIC_CONTRACTS.md), `std.numeric`); checkable
 scalar witnesses ([SCALAR_WITNESSES.md](docs/SCALAR_WITNESSES.md), `std.scalar_witness`). N01–N13, N15 closed.
 
-### v0.105.0 — Numeric conversions; portable format
+### v0.107.0 — Dense numbers
 
-Explicit rounding conversions and `dlm1:` portable numeric texts ([NUMERIC_CONVERSIONS.md](docs/NUMERIC_CONVERSIONS.md),
-`std.convert`). N01–N12 closed.
+`BigNat` dense naturals, native kernel under `std.exact`, `std.dense`, cost profile ([DENSE_NUMBERS.md](docs/DENSE_NUMBERS.md)).
+N01–N15 closed.
 
-### v0.104.0 — Elementary functions; TextBuf
+### v0.108.0 — Numeric acceptance
 
-Computable-real nodes `exp`, `log`, `sin`, `cos`, `pi` ([ELEMENTARY_FUNCTIONS.md](docs/ELEMENTARY_FUNCTIONS.md));
-owned text builder `TextBuf` (`tbuf_new/push/len/finish`). N01–N10 closed.
+N16: evidence map and cross-family acceptance ([NUMERIC_ACCEPTANCE.md](docs/NUMERIC_ACCEPTANCE.md)). Numeric section N01–N16 closed.
+
+### v0.109.0 — File handles
+
+Linear `File` resource with sticky errors and explicit close ([FILES.md](docs/FILES.md)).
+
+### v0.110.0 — Generics
+
+Generic functions and records with explicit type arguments, `std.collections` ([GENERICS.md](docs/GENERICS.md)).
+
+### v0.111.0 — Type-argument inference and bounds
+
+Omitted type arguments inferred locally; bounds `Eq`/`Ord`; `equal`, `less` ([GENERICS.md](docs/GENERICS.md)).
+
+### v0.112.0 — Type classes
+
+`class`/`instance` with generic instances and class bounds, `std.classes` ([GENERICS.md](docs/GENERICS.md)).
+
+### v0.113.0 — Superclasses and default methods
+
+`class C<T>: Super { ... fn m(...) -> R = default }` ([GENERICS.md](docs/GENERICS.md)).
+
+### v0.114.0 — Machine floats
+
+`Float`, `FloatVec`, float literals, `std.numerics` ([FLOATS.md](docs/FLOATS.md)).
+
+### v0.115.0 — Graphs, geometry, probability
+
+`NatVec`, native `gr_*`, `std.graphs`, `std.geometry`, `std.probability` ([GRAPHS.md](docs/GRAPHS.md)).
+
+### v0.116.0 — Numerical linear algebra
+
+`la_*` (LU, Cholesky, QR, eigen, SVD, CG), `std.linalg` ([LINALG.md](docs/LINALG.md)).
+
+### v0.117.0 — Analysis and optimization
+
+FFT, LP simplex, `std.analysis`, `std.optimize` ([ANALYSIS.md](docs/ANALYSIS.md)).
+
+### v0.118.0 — Number theory, finite fields, permutation groups
+
+`nt_*`, `pf_*`, `pm_*`, `std.number_theory` ([ALGEBRA.md](docs/ALGEBRA.md)).
+
+### v0.119.0 — SAT, integral homology, persistence
+
+`sat_*`, `tp_*`, `std.logic`, `std.topology` ([LOGIC_TOPOLOGY.md](docs/LOGIC_TOPOLOGY.md)).
+
+### v0.120.0 — Gröbner bases, FinSet
+
+`mv_*`, `gb_*`, `std.ideals`, `std.categories` ([GROEBNER.md](docs/GROEBNER.md)).
+
+### v0.121.0 — SAT certificates, model counting, integer programming
+
+`sat_proof`, `sat_check`, `sat_count`, `ilp_*` ([PROOFS_ILP.md](docs/PROOFS_ILP.md)).
+
+### v0.122.0 — Ordered maps
+
+`NatMap`, `TextMap`, `km_*`, `tm_*`, `std.maps` ([MAPS.md](docs/MAPS.md)).
+
+### v0.123.0 — Sparse solvers, robust geometry, signals, statistics
+
+Krylov solvers, exact predicates, Delaunay, k-d trees, STFT/wavelets/IIR, SHA-256; `std.signal`, `std.statistics`, `std.spatial` ([KERNELS.md](docs/KERNELS.md)).
+
+### v0.124.0 — BigNat primes, BPSW, BVH
+
+`bn_powmod`, `bn_modinv`, `bn_is_prime`, `bn_next_prime`, `bn_random`, hex; 256-bit `nt_mod_mul`, BPSW `nt_is_prime`; `bvh_raycast`, `bvh_winding`, `bvh_pairs`; `std.bigprime` ([BIGNUM.md](docs/BIGNUM.md)).
+
+### v0.125.0 — Loops, enums, file system
+
+`fn f(...) -> T loop` (tail loops in constant stack), `enum` with exhaustive matches, `dlm run --interactive`; `file_seek/tell/size/truncate/set_buffered`, directories, rename/copy/atomic write; `std.files` ([APPS.md](docs/APPS.md), [FILES.md](docs/FILES.md)).
+
+### v0.126.0 — Recursive data, processes, TCP
+
+Recursive records, recursive and generic `enum` with structural measures; `proc_run/spawn/poll/wait/kill/env`; `net_*` TCP; `std.process`, `std.net` ([OS.md](docs/OS.md)).
+
+### v0.127.0 — Own GUI, stage G1
+
+Raster images `gx_*`, PNG, `std.ui` widgets/layout/rendering/events, browser backend; recursion into record lists via `map`/`fold` ([GUI.md](docs/GUI.md)).
+
+### v0.128.0 — Vector UI and native windows
+
+`vx_*` vector scenes (anti-aliased, HiDPI, SVG, incremental), Cyrillic font, `std.vector` (vector widgets, states, `check_ui`), `win_*` + `run_window` (X11, Win32) ([GUI.md](docs/GUI.md)).
+
+### v0.129.0 — TrueType text of every script, lists and scrolling
+
+`file_font_load`/`file_font_find`, `vx_text_fonts` (font fallback, fit width), simplified bidi and Arabic joining, `\u{..}` escapes; `Scroll`/`ListView`/`Table`, `Select`/`Wheel` events; XIM/Unicode window input, wheel ([GUI.md](docs/GUI.md)).
+
+### v0.131.0 — Hardware-accelerated (GPU) presentation
+
+`win_gpu`, `win_present_scene`, `win_read`: vector scenes drawn by OpenGL (GLX/WGL loaded at run time, MSAA, stencil-then-cover fills, gradients, clips, images), software fallback ([GUI.md](docs/GUI.md)).
+
