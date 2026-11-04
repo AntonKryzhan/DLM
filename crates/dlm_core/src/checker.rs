@@ -112,12 +112,21 @@ impl Checker {
     }
 
     fn check_program_on_current_thread(mut self, program: &crate::program::Program) -> CheckReport {
+        match crate::native::check_program(program) {
+            Ok(native) => {
+                if self.policy.max_trust < crate::TrustLevel::Unsafe && crate::native::check::requires_unsafe(&native.unit) {
+                    self.diagnostics.push(crate::native::error(1,"unsafe/foreign native declarations require --allow-unsafe"));
+                }
+                self.typed.get_mut().native = native;
+            },
+            Err(errors) => self.diagnostics.extend(errors),
+        }
         self.typed.get_mut().bind_contexts(program);
         for module in &program.modules {
             self.typed.get_mut().record_sources(module);
         }
         let mut loaded = std::collections::BTreeSet::new();
-        let mut dependency_diagnostics = Vec::new();
+        let mut dependency_diagnostics = std::mem::take(&mut self.diagnostics);
         for dependency in program.dependencies() {
             self.current_module = dependency.name.clone();
             self.current_source = dependency.source.clone();

@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod native;
 pub mod audit;
 pub mod axiom_registry;
 pub mod bridge;

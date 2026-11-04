@@ -174,7 +174,7 @@ impl fmt::Display for SourceSpan {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Diagnostic {
     pub severity: Severity,
     pub kind: DiagnosticKind,

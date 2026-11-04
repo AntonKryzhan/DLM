@@ -1798,6 +1798,10 @@ impl Runtime {
         Ok(RuntimeValue::Record { name: record.name.clone(), fields })
     }
 
+    pub(super) fn apply_native_bridge(&mut self,theory:&str,name:&str,values:Vec<RuntimeValue>,line:usize)->Result<RuntimeValue,Diagnostic>{
+        let function=self.functions.get(theory).and_then(|f|f.get(name)).cloned().ok_or_else(||runtime_error(line,"ordinary bridge target is missing"))?;
+        self.apply_function(&function,values,theory,line)
+    }
     fn apply_function(&mut self, function: &FnDecl, values: Vec<RuntimeValue>, theory: &str, line: usize) -> Result<RuntimeValue, Diagnostic> {
         if self.locals.len() >= MAX_CALL_DEPTH {
             return Err(runtime_error(line, format!("call depth exceeded {MAX_CALL_DEPTH} while calling fn '{}'", function.name))
@@ -1869,6 +1873,11 @@ impl Runtime {
             "proc_poll" => res(self.procs.poll(nat(0)?).map(|c| RuntimeValue::OptionValue(c.map(|c| Box::new(RuntimeValue::NatExact(c)))))),
             "proc_wait" => res(self.procs.wait(nat(0)?).map(texts)),
             "proc_kill" => n(self.procs.kill(nat(0)?)),
+            "win_child" => n(self.windows.child(nat(0)?, &text(1)?, nat(2)?, nat(3)?)),
+            "win_attach" => n(self.windows.attach(nat(0)?, nat(1)?, nat(2)?)),
+            "win_resize" => n(self.windows.resize(nat(0)?, nat(1)?, nat(2)?)),
+            "win_focus" => n(self.windows.focus(nat(0)?)),
+            "win_dpi" => res(self.windows.dpi(nat(0)?).map(|x| RuntimeValue::Float(x.to_bits()))),
             "win_open" => n(self.windows.open(&text(0)?, nat(1)?, nat(2)?)),
             "win_present" => match &values[1] {
                 RuntimeValue::NatVec(img) => n(self.windows.present(nat(0)?, img)),

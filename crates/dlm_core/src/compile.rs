@@ -377,6 +377,11 @@ pub const COMPILED_BUILTINS: &[(&str, Option<usize>)] = &[
     ("proc_poll", Some(1)),
     ("proc_wait", Some(1)),
     ("proc_kill", Some(1)),
+    ("win_child", Some(4)),
+    ("win_attach", Some(3)),
+    ("win_resize", Some(3)),
+    ("win_focus", Some(1)),
+    ("win_dpi", Some(1)),
     ("win_open", Some(3)),
     ("win_present", Some(2)),
     ("win_poll", Some(2)),
@@ -538,6 +543,7 @@ pub enum IrInit {
 
 #[derive(Debug, Clone)]
 pub struct IrProgram {
+    pub native: crate::native::Mir,
     pub module: String,
     pub sources: Vec<SourceFile>,
     /// Checked source locations, keyed by compilation-local expression ID.
@@ -1051,6 +1057,11 @@ pub fn lower_program(program: &Program, policy: CheckPolicy) -> Result<IrProgram
 /// Lower an already checked program with its Typed Core facts.
 pub fn lower_checked_program(program: &Program, facts: &TypedFacts) -> Result<IrProgram, Vec<Diagnostic>> {
     let root = program.root();
+    let native_source = crate::native::collect(program);
+    let native_checked = crate::native::check::check(native_source)?;
+    if native_checked != facts.native {
+        return Err(vec![compile_error(None, "native declarations differ from checked Typed Core")]);
+    }
     if !facts.is_checked() {
         return Err(vec![compile_error(None, "unvalidated or conflicting Typed Core facts").in_source(&root.source)]);
     }
@@ -1277,7 +1288,11 @@ pub fn lower_checked_program(program: &Program, facts: &TypedFacts) -> Result<Ir
     }
 
     let main = crate::program::main_function(root).and_then(|(theory, _)| lowering.table.get(&theory).and_then(|t| t.get("main")).copied());
+    if !facts.native.is_empty() && (main.is_some() || (!init.is_empty() && facts.native.unit.ordinary_program.is_none())) {
+        return Err(vec![compile_error(None, "native application entry cannot be combined with ordinary dynamic initializers or main; keep the executable entry in one execution domain")]);
+    }
     Ok(IrProgram {
+        native: facts.native.clone(),
         module: root.name.clone(),
         sources: program.modules.iter().map(|m| m.source.clone()).collect(),
         source_spans: facts.expr_spans.clone(),
@@ -1295,7 +1310,7 @@ pub fn lower_checked_program(program: &Program, facts: &TypedFacts) -> Result<Ir
 
 /// Effects of theory-level code: its I/O builtins and the effects of the
 /// functions it calls directly (their contracts already include callees).
-fn init_effects(expr: &IrExpr, functions: &[IrFunction]) -> Vec<String> {
+pub(crate) fn init_effects(expr: &IrExpr, functions: &[IrFunction]) -> Vec<String> {
     fn walk(expr: &IrExpr, functions: &[IrFunction], out: &mut Vec<String>) {
         match &expr.op {
             IrOp::Builtin { name, args } => {

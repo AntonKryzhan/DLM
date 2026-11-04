@@ -207,7 +207,7 @@ fn every_library_module_checks() {
                 if !report.ok() {
                     failures.push(format!("{}:\n{}", path.display(), render(&report.diagnostics)));
                 }
-                if report.certificates.is_empty() {
+                if report.certificates.is_empty() && report.typed.native.is_empty() {
                     failures.push(format!("{}: no certificates", path.display()));
                 }
             }

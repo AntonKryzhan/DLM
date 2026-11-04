@@ -394,6 +394,7 @@ fn run_audit(path: &str, policy: CheckPolicy) {
 /// check, lower to IR, emit C and compile it with the system C compiler.
 fn run_build(args: &[String]) {
     let mut policy = CheckPolicy::research();
+    let mut native_options = dlm_core::native::build::Options::default();
     let mut path: Option<String> = None;
     let mut output: Option<String> = None;
     let mut emit_ir = false;
@@ -405,10 +406,26 @@ fn run_build(args: &[String]) {
         match args[i].as_str() {
             "--trusted-only" | "--no-axioms" => policy = CheckPolicy::trusted_only(),
             "--allow-axioms" | "--research" => policy = CheckPolicy::research(),
+            "--allow-unsafe" => policy = CheckPolicy::allow_unsafe(),
             "--emit-ir" => emit_ir = true,
             "--c-only" => c_only = true,
             "--check-overflow" => check_overflow = true,
             "--require-no-overflow" => { check_overflow = true; require_no_overflow = true; }
+            "--target" | "--cpu" | "--library" | "--library-dir" | "--link-object" | "--cflag" | "--plugin-profile" => {
+                let flag = &args[i];
+                i += 1;
+                let value = args.get(i).unwrap_or_else(|| { eprintln!("error: {flag} expects a value"); process::exit(2) });
+                match flag.as_str() {
+                    "--target" => native_options.artifact = dlm_core::native::build::Artifact::parse(value).unwrap_or_else(|| { eprintln!("error: unknown artifact target {value}"); process::exit(2) }),
+                    "--cpu" => native_options.cpu = value.clone(),
+                    "--library" => native_options.libraries.push(value.clone()),
+                    "--library-dir" => native_options.library_dirs.push(value.into()),
+                    "--link-object" => native_options.objects.push(value.into()),
+                    "--cflag" => native_options.flags.push(value.clone()),
+                    "--plugin-profile" => native_options.plugin_profile = Some(value.clone()),
+                    _ => unreachable!(),
+                }
+            }
             "-o" | "--lib" => {
                 i += 1;
                 let Some(value) = args.get(i) else {
@@ -450,6 +467,28 @@ fn run_build(args: &[String]) {
             process::exit(1);
         }
     };
+    if !ir.native.is_empty() {
+        if require_no_overflow { eprintln!("error: --require-no-overflow applies to the ordinary Nat/Int interval pass; native integer operations already use checked, wrapping or saturating semantics"); process::exit(2); }
+        if check_overflow { println!("native arithmetic: checked integer operations; explicit wrapping/saturating operations preserve their declared semantics"); }
+        if emit_ir { print!("{}", ir.native.render()); }
+        let output = output.unwrap_or_else(|| {
+            let base = std::path::Path::new(&path).with_extension("").to_string_lossy().into_owned();
+            match native_options.artifact {
+                dlm_core::native::build::Artifact::Executable => if cfg!(windows) { format!("{base}.exe") } else { base },
+                dlm_core::native::build::Artifact::Staticlib => format!("{base}.a"),
+                dlm_core::native::build::Artifact::Sharedlib => format!("{base}.{}", if cfg!(windows) { "dll" } else if cfg!(target_os="macos") { "dylib" } else { "so" }),
+                dlm_core::native::build::Artifact::Plugin => format!("{base}.plugin"),
+            }
+        });
+        match dlm_core::native::build::build(&ir.native, std::path::Path::new(&output), &native_options, c_only) {
+            Ok(artifact) => println!("DLM build: {path} -> {}", artifact.display()),
+            Err(diagnostic) => { eprint!("{diagnostic}"); process::exit(1); }
+        }
+        return;
+    }
+    if native_options.artifact != dlm_core::native::build::Artifact::Executable {
+        eprintln!("error: library artifacts require explicit native ABI declarations"); process::exit(1);
+    }
     if check_overflow {
         let report = dlm_core::check_machine_arithmetic(&program, policy).expect("program was checked above");
         print!("{}", report.render());
@@ -625,6 +664,7 @@ fn print_usage_and_exit(code: i32) -> ! {
     eprintln!("  dlm homology-check <proof.f2proof> [expected-complex.simp]");
     eprintln!("  dlm audit [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm>");
     eprintln!("  dlm contracts [--trusted-only|--allow-axioms|--allow-unsafe] [--lib DIR] <file.dlm>");
+    eprintln!("  native build: --target executable|staticlib|sharedlib|plugin --cpu auto|scalar|sse2 --library NAME --link-object PATH");
     eprintln!("  dlm build [--trusted-only] [-o <out>] [--emit-ir] [--c-only] [--check-overflow] [--require-no-overflow] <file.dlm>");
     eprintln!("  dlm project [--trusted-only|--allow-axioms] [--audit] [<dir>|<dlm.project>]");
     eprintln!("  dlm --version");

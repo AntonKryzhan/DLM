@@ -403,6 +403,10 @@ impl Verifier<'_> {
 pub fn verify_ir(program: &IrProgram) -> Vec<IrIssue> {
     let partial = partial_functions(program);
     let mut issues = Vec::new();
+    match crate::native::check::check(program.native.unit.clone()) {
+        Ok(checked) if checked == program.native => {},
+        _ => issues.push(IrIssue { function: program.module.clone(), message: "native IR fails type, ownership, effect or representation verification".into() }),
+    }
     let mut files = BTreeSet::new();
     if program.sources.is_empty() || program.sources.iter().any(|s| !files.insert(s.id)) {
         issues.push(IrIssue { function: program.module.clone(), message: "missing or duplicate source file identity".to_string() });

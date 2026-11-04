@@ -10,6 +10,7 @@
 
 pub type Event = [u128; 4];
 
+#[cfg(target_os = "linux")]
 fn over_white(c: u128) -> u32 {
     let a = (c & 0xFF) as u32;
     let ch = |s: u32| (((c >> s) & 0xFF) as u32 * a + 255 * (255 - a) + 127) / 255;
@@ -41,6 +42,7 @@ mod imp {
     type P = *mut c_void;
     #[allow(non_snake_case)]
     struct X11 {
+        library: usize,
         XOpenDisplay: unsafe extern "C" fn(*const c_char) -> P,
         XDefaultScreen: unsafe extern "C" fn(P) -> c_int,
         XRootWindow: unsafe extern "C" fn(P, c_int) -> c_ulong,
@@ -53,9 +55,6 @@ mod imp {
         XFlush: unsafe extern "C" fn(P) -> c_int,
         XPending: unsafe extern "C" fn(P) -> c_int,
         XNextEvent: unsafe extern "C" fn(P, P) -> c_int,
-        XDefaultVisual: unsafe extern "C" fn(P, c_int) -> P,
-        XDefaultDepth: unsafe extern "C" fn(P, c_int) -> c_int,
-        XDefaultGC: unsafe extern "C" fn(P, c_int) -> P,
         XCreateImage: unsafe extern "C" fn(P, P, c_uint, c_int, c_int, *mut c_char, c_uint, c_uint, c_int, c_int) -> P,
         XPutImage: unsafe extern "C" fn(P, c_ulong, P, P, c_int, c_int, c_int, c_int, c_uint, c_uint) -> c_int,
         XFree: unsafe extern "C" fn(P) -> c_int,
@@ -118,13 +117,14 @@ mod imp {
                 })
             })();
             Some(X11 {
+                library: h as usize,
                 im,
                 XChangeProperty: opt!(XChangeProperty),
                 XOpenDisplay: sym!(XOpenDisplay), XDefaultScreen: sym!(XDefaultScreen), XRootWindow: sym!(XRootWindow),
                 XBlackPixel: sym!(XBlackPixel), XWhitePixel: sym!(XWhitePixel), XCreateSimpleWindow: sym!(XCreateSimpleWindow),
                 XStoreName: sym!(XStoreName), XSelectInput: sym!(XSelectInput), XMapWindow: sym!(XMapWindow), XFlush: sym!(XFlush),
-                XPending: sym!(XPending), XNextEvent: sym!(XNextEvent), XDefaultVisual: sym!(XDefaultVisual), XDefaultDepth: sym!(XDefaultDepth),
-                XDefaultGC: sym!(XDefaultGC), XCreateImage: sym!(XCreateImage), XPutImage: sym!(XPutImage), XFree: sym!(XFree),
+                XPending: sym!(XPending), XNextEvent: sym!(XNextEvent),
+                XCreateImage: sym!(XCreateImage), XPutImage: sym!(XPutImage), XFree: sym!(XFree),
                 XDestroyWindow: sym!(XDestroyWindow), XCloseDisplay: sym!(XCloseDisplay), XInternAtom: sym!(XInternAtom),
                 XSetWMProtocols: sym!(XSetWMProtocols), XConnectionNumber: sym!(XConnectionNumber), XLookupString: sym!(XLookupString),
             })
@@ -132,14 +132,29 @@ mod imp {
         .as_ref()
     }
 
+    #[repr(C)]
+    struct Attributes {x:c_int,y:c_int,width:c_int,height:c_int,border_width:c_int,depth:c_int,visual:P,root:c_ulong,class_:c_int,bit_gravity:c_int,win_gravity:c_int,backing_store:c_int,backing_planes:c_ulong,backing_pixel:c_ulong,save_under:c_int,colormap:c_ulong,map_installed:c_int,map_state:c_int,all_event_masks:c_long,your_event_mask:c_long,do_not_propagate_mask:c_long,override_redirect:c_int,screen:P}
+    unsafe fn surface(x:&X11,d:P,win:c_ulong)->Result<(P,P,c_int),String>{
+        let attr=dlsym(x.library as P,c"XGetWindowAttributes".as_ptr());let gc=dlsym(x.library as P,c"XCreateGC".as_ptr());
+        if attr.is_null()||gc.is_null(){return Err("X11 surface queries unavailable".into());}
+        let attr:unsafe extern "C" fn(P,c_ulong,*mut Attributes)->c_int=std::mem::transmute(attr);
+        let create:unsafe extern "C" fn(P,c_ulong,c_ulong,P)->P=std::mem::transmute(gc);
+        let mut a:Attributes=std::mem::zeroed();if attr(d,win,&mut a)==0||a.depth<24{return Err("unsupported window visual".into());}
+        let gc=create(d,win,0,std::ptr::null_mut());if gc.is_null(){return Err("cannot create window graphics context".into());}Ok((gc,a.visual,a.depth))
+    }
+    pub fn input(win:&mut Win,event:Event)->Result<(),String>{if !(1..=9).contains(&event[0]){return Err("invalid window event kind".into());}if win.queue.len()<64{win.queue.push_back(event);}Ok(())}
+    pub fn native_handle(win:&mut Win)->Result<u128,String>{Ok(win.win as u128)}
     pub struct Win {
         dpy: P,
         win: c_ulong,
         wm_delete: c_ulong,
         gc: P,
+        visual: P,
+        depth: c_int,
         im: P,
         ic: P,
         queue: std::collections::VecDeque<Event>,
+        borrowed: bool,
         pub gl: Option<gl::GlWin>,
         pub w: u128,
         pub h: u128,
@@ -193,7 +208,8 @@ mod imp {
     // The display connection is used by one runtime thread at a time.
     unsafe impl Send for Win {}
 
-    pub fn open(title: &str, w: u128, h: u128) -> Result<Win, String> {
+    pub fn open(title:&str,w:u128,h:u128)->Result<Win,String>{open_parent(title,w,h,0)}
+    fn open_parent(title: &str, w: u128, h: u128,parent:u128) -> Result<Win, String> {
         let x = load().ok_or("cannot load libX11")?;
         unsafe {
             let d = (x.XOpenDisplay)(std::ptr::null());
@@ -201,7 +217,8 @@ mod imp {
                 return Err("cannot open display".into());
             }
             let scr = (x.XDefaultScreen)(d);
-            let win = (x.XCreateSimpleWindow)(d, (x.XRootWindow)(d, scr), 0, 0, w as c_uint, h as c_uint, 0, (x.XBlackPixel)(d, scr), (x.XWhitePixel)(d, scr));
+            let win = (x.XCreateSimpleWindow)(d, if parent==0{(x.XRootWindow)(d, scr)}else{parent as c_ulong}, 0, 0, w as c_uint, h as c_uint, 0, (x.XBlackPixel)(d, scr), (x.XWhitePixel)(d, scr));
+            let (gc,visual,depth)=match surface(x,d,win){Ok(v)=>v,Err(e)=>{(x.XDestroyWindow)(d,win);(x.XCloseDisplay)(d);return Err(e);}};
             let t = CString::new(title).unwrap_or_default();
             (x.XStoreName)(d, win, t.as_ptr());
             if let Some(cp) = x.XChangeProperty {
@@ -216,20 +233,52 @@ mod imp {
             (x.XSetWMProtocols)(d, win, &mut del, 1);
             (x.XMapWindow)(d, win);
             (x.XFlush)(d);
-            Ok(Win { dpy: d, win, wm_delete: del, gc: (x.XDefaultGC)(d, scr), im, ic, queue: Default::default(), gl: None, w, h })
+            Ok(Win { dpy: d, win, wm_delete: del, gc, visual, depth, im, ic, queue: Default::default(), borrowed: false, gl: None, w, h })
         }
     }
+
+    pub fn child(parent: u128, title: &str, w: u128, h: u128) -> Result<Win, String> {
+        if parent == 0 || parent > u64::MAX as u128 { return Err("invalid parent handle".into()); }
+        open_parent(title,w,h,parent)
+    }
+
+    pub fn attach(handle: u128, w: u128, h: u128) -> Result<Win, String> {
+        if handle == 0 || handle > u64::MAX as u128 { return Err("invalid attached handle".into()); }
+        let x=load().ok_or("cannot load libX11")?;
+        unsafe {
+            let d=(x.XOpenDisplay)(std::ptr::null()); if d.is_null(){return Err("cannot open display".into());}
+            let window=handle as c_ulong;
+            let (gc,visual,depth)=match surface(x,d,window){Ok(v)=>v,Err(e)=>{(x.XCloseDisplay)(d);return Err(e);}};
+            (x.XSelectInput)(d,window,(1<<15)|(1<<17));(x.XFlush)(d);
+            Ok(Win{dpy:d,win:window,wm_delete:0,gc,visual,depth,im:std::ptr::null_mut(),ic:std::ptr::null_mut(),queue:Default::default(),borrowed:true,gl:None,w,h})
+        }
+    }
+
+    pub fn resize(win: &mut Win,w:u128,h:u128)->Result<u128,String>{unsafe{
+        let lib=load().ok_or("cannot load libX11")?.library as P;let p=dlsym(lib,c"XResizeWindow".as_ptr());if p.is_null(){return Err("XResizeWindow unavailable".into());}
+        let f:unsafe extern "C" fn(P,c_ulong,c_uint,c_uint)->c_int=std::mem::transmute(p);f(win.dpy,win.win,w as c_uint,h as c_uint);(load().ok_or("cannot load libX11")?.XFlush)(win.dpy);
+        win.w=w;win.h=h;if let Some(g)=&win.gl{gl::resize(win.dpy,g,w,h);}Ok(0)
+    }}
+
+    pub fn focus(win:&mut Win)->Result<u128,String>{unsafe{
+        let lib=load().ok_or("cannot load libX11")?.library as P;let p=dlsym(lib,c"XSetInputFocus".as_ptr());if p.is_null(){return Err("XSetInputFocus unavailable".into());}
+        let f:unsafe extern "C" fn(P,c_ulong,c_int,c_ulong)->c_int=std::mem::transmute(p);f(win.dpy,win.win,1,0);(load().ok_or("cannot load libX11")?.XFlush)(win.dpy);Ok(0)
+    }}
+
+    pub fn dpi(win:&mut Win)->Result<f64,String>{unsafe{
+        let lib=load().ok_or("cannot load libX11")?.library as P;let a=dlsym(lib,c"XDisplayWidth".as_ptr());let b=dlsym(lib,c"XDisplayWidthMM".as_ptr());if a.is_null()||b.is_null(){return Ok(96.0);}
+        let a:unsafe extern "C" fn(P,c_int)->c_int=std::mem::transmute(a);let b:unsafe extern "C" fn(P,c_int)->c_int=std::mem::transmute(b);let screen=(load().ok_or("cannot load libX11")?.XDefaultScreen)(win.dpy);let mm=b(win.dpy,screen);Ok(if mm>0{a(win.dpy,screen) as f64*25.4/mm as f64}else{96.0})
+    }}
 
     pub fn present(win: &Win, img: &[u128], w: usize, h: usize) -> Result<u128, String> {
         let x = load().ok_or("cannot load libX11")?;
         unsafe {
-            let scr = (x.XDefaultScreen)(win.dpy);
-            let depth = (x.XDefaultDepth)(win.dpy, scr);
+            let depth = win.depth;
             if depth < 24 {
                 return Err("unsupported display depth".into());
             }
-            let mut data: Vec<u32> = img[2..2 + w * h].iter().map(|&c| super::over_white(c)).collect();
-            let im = (x.XCreateImage)(win.dpy, (x.XDefaultVisual)(win.dpy, scr), depth as c_uint, 2, 0, data.as_mut_ptr() as *mut c_char, w as c_uint, h as c_uint, 32, 0);
+            let mut data: Vec<u32> = img[2..2 + w * h].iter().map(|&c| super::over_white(c)|if depth==32{0xff000000}else{0}).collect();
+            let im = (x.XCreateImage)(win.dpy, win.visual, depth as c_uint, 2, 0, data.as_mut_ptr() as *mut c_char, w as c_uint, h as c_uint, 32, 0);
             if im.is_null() {
                 return Err("cannot create image".into());
             }
@@ -342,7 +391,8 @@ mod imp {
                     (m.XDestroyIC)(win.ic);
                     (m.XCloseIM)(win.im);
                 }
-                (x.XDestroyWindow)(win.dpy, win.win);
+                if !win.borrowed { (x.XDestroyWindow)(win.dpy, win.win); }
+                let release=dlsym(x.library as P,c"XFreeGC".as_ptr());if !release.is_null(){let release:unsafe extern "C" fn(P,P)->c_int=std::mem::transmute(release);release(win.dpy,win.gc);}
                 (x.XCloseDisplay)(win.dpy);
             }
         }
@@ -956,6 +1006,13 @@ mod imp {
     pub fn open(_title: &str, _w: u128, _h: u128) -> Result<Win, String> {
         Err("native windows in `dlm run` need Linux/X11; build the program with `dlm build`".into())
     }
+    pub fn input(_win:&mut Win,_event:Event)->Result<(),String>{Err("window input requires a supported interpreter platform".into())}
+    pub fn native_handle(_win:&mut Win)->Result<u128,String>{Err("native window handles require a supported interpreter platform".into())}
+    pub fn child(_parent:u128,_title:&str,_w:u128,_h:u128)->Result<Win,String>{Err("window embedding is unavailable on this interpreter platform".into())}
+    pub fn attach(_handle:u128,_w:u128,_h:u128)->Result<Win,String>{Err("window embedding is unavailable on this interpreter platform".into())}
+    pub fn resize(_win:&mut Win,_w:u128,_h:u128)->Result<u128,String>{Err("window embedding is unavailable on this interpreter platform".into())}
+    pub fn focus(_win:&mut Win)->Result<u128,String>{Err("window embedding is unavailable on this interpreter platform".into())}
+    pub fn dpi(_win:&mut Win)->Result<f64,String>{Err("window embedding is unavailable on this interpreter platform".into())}
     pub fn present(_win: &Win, _img: &[u128], _w: usize, _h: usize) -> Result<u128, String> {
         Err("no window".into())
     }
@@ -983,6 +1040,7 @@ mod imp {
 #[derive(Default)]
 pub struct WindowTable {
     slots: Vec<Option<imp::Win>>,
+    owners: Vec<Option<std::thread::ThreadId>>,
 }
 
 impl WindowTable {
@@ -990,6 +1048,9 @@ impl WindowTable {
     pub fn gpu(&mut self, id: u128) -> Result<String, String> {
         imp::gpu(self.get(id)?)
     }
+
+    pub fn input(&mut self,id:u128,event:Event)->Result<(),String>{imp::input(self.get(id)?,event)}
+    pub fn native_handle(&mut self,id:u128)->Result<u128,String>{imp::native_handle(self.get(id)?)}
 
     pub fn is_gpu(&mut self, id: u128) -> Result<bool, String> {
         Ok(self.get(id)?.is_gpu())
@@ -1009,14 +1070,30 @@ impl WindowTable {
         }
         if self.slots.is_empty() {
             self.slots.resize_with(64, || None);
+            self.owners.resize_with(64, || None);
         }
         let slot = self.slots.iter().position(Option::is_none).ok_or("too many windows")?;
         let win = imp::open(title.split('\0').next().unwrap_or(""), w, h)?;
         self.slots[slot] = Some(win);
+        self.owners[slot] = Some(std::thread::current().id());
         Ok(slot as u128 + 1)
     }
 
+    pub fn child(&mut self,parent:u128,title:&str,w:u128,h:u128)->Result<u128,String>{self.embed(parent,Some(title),w,h)}
+    pub fn attach(&mut self,handle:u128,w:u128,h:u128)->Result<u128,String>{self.embed(handle,None,w,h)}
+    fn embed(&mut self,handle:u128,title:Option<&str>,w:u128,h:u128)->Result<u128,String>{
+        if w==0||h==0||w>16384||h>16384{return Err("invalid embedded window size".into());}
+        if self.slots.is_empty(){self.slots.resize_with(64,||None);self.owners.resize_with(64,||None);}
+        let slot=self.slots.iter().position(Option::is_none).ok_or("too many windows")?;
+        let win=if let Some(t)=title{imp::child(handle,t,w,h)?}else{imp::attach(handle,w,h)?};
+        self.slots[slot]=Some(win);self.owners[slot]=Some(std::thread::current().id());Ok(slot as u128+1)
+    }
+    pub fn resize(&mut self,id:u128,w:u128,h:u128)->Result<u128,String>{if w==0||h==0||w>16384||h>16384{return Err("invalid window size".into());}imp::resize(self.get(id)?,w,h)}
+    pub fn focus(&mut self,id:u128)->Result<u128,String>{imp::focus(self.get(id)?)}
+    pub fn dpi(&mut self,id:u128)->Result<f64,String>{imp::dpi(self.get(id)?)}
+
     fn get(&mut self, id: u128) -> Result<&mut imp::Win, String> {
+        if id.checked_sub(1).and_then(|i|usize::try_from(i).ok()).and_then(|i|self.owners.get(i)).and_then(|o|*o).is_some_and(|o|o!=std::thread::current().id()) { return Err("window belongs to another thread".into()); }
         id.checked_sub(1)
             .and_then(|i| usize::try_from(i).ok())
             .and_then(|i| self.slots.get_mut(i))
@@ -1046,6 +1123,7 @@ impl WindowTable {
         self.get(id)?;
         if let Some(w) = self.slots[(id - 1) as usize].take() {
             imp::close(w);
+            self.owners[(id-1) as usize]=None;
         }
         Ok(0)
     }

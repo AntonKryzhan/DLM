@@ -38,6 +38,7 @@ pub struct FunctionFacts {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct TypedFacts {
+    pub native: crate::native::Mir,
     pub expr_types: BTreeMap<ExprId, OrdinaryType>,
     /// Every source expression, including callable arguments checked through
     /// collection contracts rather than ordinary expression inference.

@@ -207,10 +207,12 @@ pub fn parse_module(source: &str) -> Result<Module, Vec<Diagnostic>> {
 }
 
 pub fn parse_module_with_source(source: &str, file: SourceFile) -> Result<Module, Vec<Diagnostic>> {
-    let result = parse_module_inner(source);
+    let (ordinary_source, native) = crate::native::syntax::extract(source).map_err(|errors| errors.into_iter().map(|d| { let d = if let Some(span) = d.span { d.with_span(span.with_file(file.id)) } else { d }; d.in_source(&file) }).collect::<Vec<_>>())?;
+    let result = parse_module_inner(&ordinary_source);
     SPAN_CONTEXT.with(|context| *context.borrow_mut() = None);
     match result {
         Ok(mut module) => {
+            module.native = native;
             module.source = file;
             module.set_file_id(module.source.id);
             Ok(module)
@@ -603,6 +605,7 @@ fn parse_module_inner(source: &str) -> Result<Module, Vec<Diagnostic>> {
     }
 
     Ok(Module {
+        native: crate::native::Unit::default(),
         name: module_name.unwrap_or_else(|| "anonymous".to_string()),
         imports,
         items,

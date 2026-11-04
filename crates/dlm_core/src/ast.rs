@@ -1,8 +1,10 @@
 use crate::diagnostics::{SourceFile, SourceSpan};
 use crate::ids::{DeclId, FileId};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Module {
+    /// Explicit native application declarations (unboxed execution domain).
+    pub native: crate::native::Unit,
     pub name: String,
     pub imports: Vec<ImportDecl>,
     pub items: Vec<ModuleItem>,
@@ -14,6 +16,8 @@ impl Module {
     /// Expression IDs and physical positions are preserved.
     pub(crate) fn set_file_id(&mut self, id: FileId) {
         self.source.id = id;
+        for declaration in &mut self.native.functions { declaration.source = self.source.clone(); }
+        for declaration in &mut self.native.records { declaration.source = self.source.clone(); }
         for item in &mut self.items {
             if let ModuleItem::Theory(theory) = item {
                 for item in &mut theory.items {
@@ -30,18 +34,18 @@ impl Module {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {
     pub path: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ModuleItem {
     Theory(TheoryDecl),
     Bridge(BridgeDecl),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TheoryDecl {
     pub name: String,
     pub items: Vec<TheoryItem>,
@@ -55,7 +59,7 @@ pub struct TheoryDecl {
     pub line: usize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TheoryItem {
     Let(LetDecl),
     Expr(Expr),
@@ -88,7 +92,7 @@ impl StatementItemKind {
 }
 
 /// v0.76: `theorem` / `axiom` / `conjecture` item.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StatementItem {
     pub kind: StatementItemKind,
     pub name: String,
@@ -218,14 +222,14 @@ pub struct FnParam {
     pub ty: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LetDecl {
     pub name: String,
     pub expr: Expr,
     pub line: usize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BridgeDecl {
     pub name: String,
     pub source: String,

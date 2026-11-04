@@ -23,7 +23,7 @@ use crate::parser::parse_module_with_source;
 pub const MAX_PROGRAM_MODULES: usize = 256;
 
 /// A root module with its imported modules in dependency order.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Program {
     /// Dependency order; the root module is last.
     pub modules: Vec<Module>,

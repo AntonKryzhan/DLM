@@ -8888,9 +8888,8 @@ static int dgl_h, dgl_vy;
 static unsigned dgl_ramp_tex, dgl_radial_tex;
 static void dgl_unpack(nat_t c, unsigned char *o) { o[0] = (unsigned char)(c >> 24); o[1] = (unsigned char)(c >> 16); o[2] = (unsigned char)(c >> 8); o[3] = (unsigned char)c; }
 /* ramp (256x1, alpha = position) and radial (128x128, alpha = distance / radius) textures */
-static void dgl_make_textures(void) {
-    unsigned char ramp[256 * 4], *rad = malloc(128 * 128 * 4);
-    if (!rad) dv_fail("out of memory");
+static void dgl_make_textures(unsigned char *rad) {
+    unsigned char ramp[256 * 4];
     for (int i = 0; i < 256; i++) { ramp[4 * i] = ramp[4 * i + 1] = ramp[4 * i + 2] = 255; ramp[4 * i + 3] = (unsigned char)i; }
     for (int y = 0; y < 128; y++)
         for (int x = 0; x < 128; x++) {
@@ -8911,7 +8910,6 @@ static void dgl_make_textures(void) {
         if (k == 0) dgl_glTexImage2D(0x0DE1, 0, 0x1908, 256, 1, 0, 0x1908, 0x1401, ramp);
         else dgl_glTexImage2D(0x0DE1, 0, 0x1908, 128, 128, 0, 0x1908, 0x1401, rad);
     }
-    free(rad);
 }
 /* per-vertex texture coordinate of a gradient paint at pixel point (x, y) */
 static void dgl_tc(const dvy_paint *p, double x, double y) {
@@ -9607,13 +9605,15 @@ static DV *dvb_vx_svg(DV *sv, DV *wv, DV *hv) {
  * script through the input method (X11 XIM, Win32 WM_CHAR with surrogate pairs). */
 #define DVW_MAX 64
 typedef struct { int used; int w, h; nat_t queue[64][4]; int qn;
+    int borrowed; /* attached host surfaces are never destroyed here */
+    int native_managed; /* a completed native owner handles error cleanup */
     /* v0.131: GPU presentation (win_gpu): textures, the last scene for repaints and win_read */
     int gpu; unsigned ramp, radial; nat_t *scene; size_t scene_n, scene_cap; nat_t sw, sh; dvy_scale ss;
     unsigned fbo, rb_color, rb_stencil; int fbo_w, fbo_h, samples;
 #ifdef _WIN32
-    HWND hwnd; uint32_t *pix; int pw, ph; int closed; unsigned hs; HDC hdc; HGLRC glrc;
+    HWND hwnd; WNDPROC host_proc; uint32_t *pix; int pw, ph; int closed; unsigned hs; HDC hdc; HGLRC glrc;
 #else
-    void *dpy; unsigned long win, wm_delete; void *gc; void *im, *ic; unsigned long glwin, cmap; void *glctx;
+    void *dpy; unsigned long win, wm_delete; void *gc; void *visual; int depth, own_gc; void *im, *ic; unsigned long glwin, cmap; void *glctx;
 #endif
 } dvw_win;
 static int dgl_draw(dvw_win *x);
@@ -9736,7 +9736,15 @@ static uint32_t dvw_utf8(const unsigned char *s, int n, int *i) {
     *i += len;
     return cp;
 }
-static DV *dvb_win_open(DV *tv, DV *wv, DV *hv) {
+typedef struct dvw_attributes {int x,y,width,height,border_width,depth;void *visual;unsigned long root;int class_,bit_gravity,win_gravity,backing_store;unsigned long backing_planes,backing_pixel;int save_under;unsigned long colormap;int map_installed,map_state;long all_event_masks,your_event_mask,do_not_propagate_mask;int override_redirect;void *screen;} dvw_attributes;
+static int dvw_surface(dvw_win *x){
+ int(*attributes)(void*,unsigned long,dvw_attributes*)=0;void *(*create_gc)(void*,unsigned long,unsigned long,void*)=0;
+ *(void**)(&attributes)=dlsym(dvw_x11,"XGetWindowAttributes");*(void**)(&create_gc)=dlsym(dvw_x11,"XCreateGC");
+ dvw_attributes a;if(!attributes||!create_gc||!attributes(x->dpy,x->win,&a)||a.depth<24)return 0;
+ x->visual=a.visual;x->depth=a.depth;x->gc=create_gc(x->dpy,x->win,0,NULL);x->own_gc=x->gc!=NULL;return x->own_gc;
+}
+static void dvw_free_gc(dvw_win *x){if(x->own_gc&&x->gc){int(*release)(void*,void*)=0;*(void**)(&release)=dlsym(dvw_x11,"XFreeGC");if(release)release(x->dpy,x->gc);x->gc=NULL;x->own_gc=0;}}
+static DV *dvw_open_parent(DV *tv, DV *wv, DV *hv, nat_t parent) {
     const char *title;
     int ok = dvo_cstr(tv, "win_open", &title);
     nat_t w = dv_nat_of(wv, "win_open"), h = dv_nat_of(hv, "win_open");
@@ -9747,13 +9755,14 @@ static DV *dvb_win_open(DV *tv, DV *wv, DV *hv) {
     void *d = dvw_XOpenDisplay(0);
     if (!d) return dvo_errs("cannot open display");
     int scr = dvw_XDefaultScreen(d);
-    unsigned long win = dvw_XCreateSimpleWindow(d, dvw_XRootWindow(d, scr), 0, 0, (unsigned)w, (unsigned)h, 0, dvw_XBlackPixel(d, scr), dvw_XWhitePixel(d, scr));
+    unsigned long win = dvw_XCreateSimpleWindow(d, parent?(unsigned long)parent:dvw_XRootWindow(d, scr), 0, 0, (unsigned)w, (unsigned)h, 0, dvw_XBlackPixel(d, scr), dvw_XWhitePixel(d, scr));
     dvw_XStoreName(d, win, ok ? title : "");
     if (ok && dvw_XChangeProperty)
         dvw_XChangeProperty(d, win, dvw_XInternAtom(d, "_NET_WM_NAME", 0), dvw_XInternAtom(d, "UTF8_STRING", 0), 8, 0, (const unsigned char *)title, (int)strlen(title));
     dvw_win *x = &dvw_wins[slot];
     memset(x, 0, sizeof *x);
     x->dpy = d; x->win = win;
+    if(!dvw_surface(x)){dvw_XDestroyWindow(d,win);dvw_XCloseDisplay(d);return dvo_errs("unsupported window visual");}
     long imask = dvw_ime(x);
     /* KeyPress, ButtonPress, ButtonRelease, PointerMotion, Exposure, StructureNotify, FocusChange */
     dvw_XSelectInput(d, win, (1L << 0) | (1L << 2) | (1L << 3) | (1L << 6) | (1L << 15) | (1L << 17) | (1L << 21) | imask);
@@ -9761,9 +9770,10 @@ static DV *dvb_win_open(DV *tv, DV *wv, DV *hv) {
     dvw_XSetWMProtocols(d, win, &del, 1);
     dvw_XMapWindow(d, win);
     dvw_XFlush(d);
-    x->used = 1; x->wm_delete = del; x->gc = dvw_XDefaultGC(d, scr); x->w = (int)w; x->h = (int)h;
+    x->used = 1; x->wm_delete = del; x->w = (int)w; x->h = (int)h;
     return dv_result(dv_nat((nat_t)slot + 1), 1);
 }
+static DV *dvb_win_open(DV *tv,DV *wv,DV *hv){return dvw_open_parent(tv,wv,hv,0);}
 static DV *dvb_win_present(DV *iv, DV *imv) {
     nat_t id = dv_nat_of(iv, "win_present");
     DV *im = dvv_of(imv, "win_present");
@@ -9772,11 +9782,11 @@ static DV *dvb_win_present(DV *iv, DV *imv) {
     size_t w, h;
     if (!dvx_dims(im, &w, &h) || !w || !h) return dvo_errs("win_present needs a non-empty image");
     int scr = dvw_XDefaultScreen(x->dpy);
-    if (dvw_XDefaultDepth(x->dpy, scr) < 24) return dvo_errs("unsupported display depth");
+    if (x->depth < 24) return dvo_errs("unsupported display depth");
     uint32_t *data = malloc(sizeof(uint32_t) * w * h);
     if (!data) dv_fail("out of memory");
-    for (size_t i = 0; i < w * h; i++) data[i] = dvw_over_white(im->u.nv.d[2 + i]);
-    void *img = dvw_XCreateImage(x->dpy, dvw_XDefaultVisual(x->dpy, scr), (unsigned)dvw_XDefaultDepth(x->dpy, scr), 2, 0, (char *)data, (unsigned)w, (unsigned)h, 32, 0);
+    for (size_t i = 0; i < w * h; i++) data[i] = dvw_over_white(im->u.nv.d[2 + i])|(x->depth==32?0xff000000U:0);
+    void *img = dvw_XCreateImage(x->dpy, x->visual, (unsigned)x->depth, 2, 0, (char *)data, (unsigned)w, (unsigned)h, 32, 0);
     if (!img) { free(data); return dvo_errs("cannot create image"); }
     dvw_XPutImage(x->dpy, x->win, x->gc, img, 0, 0, 0, 0, (unsigned)w, (unsigned)h);
     dvw_XFlush(x->dpy);
@@ -9851,7 +9861,8 @@ static DV *dvb_win_close(DV *iv) {
     if (x->ic && dvw_XDestroyIC) dvw_XDestroyIC(x->ic);
     if (x->im && dvw_XCloseIM) dvw_XCloseIM(x->im);
     dgl_close(x);
-    dvw_XDestroyWindow(x->dpy, x->win);
+    if (!x->borrowed) dvw_XDestroyWindow(x->dpy, x->win);
+    dvw_free_gc(x);
     dvw_XCloseDisplay(x->dpy);
     x->used = 0;
     return dv_result(dv_nat(0), 1);
@@ -9866,34 +9877,41 @@ static nat_t dvw_vk(WPARAM vk) {
     default: return 0;
     }
 }
+static ATOM dvw_class;static HINSTANCE dvw_instance;static wchar_t dvw_class_name[64];
+static LRESULT CALLBACK dvw_proc(HWND,UINT,WPARAM,LPARAM);
+#ifndef DVW_CALL_HOST
+#define DVW_CALL_HOST CallWindowProcW
+#endif
+static LRESULT dvw_handled(dvw_win *x,HWND h,UINT m,WPARAM wp,LPARAM lp,LRESULT result){return x&&x->borrowed&&x->host_proc?DVW_CALL_HOST(x->host_proc,h,m,wp,lp):result;}
 static LRESULT CALLBACK dvw_proc(HWND h, UINT m, WPARAM wp, LPARAM lp) {
     dvw_win *x = dvw_by_hwnd(h);
     if (x) {
         int px = (short)LOWORD(lp), py = (short)HIWORD(lp);
         switch (m) {
-        case WM_CLOSE: dvw_push(x, 1, 0, 0, 0); return 0;
-        case WM_LBUTTONDOWN: dvw_push(x, 2, px < 0 ? 0 : px, py < 0 ? 0 : py, 1); return 0;
-        case WM_RBUTTONDOWN: dvw_push(x, 2, px < 0 ? 0 : px, py < 0 ? 0 : py, 3); return 0;
-        case WM_LBUTTONUP: dvw_push(x, 3, px < 0 ? 0 : px, py < 0 ? 0 : py, 1); return 0;
-        case WM_RBUTTONUP: dvw_push(x, 3, px < 0 ? 0 : px, py < 0 ? 0 : py, 3); return 0;
-        case WM_MOUSEMOVE: dvw_push(x, 4, px < 0 ? 0 : px, py < 0 ? 0 : py, 0); return 0;
+        case WM_CLOSE: dvw_push(x, 1, 0, 0, 0); return dvw_handled(x,h,m,wp,lp,0);
+        case WM_LBUTTONDOWN: dvw_push(x, 2, px < 0 ? 0 : px, py < 0 ? 0 : py, 1); return dvw_handled(x,h,m,wp,lp,0);
+        case WM_RBUTTONDOWN: dvw_push(x, 2, px < 0 ? 0 : px, py < 0 ? 0 : py, 3); return dvw_handled(x,h,m,wp,lp,0);
+        case WM_LBUTTONUP: dvw_push(x, 3, px < 0 ? 0 : px, py < 0 ? 0 : py, 1); return dvw_handled(x,h,m,wp,lp,0);
+        case WM_RBUTTONUP: dvw_push(x, 3, px < 0 ? 0 : px, py < 0 ? 0 : py, 3); return dvw_handled(x,h,m,wp,lp,0);
+        case WM_MOUSEMOVE: dvw_push(x, 4, px < 0 ? 0 : px, py < 0 ? 0 : py, 0); return dvw_handled(x,h,m,wp,lp,0);
         case WM_CHAR:
-            if (wp >= 0xD800 && wp <= 0xDBFF) { x->hs = (unsigned)wp; return 0; }
-            if (wp >= 0xDC00 && wp <= 0xDFFF) { if (x->hs) dvw_push(x, 5, 0x10000 + (((nat_t)x->hs - 0xD800) << 10) + ((nat_t)wp - 0xDC00), 0, 0); x->hs = 0; return 0; }
+            if (wp >= 0xD800 && wp <= 0xDBFF) { x->hs = (unsigned)wp; return dvw_handled(x,h,m,wp,lp,0); }
+            if (wp >= 0xDC00 && wp <= 0xDFFF) { if (x->hs) dvw_push(x, 5, 0x10000 + (((nat_t)x->hs - 0xD800) << 10) + ((nat_t)wp - 0xDC00), 0, 0); x->hs = 0; return dvw_handled(x,h,m,wp,lp,0); }
             x->hs = 0;
             if (wp >= 32 && wp != 127) dvw_push(x, 5, (nat_t)wp, 0, 0);
-            return 0;
+            return dvw_handled(x,h,m,wp,lp,0);
         case WM_MOUSEWHEEL: case 0x020E: {
             POINT pt; pt.x = px; pt.y = py;
             ScreenToClient(h, &pt);
             short delta = (short)HIWORD(wp);
             nat_t dir = m == WM_MOUSEWHEEL ? (delta > 0 ? 1 : 2) : (delta > 0 ? 4 : 3);
             dvw_push(x, 8, pt.x < 0 ? 0 : (nat_t)pt.x, pt.y < 0 ? 0 : (nat_t)pt.y, dir);
-            return 0;
+            return dvw_handled(x,h,m,wp,lp,0);
         }
         case WM_KEYDOWN: { nat_t k = dvw_vk(wp); if (k) dvw_push(x, 5, k, 0, 0); break; }
-        case WM_SIZE: { int w = LOWORD(lp), hh = HIWORD(lp); if (w != x->w || hh != x->h) { x->w = w; x->h = hh; dvw_push(x, 6, (nat_t)w, (nat_t)hh, 0); } return 0; }
-        case WM_ERASEBKGND: if (x->gpu) return 1; break;
+        case 0x02E0: dvw_push(x,9,LOWORD(wp),HIWORD(wp),0);return dvw_handled(x,h,m,wp,lp,0);
+        case WM_SIZE: { int w = LOWORD(lp), hh = HIWORD(lp); if (w != x->w || hh != x->h) { x->w = w; x->h = hh; dvw_push(x, 6, (nat_t)w, (nat_t)hh, 0); } return dvw_handled(x,h,m,wp,lp,0); }
+        case WM_ERASEBKGND: if (x->gpu) return dvw_handled(x,h,m,wp,lp,1); break;
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC dc = BeginPaint(h, &ps);
@@ -9908,42 +9926,42 @@ static LRESULT CALLBACK dvw_proc(HWND h, UINT m, WPARAM wp, LPARAM lp) {
             }
             EndPaint(h, &ps);
             dvw_push(x, 7, 0, 0, 0);
-            return 0;
+            return dvw_handled(x,h,m,wp,lp,0);
         }
         }
     }
-    return DefWindowProcW(h, m, wp, lp);
+    return x && x->borrowed && x->host_proc ? DVW_CALL_HOST(x->host_proc, h, m, wp, lp) : DefWindowProcW(h, m, wp, lp);
 }
-static DV *dvb_win_open(DV *tv, DV *wv, DV *hv) {
+static DV *dvw_open_parent(DV *tv, DV *wv, DV *hv, nat_t parent) {
     const char *title;
     int ok = dvo_cstr(tv, "win_open", &title);
     nat_t w = dv_nat_of(wv, "win_open"), h = dv_nat_of(hv, "win_open");
     if (!w || !h || w > 16384 || h > 16384) return dvo_err(-1, "invalid window size %sx%s", dvo_u(w), dvo_u(h));
     int slot = dvw_slot();
     if (slot < 0) return dvo_errs("too many windows");
-    static int registered;
-    if (!registered) {
-        WNDCLASSW wc;
-        memset(&wc, 0, sizeof wc);
-        wc.style = CS_OWNDC; /* OpenGL (win_gpu) keeps the device context */
-        wc.lpfnWndProc = dvw_proc; wc.hInstance = GetModuleHandleW(0); wc.lpszClassName = L"DLMWindow"; wc.hCursor = LoadCursorW(0, MAKEINTRESOURCEW(32512));
-        RegisterClassW(&wc);
-        registered = 1;
+    HWND parent_window=(HWND)(uintptr_t)parent;
+    if(parent&&(!IsWindow(parent_window)||GetWindowThreadProcessId(parent_window,NULL)!=GetCurrentThreadId()))return dvo_errs("parent must belong to current thread");
+    if(!dvw_class){
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,(LPCWSTR)(uintptr_t)&dvw_proc,&dvw_instance);
+        swprintf(dvw_class_name,64,L"DLMWindow_%p",(void*)(uintptr_t)&dvw_proc);
+        WNDCLASSW wc;memset(&wc,0,sizeof wc);wc.style=CS_OWNDC;wc.lpfnWndProc=dvw_proc;wc.hInstance=dvw_instance;wc.lpszClassName=dvw_class_name;wc.hCursor=LoadCursorW(0,MAKEINTRESOURCEW(32512));
+        dvw_class=RegisterClassW(&wc);if(!dvw_class)return dvo_errs("cannot register editor class");
     }
-    RECT rc = { 0, 0, (LONG)w, (LONG)h };
-    AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+    DWORD style=parent?WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN:WS_OVERLAPPEDWINDOW;
+    RECT rc={0,0,(LONG)w,(LONG)h};AdjustWindowRect(&rc,style,FALSE);
     dvw_win *x = &dvw_wins[slot];
     memset(x, 0, sizeof *x);
     x->used = 1; x->w = (int)w; x->h = (int)h;
     wchar_t wt[1024];
     if (!ok || !MultiByteToWideChar(CP_UTF8, 0, title, -1, wt, 1024)) wt[0] = 0;
     wt[1023] = 0;
-    x->hwnd = CreateWindowW(L"DLMWindow", wt, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, 0, 0, GetModuleHandleW(0), 0);
+    x->hwnd = CreateWindowW(dvw_class_name,wt,style,parent?0:CW_USEDEFAULT,parent?0:CW_USEDEFAULT,rc.right-rc.left,rc.bottom-rc.top,parent_window,0,dvw_instance,0);
     if (!x->hwnd) { x->used = 0; return dvo_err((int)GetLastError(), "cannot open window"); }
     ShowWindow(x->hwnd, SW_SHOW);
     UpdateWindow(x->hwnd);
     return dv_result(dv_nat((nat_t)slot + 1), 1);
 }
+static DV *dvb_win_open(DV *tv,DV *wv,DV *hv){return dvw_open_parent(tv,wv,hv,0);}
 static DV *dvb_win_present(DV *iv, DV *imv) {
     nat_t id = dv_nat_of(iv, "win_present");
     DV *im = dvv_of(imv, "win_present");
@@ -9980,7 +9998,8 @@ static DV *dvb_win_close(DV *iv) {
     dvw_win *x = dvw_get(id);
     if (!x) return dvo_err(-1, "no window %s", dvo_u(id));
     dgl_close(x);
-    DestroyWindow(x->hwnd);
+    if (x->borrowed) { if (x->host_proc) SetWindowLongPtrW(x->hwnd, GWLP_WNDPROC, (LONG_PTR)x->host_proc); }
+    else DestroyWindow(x->hwnd);
     free(x->pix);
     x->used = 0;
     return dv_result(dv_nat(0), 1);
@@ -10048,6 +10067,7 @@ static const char *dgl_platform_init(dvw_win *x) {
     void *ctx = dgl_glXCreateContext(x->dpy, vi, 0, 1);
     dvw_XFree(vi);
     if (!child || !ctx) {
+        if(ctx)dgl_glXDestroyContext(x->dpy,ctx);
         if (child) dvw_XDestroyWindow(x->dpy, child);
         dgl_XFreeColormap(x->dpy, cmap);
         return "cannot create an OpenGL context";
@@ -10100,11 +10120,7 @@ static int dgl_msaa_format(void) {
     static int tried, found;
     if (tried) return found;
     tried = 1;
-    WNDCLASSA wc;
-    memset(&wc, 0, sizeof wc);
-    wc.lpfnWndProc = DefWindowProcA; wc.hInstance = GetModuleHandleA(0); wc.lpszClassName = "DLMGLProbe";
-    RegisterClassA(&wc);
-    HWND w = CreateWindowA("DLMGLProbe", "", WS_OVERLAPPEDWINDOW, 0, 0, 16, 16, 0, 0, wc.hInstance, 0);
+    HWND w=CreateWindowW(dvw_class?dvw_class_name:L"STATIC",L"",WS_OVERLAPPEDWINDOW,0,0,16,16,0,0,dvw_class?dvw_instance:GetModuleHandleW(0),0);
     if (!w) return 0;
     HDC dc = GetDC(w);
     PIXELFORMATDESCRIPTOR pfd;
@@ -10135,12 +10151,12 @@ static const char *dgl_platform_init(dvw_win *x) {
     if (!x->hdc) return "cannot get the window device context";
     PIXELFORMATDESCRIPTOR pfd;
     dgl_pfd(&pfd);
-    int fmt = dgl_msaa_format();
-    if (!fmt) fmt = ChoosePixelFormat(x->hdc, &pfd);
-    if (!fmt || !DescribePixelFormat(x->hdc, fmt, sizeof pfd, &pfd) || !SetPixelFormat(x->hdc, fmt, &pfd)) return "no OpenGL pixel format with a stencil buffer";
+    int existing=GetPixelFormat(x->hdc);int fmt=existing?existing:dgl_msaa_format();
+    if(!fmt)fmt=ChoosePixelFormat(x->hdc,&pfd);
+    if(!fmt||!DescribePixelFormat(x->hdc,fmt,sizeof pfd,&pfd)||!pfd.cStencilBits||(!existing&&!SetPixelFormat(x->hdc,fmt,&pfd))){ReleaseDC(x->hwnd,x->hdc);x->hdc=0;return "no OpenGL pixel format with a stencil buffer";}
     x->glrc = dgl_wglCreateContext(x->hdc);
-    if (!x->glrc) return "cannot create an OpenGL context";
-    if (!dgl_wglMakeCurrent(x->hdc, x->glrc)) { dgl_wglDeleteContext(x->glrc); x->glrc = 0; return "cannot make the OpenGL context current"; }
+    if (!x->glrc){ReleaseDC(x->hwnd,x->hdc);x->hdc=0;return "cannot create an OpenGL context";}
+    if (!dgl_wglMakeCurrent(x->hdc, x->glrc)) { dgl_wglDeleteContext(x->glrc); x->glrc = 0;ReleaseDC(x->hwnd,x->hdc);x->hdc=0; return "cannot make the OpenGL context current"; }
     return 0;
 }
 static int dgl_current(dvw_win *x) { return dgl_wglMakeCurrent(x->hdc, x->glrc) != 0; }
@@ -10243,11 +10259,14 @@ static DV *dvb_win_gpu(DV *iv) {
     dvw_win *x = dvw_get(id);
     if (!x) return dvo_err(-1, "no window %s", dvo_u(id));
     if (!x->gpu) {
+        unsigned char *rad=malloc(128*128*4);
+        if(!rad)dv_fail("out of memory");
         const char *e = dgl_platform_init(x);
-        if (e) return dvo_errs(e);
+        if(e){free(rad);return dvo_errs(e);}
         unsigned t[2];
         dgl_ramp_tex = 0; dgl_radial_tex = 0;
-        dgl_make_textures();
+        dgl_make_textures(rad);
+        free(rad);
         t[0] = dgl_ramp_tex; t[1] = dgl_radial_tex;
         x->ramp = t[0]; x->radial = t[1];
         x->gpu = 1;
@@ -10259,10 +10278,9 @@ static DV *dvb_win_gpu(DV *iv) {
 }
 static void dgl_keep(dvw_win *x, DV *sc, nat_t w, nat_t h, dvy_scale s) {
     if (x->scene_cap < sc->u.nv.n) {
-        free(x->scene);
-        x->scene_cap = sc->u.nv.n;
-        x->scene = malloc(sizeof(nat_t) * (x->scene_cap ? x->scene_cap : 1));
-        if (!x->scene) dv_fail("out of memory");
+        nat_t *replacement=malloc(sizeof(nat_t)*(sc->u.nv.n?sc->u.nv.n:1));
+        if(!replacement)dv_fail("out of memory");
+        free(x->scene);x->scene=replacement;x->scene_cap=sc->u.nv.n;
     }
     if (sc->u.nv.n) memcpy(x->scene, sc->u.nv.d, sizeof(nat_t) * sc->u.nv.n);
     x->scene_n = sc->u.nv.n; x->sw = w; x->sh = h; x->ss = s;
@@ -10295,25 +10313,23 @@ static DV *dvb_win_read(DV *iv) {
     if (!x->gpu || !x->scene_n) return dvo_errs("win_read needs a GPU window with a presented scene");
     if (!dgl_draw(x)) return dvo_errs("invalid scene");
     size_t w = (size_t)x->sw, h = (size_t)x->sh;
-    unsigned char *px = malloc(w * h * 4);
-    if (!px) dv_fail("out of memory");
+    unsigned char *px = dv_alloc(w * h * 4);
     dgl_glFinish();
     dgl_glReadBuffer(0x0405);                     /* BACK */
     dgl_glPixelStorei(0x0D05, 1);                 /* PACK_ALIGNMENT */
     dgl_glReadPixels(0, dgl_vy, (int)w, (int)h, 0x1908, 0x1401, px);
-    nat_t *out = dvv_scratch(sizeof(nat_t) * (w * h + 2));
+    nat_t *out = dv_alloc(sizeof(nat_t) * (w * h + 2));
     out[0] = w; out[1] = h;
     for (size_t y = 0; y < h; y++)
         for (size_t xx = 0; xx < w; xx++) {
             const unsigned char *p = px + 4 * ((h - 1 - y) * w + xx);
             out[2 + y * w + xx] = ((nat_t)p[0] << 24) | ((nat_t)p[1] << 16) | ((nat_t)p[2] << 8) | 255u;
         }
-    free(px);
-    return dv_result(dvv_take(out, w * h + 2), 1);
+    DV *image=dv_new(DV_NVEC);image->u.nv.d=out;image->u.nv.n=w*h+2;return dv_result(image,1);
 }
 static void dgl_close(dvw_win *x) {
     if (!x->gpu) return;
-    dgl_current(x);
+    if(dgl_current(x)){
     unsigned t[2] = { x->ramp, x->radial };
     dgl_glDeleteTextures(2, t);
     if (x->fbo) {
@@ -10321,6 +10337,7 @@ static void dgl_close(dvw_win *x) {
         dgl_glDeleteRenderbuffers(2, r);
         dgl_glDeleteFramebuffers(1, &x->fbo);
         x->fbo = 0;
+    }
     }
     dgl_platform_close(x);
     free(x->scene);

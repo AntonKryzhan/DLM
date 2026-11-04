@@ -275,6 +275,10 @@ impl Runtime {
     /// v0.80: execute the root module of a program. Imported modules only
     /// contribute declarations (fns, records, statements) to theories that
     /// extend them; their values and expressions are not executed.
+    pub(crate) fn call_native_ordinary(program:&crate::program::Program,theory:&str,name:&str,values:Vec<RuntimeValue>,line:usize)->Result<RuntimeValue,Diagnostic>{
+        let program=program.clone();let theory=theory.to_owned();let name=name.to_owned();
+        on_runtime_thread(move||{let mut runtime=Runtime::new();for dependency in program.dependencies(){for item in &dependency.items{if let ModuleItem::Theory(t)=item{runtime.declare_theory(t);}}}runtime.execute_module(program.root())?;runtime.apply_native_bridge(&theory,&name,values,line)})
+    }
     pub fn run_program(mut self, program: &crate::program::Program) -> Result<RunReport, Diagnostic> {
         on_runtime_thread(move || {
             for dependency in program.dependencies() {
@@ -284,7 +288,12 @@ impl Runtime {
                     }
                 }
             }
-            self.run_module_on_current_thread(program.root())
+            let native = crate::native::check_program(program).map_err(|d| d.into_iter().next().unwrap())?;
+            let mut report = if native.unit.ordinary_program.is_some(){RunReport{module_name:program.root().name.clone(),theory_count:0,values_evaluated:0,output:vec![],main:None}}else{self.run_module_on_current_thread(program.root())?};
+            let mut vm = crate::native::vm::Vm::new(&native);
+            vm.run().map_err(|e| crate::native::error(1,e))?;
+            report.output.extend(vm.output);
+            Ok(report)
         })
     }
 
@@ -468,9 +477,15 @@ impl Runtime {
                     }
                 }
             }
-            Ok(self
-                .execute_module(program.root())
-                .map_err(|diagnostic| Box::new(RunFailure { diagnostic, output: std::mem::take(&mut self.output) })))
+            let checked=crate::native::check_program(program).map_err(|d|d.into_iter().next().unwrap());
+            let result = checked.and_then(|native| {
+                let mut report=if native.unit.ordinary_program.is_some(){RunReport{module_name:program.root().name.clone(),theory_count:0,values_evaluated:0,output:vec![],main:None}}else{self.execute_module(program.root())?};
+                let mut vm = crate::native::vm::Vm::new(&native);
+                let result = vm.run();
+                report.output.extend(vm.output);
+                match result { Ok(()) => Ok(report), Err(e) => { self.output = report.output; Err(crate::native::error(1,e)) } }
+            });
+            Ok(result.map_err(|diagnostic| Box::new(RunFailure { diagnostic, output: std::mem::take(&mut self.output) })))
         });
         observed.unwrap_or_else(|diagnostic| Err(Box::new(RunFailure { diagnostic, output: Vec::new() })))
     }

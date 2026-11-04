@@ -100,7 +100,7 @@ pub const ORDINARY_BUILTINS: &[&str] = &[
     "sat_proof", "sat_check", "sat_count", "ilp_solve", "ilp_status",
     "km_empty", "km_insert", "km_get", "km_remove", "km_contains", "km_len", "km_keys", "km_values", "km_from", "km_add", "km_min", "km_max", "km_floor", "km_ceil", "km_merge", "km_range", "tm_empty", "tm_insert", "tm_get", "tm_remove", "tm_contains", "tm_len", "tm_keys", "tm_values", "tm_from", "tm_add", "tm_merge", "tm_count_words",
     "la_pcg", "la_bicgstab", "la_gmres", "geo_orient2d", "geo_incircle", "geo_orient3d", "geo_delaunay", "kd_knn", "kd_radius", "fft2_forward", "fft2_inverse", "sig_stft", "sig_dwt", "sig_idwt", "sig_iir", "sig_sha256", "bvh_raycast", "bvh_winding", "bvh_pairs", "gx_new", "gx_width", "gx_height", "gx_get", "gx_fill_rect", "gx_line", "gx_circle", "gx_text", "gx_text_width", "gx_blit", "gx_checksum", "vx_render", "vx_render_region", "vx_bounds", "vx_text_width", "vx_svg", "vx_text", "vx_text_fonts", "vx_font_width", "vx_font_has", "vx_font_advance", "vx_font_metrics", "vx_codepoints", "vx_from_codepoints", "file_write_png", "file_font_load", "file_font_find",
-    "file_open", "file_ok", "file_error", "file_write", "file_write_bytes", "file_read_line", "file_read_all", "file_read_bytes", "file_flush", "file_close", "file_remove", "file_set_buffered", "file_seek", "file_tell", "file_size", "file_truncate", "file_exists", "file_is_dir", "file_size_of", "file_mtime", "file_list_dir", "file_walk", "file_make_dir", "file_remove_dir", "file_rename", "file_copy", "file_write_atomic", "proc_run", "proc_env", "net_resolve", "net_listen", "net_local_port", "net_accept", "net_connect", "net_send", "net_recv_line", "net_recv_all", "net_shutdown", "net_close", "proc_spawn", "proc_poll", "proc_wait", "proc_kill", "win_open", "win_present", "win_poll", "win_size", "win_close", "win_gpu", "win_present_scene", "win_read",
+    "file_open", "file_ok", "file_error", "file_write", "file_write_bytes", "file_read_line", "file_read_all", "file_read_bytes", "file_flush", "file_close", "file_remove", "file_set_buffered", "file_seek", "file_tell", "file_size", "file_truncate", "file_exists", "file_is_dir", "file_size_of", "file_mtime", "file_list_dir", "file_walk", "file_make_dir", "file_remove_dir", "file_rename", "file_copy", "file_write_atomic", "proc_run", "proc_env", "net_resolve", "net_listen", "net_local_port", "net_accept", "net_connect", "net_send", "net_recv_line", "net_recv_all", "net_shutdown", "net_close", "proc_spawn", "proc_poll", "proc_wait", "proc_kill", "win_child", "win_attach", "win_resize", "win_focus", "win_dpi", "win_open", "win_present", "win_poll", "win_size", "win_close", "win_gpu", "win_present_scene", "win_read",
     "bn_from_nat", "bn_to_nat", "bn_from_words", "bn_to_words", "bn_from_text", "bn_to_text", "bn_bits", "bn_limbs", "bn_cmp", "bn_add", "bn_monus", "bn_mul", "bn_div", "bn_mod", "bn_shl", "bn_shr", "bn_gcd", "bn_sqrt", "bn_powmod", "bn_modinv", "bn_is_prime", "bn_next_prime", "bn_random", "bn_to_hex", "bn_from_hex",
 ];
 
@@ -173,6 +173,11 @@ pub const BYTE_BUFFER_BUILTINS: &[(&str, &[Option<bool>])] = &[
     ("proc_poll", &[None]),
     ("proc_wait", &[None]),
     ("proc_kill", &[None]),
+    ("win_child", &[None, None, None, None]),
+    ("win_attach", &[None, None, None]),
+    ("win_resize", &[None, None, None]),
+    ("win_focus", &[None]),
+    ("win_dpi", &[None]),
     ("win_open", &[None, None, None]),
     ("win_present", &[None, None]),
     ("win_poll", &[None, None]),
@@ -480,6 +485,11 @@ pub const FILE_BUILTINS: &[(&str, &[&str], &str)] = &[
     ("proc_wait", &["Nat"], "Result<List<Text>,Text>"),
     ("proc_kill", &["Nat"], "Result<Nat,Text>"),
     // v0.128: native windows (crate::window)
+    ("win_child", &["Nat", "Text", "Nat", "Nat"], "Result<Nat,Text>"),
+    ("win_attach", &["Nat", "Nat", "Nat"], "Result<Nat,Text>"),
+    ("win_resize", &["Nat", "Nat", "Nat"], "Result<Nat,Text>"),
+    ("win_focus", &["Nat"], "Result<Nat,Text>"),
+    ("win_dpi", &["Nat"], "Result<Float,Text>"),
     ("win_open", &["Text", "Nat", "Nat"], "Result<Nat,Text>"),
     ("win_present", &["Nat", "NatVec"], "Result<Nat,Text>"),
     ("win_poll", &["Nat", "Nat"], "Result<NatVec,Text>"),
