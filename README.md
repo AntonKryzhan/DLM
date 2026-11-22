@@ -2,7 +2,62 @@
 
 **English** | [Русский](README.ru.md)
 
-**DLM (Deductive Logic Machine)** is an experimental Rust-based programming language exploring formal verification, proof-aware computation, symbolic mathematics, native compilation and logically specified networking (DLN).
+**DLM is an implemented, research-stage programming language and formal-computation
+system.** Its Rust workspace contains a parser, semantic and contract checking,
+an interpreter, typed intermediate representations, a native C backend for the
+supported executable subset, proof-related infrastructure, and substantial
+standard libraries. The goal is a **general-purpose language** in which formal
+reasoning is available when needed—not a requirement to prove every program.
+
+The audited source snapshot is **v0.145.0** (`Cargo.toml`). The word *research*
+describes open assurance and compatibility work; it does not mean that this
+repository is a minimal demonstration or merely a language proposal.
+
+### What is implemented in the source tree
+
+- **Compiler and language:** source parsing, modules, type and effect checking,
+  generics and type classes, ownership/resource checks, checked lowering,
+  interpretation and C generation; a separate `native { ... }` application
+  domain supports machine data, FFI, atomics, SIMD and several artifact types
+  within documented limits. See [compiler](docs/COMPILER.md) and
+  [native applications](docs/NATIVE_APPLICATIONS.md).
+- **Logic and audit:** theory boundaries, proof passports, provenance and
+  trust tracking, a proof kernel and bounded independent certificate/replay
+  checks. These do **not** constitute a proof of the entire compiler, runtime
+  or arbitrary user program. See [law status](docs/LAW_STATUS.md).
+- **Computational libraries:** exact and bounded arithmetic, rational and
+  complex numbers, matrices, graphs, algebra, topology, numerical methods,
+  files, processes, vector UI and graphics. Implemented domains have their
+  own limits and validation conditions; see
+  [mathematical progress](docs/MATHEMATICS_PROGRESS.md).
+- **Networking (DLN):** typed socket and codec layers, asynchronous operations,
+  cryptographic primitives, QUIC/transport adapters, NetworkSpec and later
+  identity, discovery and adaptive-network modules. Native dependencies,
+  platform validation and protocol-proof obligations remain explicit; see
+  [DLN status](docs/DLN_STATUS.md) and the respective `docs/DLN_*.md` files.
+
+**Source inventory for this v0.145.0 snapshot:** 4 Rust workspace crates
+(`dlm_core`, `dlm_cli`, `dlm_network_proof`, `dlm_transport_proof`), 128 Rust
+source files under `dlm_core/src`, 74 `lib/std/*.dlm` modules, 298 `.dlm`
+examples and 164 Rust integration-test files across the workspace. These are
+counts of implementation and test assets, **not** proof of correctness or
+production adoption.
+
+### Maturity: four separate questions
+
+| Dimension | Evidence-based assessment |
+| --- | --- |
+| **Implementation depth** | Substantial working compiler, runtime, logic, mathematics, native and network code; far beyond a toy prototype. |
+| **API and semantic stability** | Supported semantics and compatibility boundaries are tested and documented, but the pre-1.0 APIs and some language features can still change. |
+| **Users and ecosystem** | A sizeable in-repository standard library, examples and tests exist; independent third-party usage, tooling coverage and ecosystem breadth are not established by source size. |
+| **Production readiness** | Real executable capabilities exist, but full cross-platform, security, performance and v1.0 acceptance gates are not yet demonstrated. Use documented supported subsets and validate for each deployment. |
+
+The source tree is the evidence for what exists; passing tests are evidence for
+their tested scenarios, not universal guarantees. Some roadmap/status documents
+contain historical version snapshots. For current release numbering use
+`Cargo.toml`; for open contracts and acceptance work consult
+[ROADMAP.md](ROADMAP.md), [docs/LAW_STATUS.md](docs/LAW_STATUS.md) and
+[docs/MATHEMATICS_PROGRESS.md](docs/MATHEMATICS_PROGRESS.md).
 
 ## Origin story
 
@@ -54,10 +109,15 @@ DLM grew out of the idea that a future mathematical programming language should 
 
 ## What is DLM?
 
-**DLM** is an experimental programming language and formal reasoning system built around one central idea:
-programs should not only execute — they should also carry explicit mathematical meaning, proof status, trust level, provenance, validation history, and logical boundaries.
+**DLM** is a programming-language implementation and formal-reasoning system
+built around one central idea: programs should execute, while selected values,
+claims and transformations can also carry explicit proof status, trust level,
+provenance, validation history and logical boundaries.
 
-DLM is not just another general-purpose language. It is a research language for working with computation, logic, proof objects, symbolic structures, and a new style of constructive mathematics.
+DLM already has a checker, interpreter, native compilation path and application
+libraries. Its research focus concerns how those pieces interact with proof
+objects and mathematical meaning; it is not a substitute for ordinary language
+capabilities or an assertion that all computations are formally proved.
 
 The project started as part of the **ЯРД / DLM** research line: an attempt to design a language where mathematical truth, program execution, proof construction, and validation metadata are treated as first-class concepts.
 
@@ -277,13 +337,16 @@ DLM is not a replacement for them.
 
 Instead, DLM explores a language design where proof metadata, symbolic execution, program structure, and trust information are integrated directly into the programming model.
 
-DLM is more experimental and less mature, but it is also freer to explore new ideas.
+DLM has a substantial implemented compiler and library surface, but it does
+not claim the proof-system coverage, ecosystem or production assurance of these
+established tools. Its proof-related guarantees are scoped to documented kernels
+and contracts.
 
 ---
 
 ## Advantages
 
-DLM is designed to provide:
+DLM implements or actively develops:
 
 * explicit proof metadata;
 * traceable derivation history;
@@ -299,26 +362,28 @@ DLM is designed to provide:
 
 ## Limitations
 
-DLM is experimental.
+The substantial implementation should not be confused with a stable v1.0
+platform. Current limitations include:
 
-Current limitations include:
+* evolving pre-1.0 syntax, APIs, some semantics and compatibility contracts;
+* less mature IDE, package, integration and distribution tooling than established languages;
+* incomplete independent adoption and production-operations evidence;
+* platform-specific native and networking dependencies and unfinished acceptance matrices;
+* bounded proof-checking and numerical guarantees, not a whole-program or
+  whole-compiler correctness theorem;
+* remaining work on general task scheduling, full language/backend coverage
+  and the v1.0 release gates.
 
-* incomplete language ecosystem;
-* limited tooling compared to mature languages;
-* small standard library;
-* evolving syntax and semantics;
-* limited documentation;
-* no large production ecosystem yet;
-* research-oriented architecture;
-* possible breaking changes during development.
-
-DLM should currently be treated as a research prototype, not as a production replacement for established languages.
+The standard library is **substantial but uneven**: many specialized modules
+are implemented, while some common general-purpose facilities and portability
+guarantees remain open. DLM can be used and tested within its documented
+capability boundaries; production suitability must be established per use case.
 
 ---
 
 ## What DLM can be useful for
 
-Potential areas of use:
+Implemented and research-stage areas of use:
 
 * formal logic experiments;
 * proof-carrying computation;
@@ -330,54 +395,54 @@ Potential areas of use:
 * language design experiments;
 * trust-aware computation;
 * mathematical knowledge representation.
+* checked native utilities and file-processing applications within the supported subset;
+* network/transport implementation and protocol research with explicit assurance boundaries.
 
 ---
 
 ## Repository structure
 
 ```text
-crates/      Rust crates implementing the DLM core and CLI
-docs/        Documentation and design notes
-examples/    Example DLM programs
-tests/       Test cases
-Cargo.toml   Rust workspace configuration
-yard.toml    Project configuration
+crates/dlm_core/              Parser, checker, interpreter, proof and native backends
+crates/dlm_cli/               The `dlm` command-line interface
+crates/dlm_network_proof/     Independent bounded network-certificate checks
+crates/dlm_transport_proof/   Independent bounded transport-certificate checks
+lib/std/                     DLM standard-library modules
+examples/{valid,invalid,math,proofs,native}/  Source examples and fixtures
+crates/*/tests/              Rust integration and regression tests
+docs/                        Design, contracts and acceptance evidence
+Cargo.toml                   Rust workspace, version and license declaration
 ```
 
 ---
 
 ## Running checks
 
-Example:
+Examples using the checked-in workspace:
 
 ```bash
 cargo run -p dlm_cli -- check examples/valid/provability_truth_boundary.dlm
+cargo run -p dlm_cli -- run examples/valid/simple_nat.dlm
+cargo test --workspace --locked
 ```
 
-Expected result:
-
-```text
-DLM check: examples/valid/provability_truth_boundary.dlm
-
-OK
-```
+Native executable builds use `dlm build` with a compatible 64-bit GCC/Clang
+toolchain and only cover supported lowering paths; consult
+[docs/COMPILER.md](docs/COMPILER.md) for platform setup and failure modes.
+The test command runs the suite—it is **not** a claim that every target or CI
+environment has already passed.
 
 ---
 
 ## Development status
 
-DLM is under active development.
-
-The current focus is on:
-
-* core language checking;
-* proof term representation;
-* passports and validation metadata;
-* symbolic printing;
-* proof kernel checking;
-* example programs;
-* theory boundaries;
-* static validation.
+DLM v0.145.0 is an active, sizeable research-stage implementation, not an
+unimplemented proposal. The compiler, interpreter, native subsystem, logic
+infrastructure, mathematical libraries and DLN modules all contain executable
+code and dedicated tests. Their validation scopes differ, and work remains on
+API stability, platform parity, language completeness, protocol assurance,
+ecosystem tooling and v1.0 acceptance. Release-specific guarantees must be
+checked against the actual code and recorded test evidence.
 
 ---
 
@@ -414,7 +479,7 @@ Fundamental readiness   — has it survived deeper mathematical, kernel, stdlib,
 
 This is important because `moving to the next stage` does not mean the previous stage is mathematically perfect. It means the previous stage has passed a strong enough MVP gate to be stress-tested by the next layer.
 
-Current interpretation:
+Historical interpretation of this stage model:
 
 ```text
 Metamathematical foundation: strong MVP gate, not absolute final theory.
@@ -426,4 +491,7 @@ See `docs/STAGE_READINESS_MODEL.md`.
 
 ## License
 
-The license is currently defined by the repository owner.
+The workspace manifests declare `MIT OR Apache-2.0`. The audited source
+snapshot does not contain standalone license-text files; confirm the repository's
+distribution terms before reuse.
+
