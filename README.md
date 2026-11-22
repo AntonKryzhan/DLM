@@ -491,7 +491,6 @@ See `docs/STAGE_READINESS_MODEL.md`.
 
 ## License
 
-The workspace manifests declare `MIT OR Apache-2.0`. The audited source
-snapshot does not contain standalone license-text files; confirm the repository's
+confirm the repository's
 distribution terms before reuse.
 
