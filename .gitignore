@@ -24,3 +24,6 @@ __pycache__/
 /DLM-UNIVERSE/
 /DLM-CALCULATOR/
 /CHORDlike-LIVE-DLM/
+
+# Separate local projects
+/DPI/
