@@ -1822,7 +1822,7 @@ static bool dnc_load(void) {
     int expected=0;
     if(atomic_compare_exchange_strong(&dnc_state,&expected,1)) {
 #if defined(_WIN32)
-        const char *gnutls[]={"libgnutls-30.dll",NULL},*hogweed[]={"libhogweed-6.dll",NULL};
+        const char *gnutls[]={"libgnutls-30.dll",NULL},*hogweed[]={"libhogweed-7.dll","libhogweed-6.dll",NULL};
 #elif defined(__APPLE__)
         const char *gnutls[]={"libgnutls.30.dylib",NULL},*hogweed[]={"libhogweed.6.dylib",NULL};
 #else

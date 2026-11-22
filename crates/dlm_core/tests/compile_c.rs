@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use dlm_core::{
-    build_c_executable, default_c_compiler, emit_c, link_program, load_program_with_paths, lower_program, parse_module,
+    build_c_executable, build_c_executable_with_flags, default_c_compiler, emit_c, link_program, load_program_with_paths, lower_program, parse_module,
     CheckPolicy, DiagnosticKind, IrOp, Program, Runtime,
 };
 
@@ -545,7 +545,8 @@ int main(void) {
 }
 "#;
     let c = format!("#define main dlm_runtime_main\n{}\n{harness}", dlm_core::C_RUNTIME);
-    let exe = build_c_executable(&c, &dir.join("groups.c"), &dir.join("groups"), &default_c_compiler()).unwrap();
+    let flags: &[&str] = if cfg!(windows) { &["-Wl,--stack,16777216"] } else { &[] };
+    let exe = build_c_executable_with_flags(&c, &dir.join("groups.c"), &dir.join("groups"), &default_c_compiler(), flags).unwrap();
     let output = Command::new(exe).output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     std::fs::remove_dir_all(dir).ok();

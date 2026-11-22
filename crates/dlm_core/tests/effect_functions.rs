@@ -44,8 +44,8 @@ fn file_effects_and_zero_argument_callbacks_work() {
     print_line(invoke(reader_value, "{}"))
     print_line(invoke0(thunk))
     "#,
-        file.display(),
-        file.display()
+        file.to_string_lossy().replace('\\', "/"),
+        file.to_string_lossy().replace('\\', "/")
     ));
     assert_eq!(run_both(&p, &dir), ["content", "content"]);
 }

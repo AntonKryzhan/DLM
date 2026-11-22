@@ -1700,6 +1700,9 @@ static DV *dvb_file_make_dir(DV *pv) {
             && c[i] != '\\'
 #endif
         ) continue;
+#ifdef _WIN32
+        if (i == 2 && c[1] == ':' && (c[2] == '/' || c[2] == '\\')) continue;
+#endif
         char saved = c[i];
         c[i] = 0;
         dvz_stat_t st;

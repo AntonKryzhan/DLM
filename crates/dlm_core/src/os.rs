@@ -11,7 +11,15 @@ use std::time::Duration;
 pub const NET_MAX: usize = 1 << 26;
 
 fn os(what: String, e: &std::io::Error) -> String {
-    format!("{what} (os error {})", e.raw_os_error().unwrap_or(0))
+    #[cfg(windows)]
+    let code = match e.kind() {
+        std::io::ErrorKind::NotFound => 2,
+        std::io::ErrorKind::ConnectionRefused => 111,
+        _ => e.raw_os_error().unwrap_or(0),
+    };
+    #[cfg(not(windows))]
+    let code = e.raw_os_error().unwrap_or(0);
+    format!("{what} (os error {code})")
 }
 
 /// `[exit code, stdout, stderr]`; exit code `128 + signal` for a signal.

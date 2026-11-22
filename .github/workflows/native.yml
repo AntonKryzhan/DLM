@@ -16,10 +16,17 @@ jobs:
         with:
           msystem: UCRT64
           update: true
-          install: mingw-w64-ucrt-x86_64-gcc
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gnutls
+            mingw-w64-ucrt-x86_64-nettle
+            mingw-w64-ucrt-x86_64-curl
       - name: Build and test native Windows executables
         shell: pwsh
         run: |
           $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;${{ runner.temp }}\msys64\usr\bin;$env:PATH"
           if (-not $env:HOME) { $env:HOME = $env:USERPROFILE }
+          $env:DLM_LIBGNUTLS = "${{ runner.temp }}\msys64\ucrt64\bin\libgnutls-30.dll"
+          $env:DLM_LIBHOGWEED = "${{ runner.temp }}\msys64\ucrt64\bin\libhogweed-7.dll"
+          $env:DLM_LIBCURL = "${{ runner.temp }}\msys64\ucrt64\bin\libcurl-4.dll"
           ./tools/build_windows.ps1

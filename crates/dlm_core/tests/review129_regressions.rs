@@ -169,7 +169,7 @@ theory T extends StdVector {
     let sc = vx_text_fonts(0,0,16000,0,nvl(list(f)),solid(255),"A")
     print_line(nat_to_text(gx_checksum(unwrap_or(vx_render(sc,80,80,1,1),nv_empty()))))
 }
-"#.replace("FONT",font.to_str().unwrap()).replace("PORT",&port.to_string());
+"#.replace("FONT",&font.to_string_lossy().replace('\\', "/")).replace("PORT",&port.to_string());
     std::fs::write(&path,source).unwrap();let root=Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let program=load_program_with_paths(&path,&[root.join("lib")]).unwrap();
     let check=Checker::with_policy(CheckPolicy::trusted_only()).check_program(&program);assert!(check.ok(),"{:?}",check.diagnostics);

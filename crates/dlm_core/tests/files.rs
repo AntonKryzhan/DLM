@@ -76,17 +76,17 @@ fn body(dir: &str) -> String {
 #[test]
 fn files_agree_between_interpreter_and_native_and_are_closed_in_scope() {
     let run_dir = scratch("interp");
-    let p = program(&body(run_dir.to_str().unwrap()));
+    let p = program(&body(&run_dir.to_string_lossy().replace('\\', "/")));
     let report = Checker::with_policy(CheckPolicy::trusted_only()).check_program(&p);
     assert!(report.ok(), "{:?}", report.diagnostics);
     let interpreted = Runtime::new().run_program(&p).unwrap().output;
     let native_dir = scratch("native");
-    let (out, err, code) = native(&program(&body(native_dir.to_str().unwrap())), &native_dir);
+    let (out, err, code) = native(&program(&body(&native_dir.to_string_lossy().replace('\\', "/"))), &native_dir);
     assert_eq!(code, 0, "{err}");
     let fix = |lines: Vec<String>, dir: &PathBuf| {
         lines
             .into_iter()
-            .map(|l| l.replace(dir.to_str().unwrap(), "<dir>"))
+            .map(|l| l.replace(&dir.to_string_lossy().replace('\\', "/"), "<dir>"))
             .collect::<Vec<_>>()
     };
     let interpreted = fix(interpreted, &run_dir);
@@ -126,7 +126,7 @@ fn runtime_errors_close_open_files_at_exit_and_keep_written_data() {
     let path = dir.join("log.txt");
     let src = format!(
         "    print_line(let f = file_open(\"{}\", \"w\") in let w = file_write(f, \"before\") in let b = buf_set(buf_new(1, 0), 5, 1) in let n = buf_free(b) in match file_close(f) {{ ok(k) => \"closed\", err(e) => e }})",
-        path.display()
+        path.to_string_lossy().replace('\\', "/")
     );
     let p = program(&src);
     let interpreted = Runtime::new().run_program(&p).expect_err("runtime error");
@@ -202,10 +202,10 @@ fn file_remove_rejects_directories_and_errors_preserve_embedded_nul() {
     print_line(let f = file_open("{}\0suffix", "r") in status(file_close(f)))
     print_line(let f = file_open("{}", "r\0w") in status(file_close(f)))
     print_line(status(file_remove("{}\0suffix")))"#,
-        empty.display(),
-        empty.display(),
-        empty.display(),
-        empty.display()
+        empty.to_string_lossy().replace('\\', "/"),
+        empty.to_string_lossy().replace('\\', "/"),
+        empty.to_string_lossy().replace('\\', "/"),
+        empty.to_string_lossy().replace('\\', "/")
     );
     let p = program(&body);
     let report = Checker::with_policy(CheckPolicy::trusted_only()).check_program(&p);

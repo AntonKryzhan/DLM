@@ -87,6 +87,8 @@ pub(crate) struct FileSlot {
     path: String,
     mode: u8,
     file: Option<std::fs::File>,
+    #[cfg(windows)]
+    append_resize: Option<std::fs::File>,
     error: Option<String>,
     written: u128,
     pending: Vec<u8>,
@@ -105,7 +107,15 @@ impl Drop for FileSlot {
 
 /// v0.125: `cannot <what> (os error N)`, the same text as the native `dvz_fail`.
 fn os_fail(what: String, err: &std::io::Error) -> String {
-    format!("{what} (os error {})", err.raw_os_error().unwrap_or(0))
+    #[cfg(windows)]
+    let code = match err.kind() {
+        std::io::ErrorKind::NotFound => 2,
+        std::io::ErrorKind::DirectoryNotEmpty => 39,
+        _ => err.raw_os_error().unwrap_or(0),
+    };
+    #[cfg(not(windows))]
+    let code = err.raw_os_error().unwrap_or(0);
+    format!("{what} (os error {code})")
 }
 
 fn fs_walk(root: &std::path::Path, rel: &str, out: &mut Vec<String>) -> Result<(), String> {
@@ -327,6 +337,10 @@ impl Runtime {
                     None => slot.fail(format!("invalid file mode `{mode}`")),
                     Some(Err(_)) => slot.fail(format!("cannot open file `{path}`")),
                     Some(Ok(f)) => {
+                        #[cfg(windows)]
+                        if mode == "a" {
+                            slot.append_resize = std::fs::OpenOptions::new().write(true).open(&path).ok();
+                        }
                         slot.file = Some(f);
                         slot.mode = mode.as_bytes()[0];
                     }
@@ -517,7 +531,11 @@ impl Runtime {
                     slot.fail(format!("cannot truncate file `{}`", slot.path));
                     return Ok(RuntimeValue::Bool(false));
                 }
-                match slot.file.as_ref().map(|f| f.set_len(n as u64)) {
+                #[cfg(windows)]
+                let file = if slot.mode == b'a' { slot.append_resize.as_ref() } else { slot.file.as_ref() };
+                #[cfg(not(windows))]
+                let file = slot.file.as_ref();
+                match file.map(|f| f.set_len(n as u64)) {
                     Some(Ok(())) if n <= i64::MAX as u128 => RuntimeValue::Bool(true),
                     _ => {
                         slot.fail(format!("cannot truncate file `{}`", slot.path));
