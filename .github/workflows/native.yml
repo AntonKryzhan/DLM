@@ -20,5 +20,6 @@ jobs:
       - name: Build and test native Windows executables
         shell: pwsh
         run: |
-          $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;$env:PATH"
+          $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;${{ runner.temp }}\msys64\usr\bin;$env:PATH"
+          if (-not $env:HOME) { $env:HOME = $env:USERPROFILE }
           ./tools/build_windows.ps1

@@ -57,7 +57,7 @@ fn run_both(name: &str, module: &str, body: &str) -> (Vec<String>, Vec<(String, 
 
 const FONT_TEXT: &str = r#"    fn fid(r: Result<Text, Text>) -> Nat = match r { ok(p) => match file_font_load(p) { ok(n) => n, err(e) => 0 }, err(e) => 0 }
     let fonts = nvl(list(fid(file_font_find("dejavusans.ttf")), fid(file_font_find("wqy-zenhei")), fid(file_font_find("dejavuserif.ttf"))))
-    print_line(match file_font_load("/nonexistent/x.ttf") { ok(n) => "?", err(e) => e })
+    print_line(match file_font_load("{D}/missing.ttf") { ok(n) => "?", err(e) => e })
     print_line(match file_font_find("no-such-font-xyz") { ok(n) => "?", err(e) => e })
     print_symbolic(vx_codepoints("A\u{416}\u{1F600}\x41"))
     print_line(vx_from_codepoints(nvl(list(1046, 55296, 1114112, 65))))
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 #[test]
 fn font_text_agrees_between_interpreter_and_native() {
     let (out, files) = run_both("fonts", "test.fonts", FONT_TEXT);
-    assert_eq!(out[0], "cannot read `/nonexistent/x.ttf` (os error 2)");
+    assert!(out[0].starts_with("cannot read `") && out[0].ends_with("/work/missing.ttf` (os error 2)"), "{}", out[0]);
     assert_eq!(out[1], "no font file matching `no-such-font-xyz`");
     assert_eq!(out[2], "nvec[65, 1046, 128512, 65]");
     assert_eq!(out[3], "Ж\u{FFFD}\u{FFFD}A");

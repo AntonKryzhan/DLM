@@ -15,10 +15,11 @@ fn check_reports_imported_physical_location_and_root_location() {
     std::fs::write(&root, "module app\nimport lib.base\ntheory App {\n    let a = unknown_root\n}\n").unwrap();
     std::fs::write(&library, "module lib.base\ntheory Base {\n    fn f() -> Nat =\n        1 + unknown_library\n}\n").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_dlm")).arg("check").arg(&root).output().unwrap();
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stderr = String::from_utf8_lossy(&output.stderr).replace('\\', "/");
+    let case_dir = dir.file_name().unwrap().to_string_lossy();
     assert_eq!(output.status.code(), Some(1));
-    assert!(stderr.contains(&format!("{}:4:13:", library.display())), "{stderr}");
-    assert!(stderr.contains(&format!("{}:4:13:", root.display())), "{stderr}");
+    assert!(stderr.contains(&format!("{case_dir}/lib/base.dlm:4:13:")), "{stderr}");
+    assert!(stderr.contains(&format!("{case_dir}/app.dlm:4:13:")), "{stderr}");
     std::fs::remove_dir_all(dir).unwrap();
 }
 
@@ -28,15 +29,16 @@ fn standalone_parse_and_build_errors_include_the_exact_file_position() {
     let root = dir.join("app.dlm");
     std::fs::write(&root, "module app\ntheory App {\n    let a = concat(\n        \"é\",\n        @@@)\n}\n").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_dlm")).arg("check").arg(&root).output().unwrap();
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stderr = String::from_utf8_lossy(&output.stderr).replace('\\', "/");
+    let case_dir = dir.file_name().unwrap().to_string_lossy();
     assert_eq!(output.status.code(), Some(1));
-    assert!(stderr.contains(&format!("{}:5:9:", root.display())), "{stderr}");
+    assert!(stderr.contains(&format!("{case_dir}/app.dlm:5:9:")), "{stderr}");
     std::fs::write(&root, "module app\ntheory App {\n    let a =\n        340282366920938463463374607431768211456\n}\n").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_dlm")).arg("build").arg(&root).arg("--c-only").output().unwrap();
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stderr = String::from_utf8_lossy(&output.stderr).replace('\\', "/");
     assert_eq!(output.status.code(), Some(1));
     assert!(stderr.contains("E0950 CompileError"), "{stderr}");
-    assert!(stderr.contains(&format!("{}:4:9:", root.display())), "{stderr}");
+    assert!(stderr.contains(&format!("{case_dir}/app.dlm:4:9:")), "{stderr}");
     assert!(!root.with_extension("c").exists());
     std::fs::remove_dir_all(dir).unwrap();
 }
