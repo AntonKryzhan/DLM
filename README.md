@@ -2,6 +2,8 @@
 
 **English** | [Русский](README.ru.md)
 
+**DLM (Deductive Logic Machine)** is an experimental Rust-based programming language exploring formal verification, proof-aware computation, symbolic mathematics, native compilation and logically specified networking (DLN).
+
 ## Origin story
 
 DLM began as an unusual research experiment.
