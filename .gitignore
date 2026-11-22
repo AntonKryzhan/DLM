@@ -19,3 +19,8 @@ Thumbs.db
 
 # Python caches
 __pycache__/
+
+# Local experimental applications
+/DLM-UNIVERSE/
+/DLM-CALCULATOR/
+/CHORDlike-LIVE-DLM/
