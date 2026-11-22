@@ -63,7 +63,7 @@ fn run_and_build(example: &str, expected: &str) {
     );
     let trace = String::from_utf8(native.stderr).unwrap();
     assert!(
-        trace.ends_with(" released at exit\n") && trace.contains(", 0 released at exit"),
+        trace.trim_end().ends_with(" released at exit") && trace.contains(", 0 released at exit"),
         "{trace}"
     );
     std::fs::remove_dir_all(dir).unwrap();
