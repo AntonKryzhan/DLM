@@ -22,7 +22,7 @@ fn build(name: &str, module: &str, source_body: &str) -> Built {
     let work = dir.join("work");
     std::fs::create_dir_all(&work).unwrap();
     let path = dir.join("main.dlm");
-    let source = format!("module {module}\nimport std.vector\ntheory App extends StdVector {{\n{}}}\n", source_body.replace("{D}", &work.display().to_string()));
+    let source = format!("module {module}\nimport std.vector\ntheory App extends StdVector {{\n{}}}\n", source_body.replace("{D}", &work.display().to_string().replace('\\', "/")));
     std::fs::write(&path, source).unwrap();
     let program = load_program_with_paths(&path, &[repo().join("lib")]).unwrap();
     let report = Checker::with_policy(CheckPolicy::trusted_only()).check_program(&program);

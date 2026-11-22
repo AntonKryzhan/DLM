@@ -36,7 +36,7 @@ fn project_checks_the_repository() {
     assert!(ok, "{stdout}\n{stderr}");
     assert!(stdout.starts_with("DLM project: DLM\n"), "{stdout}");
     assert!(stdout.contains("failed: 0"), "{stdout}");
-    assert!(stdout.contains("std/list.dlm  module=std.list status=closed"), "{stdout}");
+    assert!(stdout.replace('\\', "/").contains("std/list.dlm  module=std.list status=closed"), "{stdout}");
     let (ok, stdout, _) = dlm(&["project", "--audit", &format!("{ROOT}/dlm.project")]);
     assert!(ok);
     assert!(stdout.matches("DLM-AUDIT v1").count() >= 60, "one audit per root");
