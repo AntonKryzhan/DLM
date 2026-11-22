@@ -1,5 +1,7 @@
 # DLM — Deductive Logic Machine
 
+**English** | [Русский](README.ru.md)
+
 ## Origin story
 
 DLM began as an unusual research experiment.
