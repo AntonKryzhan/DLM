@@ -62,7 +62,21 @@ fn main() {
             run_contracts(&path, policy);
         }
         "project" => run_project(&args[2..]),
-        "build" => run_build(&args[2..]),
+        "build" => {
+            #[cfg(windows)]
+            {
+                let build_args = args[2..].to_vec();
+                std::thread::Builder::new()
+                    .name("dlm-build".into())
+                    .stack_size(16 * 1024 * 1024)
+                    .spawn(move || run_build(&build_args))
+                    .expect("start DLM build")
+                    .join()
+                    .expect("DLM build thread panicked");
+            }
+            #[cfg(not(windows))]
+            run_build(&args[2..]);
+        }
         "network-codegen" => network_codegen::run(&args[2..]),
         "network-protocol" => network_protocol::run(&args[2..]),
         "network-audit" => network_protocol::run_audit(&args[2..]),
