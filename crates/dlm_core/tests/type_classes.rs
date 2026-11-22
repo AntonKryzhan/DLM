@@ -392,6 +392,15 @@ print_line(nat_to_text(length(same_value(list(1, 2)))))
 
 #[test]
 fn eq_checks_the_complete_record_graph() {
+    std::thread::Builder::new()
+        .stack_size(16 * 1024 * 1024)
+        .spawn(check_complete_record_graph)
+        .expect("start deep Eq test")
+        .join()
+        .expect("deep Eq test panicked");
+}
+
+fn check_complete_record_graph() {
     let make = |leaf: &str, value: &str| {
         let mut body = format!("record R0(value: {leaf})\n");
         let mut v = format!("R0({value})");

@@ -6,7 +6,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --workspace --locked
+      - run: cargo test --workspace --locked --no-fail-fast
   windows:
     runs-on: windows-latest
     steps:

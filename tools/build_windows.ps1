@@ -16,7 +16,7 @@ try {
         throw "Use 64-bit MinGW-w64 GCC/Clang (MSYS2 UCRT64); compiler target: $target"
     }
     if (-not $SkipTests) {
-        & cargo test --workspace --locked
+        & cargo test --workspace --locked --no-fail-fast
         if ($LASTEXITCODE -ne 0) { throw "DLM tests failed" }
     }
     & cargo build --release --locked -p dlm_cli
