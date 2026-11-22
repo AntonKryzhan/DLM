@@ -194,6 +194,7 @@ fn every_invalid_example_is_rejected_in_its_intended_mode() {
 fn every_library_module_checks() {
     let mut failures = Vec::new();
     let mut count = 0usize;
+    let manifest = dlm_core::load_project(&repo_root()).expect("library trust admissions");
     let std_dir = repo_root().join("lib").join("std");
     for entry in fs::read_dir(&std_dir).expect("read lib/std") {
         let path = entry.expect("dir entry").path();
@@ -203,7 +204,16 @@ fn every_library_module_checks() {
         count += 1;
         match load_program_with_paths(&path, &[repo_root().join("lib")]) {
             Ok(program) => {
-                let report = Checker::with_policy(CheckPolicy::trusted_only()).check_program(&program);
+                let strict = Checker::with_policy(CheckPolicy::trusted_only()).check_program(&program);
+                let admitted = manifest.unsafe_roots.contains(&path.canonicalize().unwrap());
+                let report = if admitted {
+                    assert!(!strict.ok(), "remove stale unsafe admission for {}", path.display());
+                    let report = Checker::with_policy(CheckPolicy::allow_unsafe()).check_program(&program);
+                    if report.ok() {
+                        assert_eq!(dlm_core::audit_check_report(&report, vec![]).status, dlm_core::AuditStatus::Unsafe);
+                    }
+                    report
+                } else { strict };
                 if !report.ok() {
                     failures.push(format!("{}:\n{}", path.display(), render(&report.diagnostics)));
                 }

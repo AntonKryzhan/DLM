@@ -63,6 +63,15 @@ roots: 63  failed: 0  proved: 56  axioms: 1  open goals: 1  status: unsafe
 The status is `unsafe` because examples declare unsafe bridges on purpose. Both `lib/std` modules are `closed`. The
 API is `load_project`, `check_project` and `ProjectReport::render`.
 
+v0.134 adds the optional `unsafe_roots` manifest key for exact `.dlm` root files
+that intentionally admit native foreign code. It does not accept a directory,
+does not silently authorize other roots, and canonicalizes entries before matching.
+For example, the repository explicitly lists `lib/std/native_net.dlm`; the
+remaining library roots retain the research policy. A trusted-only manifest or
+`--trusted-only` override rejects foreign code even when it is listed. Native
+unsafe execution and its C ABI libraries are included as Unsafe audit components;
+admitting a provider does not convert its declarations into proved facts.
+
 ## Mutual recursion
 
 ```dlm

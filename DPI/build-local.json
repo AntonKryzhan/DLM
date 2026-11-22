@@ -1,0 +1,25 @@
+﻿{
+    "application_version":  "2.4",
+    "dlm":  "dlm 0.133.0",
+    "c_target":  "x86_64-w64-mingw32",
+    "cpu":  "auto",
+    "built_at":  "2026-11-19T16:47:53.6357892+03:00",
+    "binaries":  [
+                     {
+                         "file":  "NoDPI.exe",
+                         "sha256":  "6CE350DA18B97B8BA3077FF26AD9711EF888429D0F6BA0F1E08D8480D84346C0"
+                     },
+                     {
+                         "file":  "NoDPIGui.exe",
+                         "sha256":  "11E76E43847315BFE1638D127BD357E629DB11E119D0422C3B644671A732AD49"
+                     },
+                     {
+                         "file":  "NoDPIProbe.exe",
+                         "sha256":  "4FE1C7D68905CD5AC6398D8EB617AD849690C9040DD0AD3A5A49B42F7418686B"
+                     },
+                     {
+                         "file":  "DPITrainer.exe",
+                         "sha256":  "0F2F01D6742C0EA8D00C904E20B361ADDE1899064C548CE058A7FC3FF4AFA4CF"
+                     }
+                 ]
+}

@@ -1,0 +1,125 @@
+﻿**********************
+Начало записи сценария Windows PowerShell
+Время начала: 20261101030604
+Имя пользователя: DESKTOP-IKDK7HV\Ark
+Запуск от имени пользователя: DESKTOP-IKDK7HV\Ark
+Имя конфигурации: 
+Компьютер: DESKTOP-IKDK7HV (Microsoft Windows NT 10.0.19045.0)
+Ведущее приложение: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File M:\users\Ark\Desktop\DLM\DLM-CALCULATOR\Build.ps1
+ИД процесса: 15948
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Compiler: dlm 0.130.0
+SDK:      M:\users\Ark\Desktop\DLM\DLM-OUT
+Project:  M:\users\Ark\Desktop\DLM\DLM-CALCULATOR
+DLM build: tests.dlm -> M:\users\Ark\Desktop\DLM\DLM-CALCULATOR\build\tests.exe
+functions: 285  globals: 0  erased statements: 0
+PASS addition -> 46
+PASS negative result -> -3
+PASS multiplication -> 84
+PASS division -> 9
+PASS decimal -> 0.3
+PASS decimal comma -> 3
+PASS consecutive decimal point -> 3.5
+PASS leading decimal point -> 0.75
+PASS leading zeroes -> 15
+PASS repeat equals -> 11
+PASS repeat zero operand -> 5
+PASS missing right operand -> 10
+PASS replace operator -> 36
+PASS sequential operators -> 20
+PASS new input after equals -> 4
+PASS percent -> 0.5
+PASS context addition percent -> 220
+PASS context subtraction percent -> 180
+PASS multiplication percent -> 20
+PASS division percent -> 2000
+PASS sqrt -> 9
+PASS square -> 144
+PASS reciprocal -> 0.25
+PASS sign input -> -3
+PASS negative right operand -> 3
+PASS division by zero -> ╨Ю╤И╨╕╨▒╨║╨░
+PASS negative square root -> ╨Ю╤И╨╕╨▒╨║╨░
+PASS error recovery -> 8
+PASS clear -> 4
+PASS display rounding -> 0.333333333333
+PASS rounding keeps full value -> 1
+PASS entry precision limit -> 1234567890123456
+PASS new decimal after result -> 0.5
+PASS negative decimal input -> -1
+PASS negative input from zero -> -3
+PASS negative zero normalizes -> 0
+PASS unary preserves pending operator -> 8
+PASS repeat division -> 8
+PASS trailing decimal -> 5
+PASS CE preserves pending operator
+PASS CE after result
+PASS backspace edits entry
+PASS backspace decimal
+PASS backspace negative digit
+PASS backspace after result
+PASS MS and MR
+PASS memory add and subtract
+PASS memory recall as right operand
+PASS digit replaces recalled memory
+PASS MC clears flag
+PASS zero can be stored
+PASS history retains last eight
+PASS history recall
+PASS history clear preserves result
+PASS unknown key preserves state
+PASS native Enter
+PASS native Escape
+PASS native Delete
+PASS native Backspace
+PASS format carry
+PASS format large exponent
+PASS format small exponent
+PASS format fixed small
+PASS format subnormal
+PASS overflow reports error
+PASS overflow recovery
+PASS memory overflow preserves finite memory
+PASS error can recover from memory
+Failures: 0
+DLM build: ui-tests.dlm -> M:\users\Ark\Desktop\DLM\DLM-CALCULATOR\build\ui-tests.exe
+functions: 322  globals: 0  erased statements: 0
+PASS initial frame is rendered
+PASS disabled memory has no hit
+PASS digit hit
+PASS button gap has no hit
+PASS empty history has no hit
+PASS half scale hit
+PASS wide window centered hit
+PASS wide window margin
+PASS tall window centered hit
+PASS press waits for release
+PASS release activates digit
+PASS release without press ignored
+PASS drag away cancels click
+PASS right click ignored
+PASS unknown event ignored
+PASS native Escape clears
+PASS resize preserves calculation
+PASS incremental frame equals full render
+PASS long entry fits display
+PASS model invariant after events
+UI failures: 0
+DLM build: main.dlm -> M:\users\Ark\Desktop\DLM\DLM-CALCULATOR\build\Calculator.c
+
+
+
+READY: M:\users\Ark\Desktop\DLM\DLM-CALCULATOR\Calculator.exe
+Start Run.cmd or Calculator.exe.
+**********************
+Конец записи протокола Windows PowerShell
+Время окончания: 20261101030620
+**********************

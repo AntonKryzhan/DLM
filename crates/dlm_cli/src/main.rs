@@ -1,6 +1,8 @@
 mod math_commands;
 mod rational_commands;
 mod q_witness_commands;
+mod network_codegen;
+mod network_protocol;
 
 use std::env;
 use std::fs;
@@ -42,6 +44,7 @@ fn main() {
             let (policy, path) = parse_check_args(&args[2..args.len() - 1]);
             run_proof_export(&path, args.last().unwrap(), policy);
         }
+        "proof-check" if args.get(2).map(|p|network_protocol::is_certificate(p)).unwrap_or(false) => network_protocol::run_audit(&args[2..]),
         "proof-check" if args.len() == 3 => run_proof_check(&args[2]),
         "homology" if args.len() == 5 && args[2] == "--prime" => math_commands::homology_prime(&args[3], &args[4]),
         "homology" if args.len() == 3 => run_homology(&args[2]),
@@ -60,6 +63,10 @@ fn main() {
         }
         "project" => run_project(&args[2..]),
         "build" => run_build(&args[2..]),
+        "network-codegen" => network_codegen::run(&args[2..]),
+        "network-protocol" => network_protocol::run(&args[2..]),
+        "network-audit" => network_protocol::run_audit(&args[2..]),
+        "network-bind" => network_protocol::run_bind(&args[2..]),
         "--version" | "-V" => {
             println!("dlm {}", env!("CARGO_PKG_VERSION"));
         }
@@ -667,6 +674,10 @@ fn print_usage_and_exit(code: i32) -> ! {
     eprintln!("  native build: --target executable|staticlib|sharedlib|plugin --cpu auto|scalar|sse2 --library NAME --link-object PATH");
     eprintln!("  dlm build [--trusted-only] [-o <out>] [--emit-ir] [--c-only] [--check-overflow] [--require-no-overflow] <file.dlm>");
     eprintln!("  dlm project [--trusted-only|--allow-axioms] [--audit] [<dir>|<dlm.project>]");
+    eprintln!("  dlm network-protocol <schema.dlm|spec.dns> --module <name> --prefix <Name> -o <session.dlm> [--machine FILE.state] [--minor N] [--lib DIR] [--check|--force]");
+    eprintln!("  dlm network-audit <session.dlm.nproof> --lib <dir> [--binary FILE] [--work N]");
+    eprintln!("  dlm network-bind <session.dlm.nproof> --lib <dir> --binary FILE");
+    eprintln!("  dlm network-codegen <schema.dlm|spec.dns> --module <name> --prefix <Name> -o <codec.dlm> [--minor N] [--storage BYTES] [--lib DIR] [--check|--force]");
     eprintln!("  dlm --version");
     eprintln!("options:");
     eprintln!("  --lib <dir>   search <dir> for imported modules (repeatable; also DLM_PATH)");

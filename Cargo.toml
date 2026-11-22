@@ -2,10 +2,12 @@
 members = [
     "crates/dlm_cli",
     "crates/dlm_core",
+    "crates/dlm_network_proof",
+    "crates/dlm_transport_proof",
 ]
 resolver = "2"
 
 [workspace.package]
 edition = "2021"
 license = "MIT OR Apache-2.0"
-version = "0.133.0"
+version = "0.145.0"

@@ -1,0 +1,239 @@
+#ifndef DLM_NATIVE_APPLICATION_H
+#define DLM_NATIVE_APPLICATION_H
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+#ifdef __cplusplus
+#include <atomic>
+#define DN_HEADER_ATOMIC(T) std::atomic<T>
+#define DN_HEADER_ASSERT static_assert
+#else
+#include <stdatomic.h>
+#define DN_HEADER_ATOMIC(T) _Atomic(T)
+#define DN_HEADER_ASSERT _Static_assert
+#endif
+typedef struct dn_utf8 {const uint8_t *data;size_t len;} dn_utf8;
+typedef struct dn_window dn_window;
+typedef struct dn_r_TransportRequirements dn_r_TransportRequirements;
+typedef struct dn_r_TransportBounds dn_r_TransportBounds;
+typedef struct dn_r_TransportCandidate dn_r_TransportCandidate;
+typedef struct dn_r_TransportCheck dn_r_TransportCheck;
+typedef struct dn_r_TransportChoice dn_r_TransportChoice;
+typedef struct dn_r_ProtocolVersion dn_r_ProtocolVersion;
+typedef struct dn_r_WireFormat dn_r_WireFormat;
+typedef struct dn_r_MessageField dn_r_MessageField;
+typedef struct dn_r_MessageSchema dn_r_MessageSchema;
+typedef struct dn_r_SessionContract dn_r_SessionContract;
+typedef struct dn_r_SecurityRequirements dn_r_SecurityRequirements;
+typedef struct dn_r_ResourceBounds dn_r_ResourceBounds;
+typedef struct dn_r_ProofObligations dn_r_ProofObligations;
+typedef struct dn_r_NetworkSpec dn_r_NetworkSpec;
+typedef struct dn_r_SchemaMeasure dn_r_SchemaMeasure;
+typedef struct dn_r_NetworkSpecCheck dn_r_NetworkSpecCheck;
+typedef struct dn_r_NetworkAdmission dn_r_NetworkAdmission;
+typedef struct dn_r_ProtocolValue dn_r_ProtocolValue;
+typedef struct dn_r_ProtocolFrame dn_r_ProtocolFrame;
+typedef struct dn_r_NetworkSpecIo dn_r_NetworkSpecIo;
+typedef struct dn_r_NetworkSpecDecoded dn_r_NetworkSpecDecoded;
+typedef struct dn_r_NetworkNegotiation dn_r_NetworkNegotiation;
+#ifdef __cplusplus
+extern "C" {
+#endif
+const char *dlm_native_last_error(void);
+void dlm_native_clear_error(void);
+uint32_t dlm_native_abi_version(void);
+uint64_t dlm_native_thread_init(void);
+uint64_t dlm_native_allocations(void);
+uint64_t dlm_native_frees(void);
+int dlm_native_cpu_profile(void);
+uint64_t dlm_native_live_allocations(void);
+bool dlm_native_runtime_init(void);
+bool dlm_native_runtime_shutdown(void);
+size_t dlm_native_sizeof_TransportRequirements(void);
+size_t dlm_native_alignof_TransportRequirements(void);
+uint32_t dlm_native_version_TransportRequirements(void);
+size_t dlm_native_offset_TransportRequirements_required(void);
+size_t dlm_native_offset_TransportRequirements_forbidden(void);
+size_t dlm_native_offset_TransportRequirements_preferred(void);
+size_t dlm_native_sizeof_TransportBounds(void);
+size_t dlm_native_alignof_TransportBounds(void);
+uint32_t dlm_native_version_TransportBounds(void);
+size_t dlm_native_offset_TransportBounds_max_message(void);
+size_t dlm_native_offset_TransportBounds_queued_messages(void);
+size_t dlm_native_offset_TransportBounds_channels(void);
+size_t dlm_native_offset_TransportBounds_memory(void);
+size_t dlm_native_sizeof_TransportCandidate(void);
+size_t dlm_native_alignof_TransportCandidate(void);
+uint32_t dlm_native_version_TransportCandidate(void);
+size_t dlm_native_offset_TransportCandidate_profile(void);
+size_t dlm_native_offset_TransportCandidate_available(void);
+size_t dlm_native_offset_TransportCandidate_cost(void);
+size_t dlm_native_sizeof_TransportCheck(void);
+size_t dlm_native_alignof_TransportCheck(void);
+uint32_t dlm_native_version_TransportCheck(void);
+size_t dlm_native_offset_TransportCheck_properties(void);
+size_t dlm_native_offset_TransportCheck_missing(void);
+size_t dlm_native_offset_TransportCheck_forbidden(void);
+size_t dlm_native_offset_TransportCheck_status(void);
+size_t dlm_native_sizeof_TransportChoice(void);
+size_t dlm_native_alignof_TransportChoice(void);
+uint32_t dlm_native_version_TransportChoice(void);
+size_t dlm_native_offset_TransportChoice_profile(void);
+size_t dlm_native_offset_TransportChoice_properties(void);
+size_t dlm_native_offset_TransportChoice_missing(void);
+size_t dlm_native_offset_TransportChoice_forbidden(void);
+size_t dlm_native_offset_TransportChoice_preference_misses(void);
+size_t dlm_native_offset_TransportChoice_cost(void);
+size_t dlm_native_offset_TransportChoice_status(void);
+size_t dlm_native_sizeof_ProtocolVersion(void);
+size_t dlm_native_alignof_ProtocolVersion(void);
+uint32_t dlm_native_version_ProtocolVersion(void);
+size_t dlm_native_offset_ProtocolVersion_major(void);
+size_t dlm_native_offset_ProtocolVersion_minor(void);
+size_t dlm_native_offset_ProtocolVersion_minimum_minor(void);
+size_t dlm_native_sizeof_WireFormat(void);
+size_t dlm_native_alignof_WireFormat(void);
+uint32_t dlm_native_version_WireFormat(void);
+size_t dlm_native_offset_WireFormat_kind(void);
+size_t dlm_native_offset_WireFormat_endian(void);
+size_t dlm_native_offset_WireFormat_envelope_version(void);
+size_t dlm_native_offset_WireFormat_unknown_fields(void);
+size_t dlm_native_sizeof_MessageField(void);
+size_t dlm_native_alignof_MessageField(void);
+uint32_t dlm_native_version_MessageField(void);
+size_t dlm_native_offset_MessageField_id(void);
+size_t dlm_native_offset_MessageField_kind(void);
+size_t dlm_native_offset_MessageField_minimum_count(void);
+size_t dlm_native_offset_MessageField_maximum_count(void);
+size_t dlm_native_offset_MessageField_maximum_length(void);
+size_t dlm_native_offset_MessageField_first_minor(void);
+size_t dlm_native_offset_MessageField_last_minor(void);
+size_t dlm_native_offset_MessageField_flags(void);
+size_t dlm_native_sizeof_MessageSchema(void);
+size_t dlm_native_alignof_MessageSchema(void);
+uint32_t dlm_native_version_MessageSchema(void);
+size_t dlm_native_offset_MessageSchema_id(void);
+size_t dlm_native_offset_MessageSchema_phase(void);
+size_t dlm_native_offset_MessageSchema_senders(void);
+size_t dlm_native_offset_MessageSchema_first_minor(void);
+size_t dlm_native_offset_MessageSchema_last_minor(void);
+size_t dlm_native_offset_MessageSchema_field_count(void);
+size_t dlm_native_offset_MessageSchema_fields(void);
+size_t dlm_native_sizeof_SessionContract(void);
+size_t dlm_native_alignof_SessionContract(void);
+uint32_t dlm_native_version_SessionContract(void);
+size_t dlm_native_offset_SessionContract_handshake_timeout_ms(void);
+size_t dlm_native_offset_SessionContract_idle_timeout_ms(void);
+size_t dlm_native_offset_SessionContract_maximum_duration_ms(void);
+size_t dlm_native_offset_SessionContract_maximum_in_flight(void);
+size_t dlm_native_offset_SessionContract_authentication_before_data(void);
+size_t dlm_native_sizeof_SecurityRequirements(void);
+size_t dlm_native_alignof_SecurityRequirements(void);
+uint32_t dlm_native_version_SecurityRequirements(void);
+size_t dlm_native_offset_SecurityRequirements_authentication(void);
+size_t dlm_native_offset_SecurityRequirements_confidentiality(void);
+size_t dlm_native_offset_SecurityRequirements_integrity(void);
+size_t dlm_native_offset_SecurityRequirements_replay_scope(void);
+size_t dlm_native_sizeof_ResourceBounds(void);
+size_t dlm_native_alignof_ResourceBounds(void);
+uint32_t dlm_native_version_ResourceBounds(void);
+size_t dlm_native_offset_ResourceBounds_transport(void);
+size_t dlm_native_offset_ResourceBounds_maximum_unknown_fields(void);
+size_t dlm_native_offset_ResourceBounds_maximum_unknown_bytes(void);
+size_t dlm_native_offset_ResourceBounds_maximum_session_messages(void);
+size_t dlm_native_offset_ResourceBounds_maximum_schema_nodes(void);
+size_t dlm_native_sizeof_ProofObligations(void);
+size_t dlm_native_alignof_ProofObligations(void);
+uint32_t dlm_native_version_ProofObligations(void);
+size_t dlm_native_offset_ProofObligations_requested(void);
+size_t dlm_native_offset_ProofObligations_assurance(void);
+size_t dlm_native_sizeof_NetworkSpec(void);
+size_t dlm_native_alignof_NetworkSpec(void);
+uint32_t dlm_native_version_NetworkSpec(void);
+size_t dlm_native_offset_NetworkSpec_protocol(void);
+size_t dlm_native_offset_NetworkSpec_version(void);
+size_t dlm_native_offset_NetworkSpec_wire(void);
+size_t dlm_native_offset_NetworkSpec_transport(void);
+size_t dlm_native_offset_NetworkSpec_security(void);
+size_t dlm_native_offset_NetworkSpec_resources(void);
+size_t dlm_native_offset_NetworkSpec_session(void);
+size_t dlm_native_offset_NetworkSpec_proofs(void);
+size_t dlm_native_offset_NetworkSpec_message_count(void);
+size_t dlm_native_offset_NetworkSpec_messages(void);
+size_t dlm_native_sizeof_SchemaMeasure(void);
+size_t dlm_native_alignof_SchemaMeasure(void);
+uint32_t dlm_native_version_SchemaMeasure(void);
+size_t dlm_native_offset_SchemaMeasure_minimum(void);
+size_t dlm_native_offset_SchemaMeasure_maximum(void);
+size_t dlm_native_offset_SchemaMeasure_status(void);
+size_t dlm_native_sizeof_NetworkSpecCheck(void);
+size_t dlm_native_alignof_NetworkSpecCheck(void);
+uint32_t dlm_native_version_NetworkSpecCheck(void);
+size_t dlm_native_offset_NetworkSpecCheck_status(void);
+size_t dlm_native_offset_NetworkSpecCheck_component(void);
+size_t dlm_native_offset_NetworkSpecCheck_message(void);
+size_t dlm_native_offset_NetworkSpecCheck_field(void);
+size_t dlm_native_offset_NetworkSpecCheck_minimum(void);
+size_t dlm_native_offset_NetworkSpecCheck_maximum(void);
+size_t dlm_native_offset_NetworkSpecCheck_required_properties(void);
+size_t dlm_native_offset_NetworkSpecCheck_required_proofs(void);
+size_t dlm_native_offset_NetworkSpecCheck_pending_proofs(void);
+size_t dlm_native_offset_NetworkSpecCheck_unsupported_security(void);
+size_t dlm_native_offset_NetworkSpecCheck_schema_nodes(void);
+size_t dlm_native_sizeof_NetworkAdmission(void);
+size_t dlm_native_alignof_NetworkAdmission(void);
+uint32_t dlm_native_version_NetworkAdmission(void);
+size_t dlm_native_offset_NetworkAdmission_requirements(void);
+size_t dlm_native_offset_NetworkAdmission_bounds(void);
+size_t dlm_native_offset_NetworkAdmission_choice(void);
+size_t dlm_native_offset_NetworkAdmission_session(void);
+size_t dlm_native_offset_NetworkAdmission_maximum_session_messages(void);
+size_t dlm_native_offset_NetworkAdmission_pending_proofs(void);
+size_t dlm_native_offset_NetworkAdmission_unsupported_security(void);
+size_t dlm_native_offset_NetworkAdmission_status(void);
+size_t dlm_native_sizeof_ProtocolValue(void);
+size_t dlm_native_alignof_ProtocolValue(void);
+uint32_t dlm_native_version_ProtocolValue(void);
+size_t dlm_native_offset_ProtocolValue_value(void);
+size_t dlm_native_offset_ProtocolValue_next(void);
+size_t dlm_native_offset_ProtocolValue_status(void);
+size_t dlm_native_sizeof_ProtocolFrame(void);
+size_t dlm_native_alignof_ProtocolFrame(void);
+uint32_t dlm_native_version_ProtocolFrame(void);
+size_t dlm_native_offset_ProtocolFrame_payload(void);
+size_t dlm_native_offset_ProtocolFrame_count(void);
+size_t dlm_native_offset_ProtocolFrame_next(void);
+size_t dlm_native_offset_ProtocolFrame_status(void);
+size_t dlm_native_sizeof_NetworkSpecIo(void);
+size_t dlm_native_alignof_NetworkSpecIo(void);
+uint32_t dlm_native_version_NetworkSpecIo(void);
+size_t dlm_native_offset_NetworkSpecIo_count(void);
+size_t dlm_native_offset_NetworkSpecIo_next(void);
+size_t dlm_native_offset_NetworkSpecIo_status(void);
+size_t dlm_native_sizeof_NetworkSpecDecoded(void);
+size_t dlm_native_alignof_NetworkSpecDecoded(void);
+uint32_t dlm_native_version_NetworkSpecDecoded(void);
+size_t dlm_native_offset_NetworkSpecDecoded_spec(void);
+size_t dlm_native_offset_NetworkSpecDecoded_count(void);
+size_t dlm_native_offset_NetworkSpecDecoded_status(void);
+size_t dlm_native_sizeof_NetworkNegotiation(void);
+size_t dlm_native_alignof_NetworkNegotiation(void);
+uint32_t dlm_native_version_NetworkNegotiation(void);
+size_t dlm_native_offset_NetworkNegotiation_minor(void);
+size_t dlm_native_offset_NetworkNegotiation_requirements(void);
+size_t dlm_native_offset_NetworkNegotiation_bounds(void);
+size_t dlm_native_offset_NetworkNegotiation_choice(void);
+size_t dlm_native_offset_NetworkNegotiation_session(void);
+size_t dlm_native_offset_NetworkNegotiation_maximum_session_messages(void);
+size_t dlm_native_offset_NetworkNegotiation_pending_proofs(void);
+size_t dlm_native_offset_NetworkNegotiation_unsupported_security(void);
+size_t dlm_native_offset_NetworkNegotiation_status(void);
+size_t dlm_native_offset_NetworkNegotiation_component(void);
+size_t dlm_native_offset_NetworkNegotiation_message(void);
+size_t dlm_native_offset_NetworkNegotiation_field(void);
+#ifdef __cplusplus
+}
+#endif
+#undef DN_HEADER_ATOMIC
+#undef DN_HEADER_ASSERT
+#endif

@@ -1,0 +1,13 @@
+{
+    "schema":  1,
+    "target":  "chromium_youtube",
+    "passed":  false,
+    "critical":  true,
+    "elapsed_ms":  98,
+    "dom_bytes":  0,
+    "reason":  "browser_or_dom_failure",
+    "browser":  "chrome.exe",
+    "isolated_profile":  true,
+    "proxy":  "direct",
+    "media_tested":  false
+}

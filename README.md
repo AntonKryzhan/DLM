@@ -1,8 +1,6 @@
-[Русский](docs/LANGUAGE_GUIDE_RU.md) | [English](docs/LANGUAGE_GUIDE_EN.md)
-
 # DLM — Deductive Logic Machine
 
-> Current source version: **0.133.0**. DLM is an experimental language with a
+> Current source version: **0.139.0**. DLM is an experimental language with a
 > native C backend for its supported executable subset, formal reasoning, and
 > bounded exact computational-mathematics libraries. The long-term goal is a
 > **general-purpose programming language**, not a mandatory theorem prover for
@@ -10,6 +8,43 @@
 > in [ROADMAP.md](ROADMAP.md); implemented and open guarantees are tracked in
 > [docs/LAW_STATUS.md](docs/LAW_STATUS.md). Mathematical work is separately
 > tracked in [docs/MATHEMATICS_PROGRESS.md](docs/MATHEMATICS_PROGRESS.md).
+
+v0.138 adds `std.net_crypto`: GnuTLS/Nettle-backed X25519, SHA-256/HMAC,
+HKDF-SHA-256, owned key material and directional AES-256-GCM records with bounded
+replay windows, key lifetime and record/byte budgets. New crypto operations keep
+foreign admission explicit and expose no plaintext before authentication. The
+0.137 Windows IOCP examples/thread host were confirmed by the user. See
+[crypto contracts](docs/DLN_CRYPTO.md) and [validation](docs/DLN_CRYPTO_TEST_RESULTS.md).
+
+v0.137 adds `std.net_async`: scoped TCP/UDP operations, bounded cross-thread
+wakers, operation/group cancellation and join without discarding retained
+results. New scopes use IOCP on Windows and the existing epoll/kqueue/poll
+engines on POSIX. The legacy reactor API remains unchanged. IOCP source and
+native Windows validation commands are included; the user confirmed all seven
+examples and the IOCP/thread host on Windows. See [scoped networking](docs/DLN_ASYNC.md).
+
+v0.136 adds `std.net_reactor`: group-owned asynchronous TCP/UDP operations,
+numeric connect and accept, deadlines, cancellation, timers/events and bounded
+operation/payload queues. Linux uses epoll; BSD has a kqueue branch and Windows
+has a WSAPoll branch; its five Windows smoke examples were confirmed by the user.
+General language task scheduling remains open; v0.137 adds a separate IOCP scope. See [owned reactor](docs/DLN_REACTOR.md).
+
+v0.135 adds the DLN foundation modules `std.net_bytes`, `std.net_codec`,
+`std.net_error` and `std.net_socket`: distinct owning TCP/UDP/listener/TLS types,
+structured errors, explicit IPv6-only/dual-stack binding, numeric address
+connections, socket options, ULEB128/ZigZag and a constant-memory streaming
+frame decoder. The v0.134 compiler/stdlib and network C ABI are recorded in a
+versioned compatibility snapshot. See [DLN foundation](docs/DLN_FOUNDATION.md)
+and [implementation status](docs/DLN_STATUS.md).
+
+v0.134 adds `std.native_net` and `std.native_protocol`: owned binary TCP/UDP
+sockets, readiness polling, cancellation, bounded protocol codecs and an optional
+libcurl-backed TLS 1.3 / HTTPS / HTTP/2 / HTTP/3 / WebSocket client provider.
+The compiler embeds the adapter only for modules that import its explicit
+`dlm.net.v1` trust boundary; existing ordinary network APIs are unchanged.
+See [Native networking](docs/NATIVE_NETWORKING.md) for build instructions,
+capability detection and exact limits. This is not a complete QUIC/MASQUE or VPN
+implementation; HTTP/3 requires a supporting libcurl build.
 
 v0.133 provides the `native { ... }` application domain: machine scalars,
 checked mutable code, dense owned storage, C ABI imports/exports and function
@@ -1576,3 +1611,22 @@ Explicit rounding conversions and `dlm1:` portable numeric texts ([NUMERIC_CONVE
 
 Computable-real nodes `exp`, `log`, `sin`, `cos`, `pi` ([ELEMENTARY_FUNCTIONS.md](docs/ELEMENTARY_FUNCTIONS.md));
 owned text builder `TextBuf` (`tbuf_new/push/len/finish`). N01–N10 closed.
+
+DLM 0.139.0 adds general QUIC v1/v2 through std.net_quic and a pinned
+ngtcp2/GnuTLS provider. See [docs/DLN_QUIC.md](docs/DLN_QUIC.md) for setup,
+verified TLS identity, streams/datagrams, bounded queues, migration and gates.
+
+DLM 0.140.0 adds requirement-based profile selection and common binary messages
+through std.net_transport_policy and std.net_transport. See
+[docs/DLN_TRANSPORT.md](docs/DLN_TRANSPORT.md) for TCP/TLS/UDP/QUIC profiles,
+controlled storage quotas, retained receive and acceptance boundaries.
+
+DLM 0.141.0 adds NetworkSpec through std.net_spec, std.net_spec_wire,
+std.net_spec_compat and std.net_spec_laws: bounded descriptions, directional
+version compatibility and explicit pending proof obligations. See
+[docs/DLN_NETWORK_SPEC.md](docs/DLN_NETWORK_SPEC.md).
+
+DLM 0.142.0 adds `dlm network-codegen` and std.net_codec_runtime: typed payload
+serializers/parsers from NetworkSpec, versioned plans, independently checked
+wrapper/runtime bindings and explicit pending proof obligations. See
+[docs/DLN_CODEC_GENERATOR.md](docs/DLN_CODEC_GENERATOR.md).

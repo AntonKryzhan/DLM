@@ -254,6 +254,14 @@ pub fn audit_check_report(report: &CheckReport, imports: Vec<String>) -> Program
             None => {}
         }
     }
+    if crate::native::check::requires_unsafe(&report.typed.native.unit) {
+        value_components.insert(TrustedComponent::Unsafe);
+        tainted_values.push("native execution (Unsafe)".to_string());
+        let libraries: BTreeSet<_> = report.typed.native.unit.functions.iter().filter_map(|f| f.library.as_ref()).collect();
+        for library in libraries {
+            tainted_values.push(format!("native C ABI library {library} (Unsafe)"));
+        }
+    }
     let mut bridges = Vec::new();
     for bridge in &report.bridges {
         let kind = match &bridge.kind {

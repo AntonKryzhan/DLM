@@ -1,0 +1,24 @@
+DLM-KERNEL-PROOF v1
+rules nat-semiring-v1
+var count
+var prefix
+var payload
+term var 0
+term var 1
+term var 2
+term add 1 2
+term mul 0 3
+term mul 0 1
+term mul 0 2
+term add 5 6
+term mul 3 0
+term nat 1
+term mul 0 9
+term mul 9 3
+term nat 0
+term mul 0 12
+term mul 12 3
+proof law distribute 0 1 2
+goal 4 7
+root 0
+END-DLM-KERNEL-PROOF

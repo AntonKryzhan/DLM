@@ -1,0 +1,110 @@
+﻿{
+    "schema":  2,
+    "run":  "20261118-213944",
+    "repeats":  2,
+    "media_tested":  false,
+    "voice_tested":  false,
+    "recommended_profile":  1,
+    "improved_over_control":  false,
+    "all_http_checks_passed":  true,
+    "applied":  false,
+    "profiles":  [
+                     {
+                         "profile":  0,
+                         "critical_passed":  8,
+                         "critical_expected":  8,
+                         "measured_total":  8,
+                         "control_failures":  0,
+                         "successful_latency_ms":  3188,
+                         "errors":  [
+
+                                    ],
+                         "complete":  true
+                     },
+                     {
+                         "profile":  1,
+                         "critical_passed":  8,
+                         "critical_expected":  8,
+                         "measured_total":  8,
+                         "control_failures":  0,
+                         "successful_latency_ms":  2858,
+                         "errors":  [
+
+                                    ],
+                         "complete":  true
+                     },
+                     {
+                         "profile":  2,
+                         "critical_passed":  8,
+                         "critical_expected":  8,
+                         "measured_total":  8,
+                         "control_failures":  0,
+                         "successful_latency_ms":  3421,
+                         "errors":  [
+
+                                    ],
+                         "complete":  true
+                     },
+                     {
+                         "profile":  3,
+                         "critical_passed":  8,
+                         "critical_expected":  8,
+                         "measured_total":  8,
+                         "control_failures":  0,
+                         "successful_latency_ms":  3327,
+                         "errors":  [
+
+                                    ],
+                         "complete":  true
+                     },
+                     {
+                         "profile":  4,
+                         "critical_passed":  8,
+                         "critical_expected":  8,
+                         "measured_total":  8,
+                         "control_failures":  0,
+                         "successful_latency_ms":  3234,
+                         "errors":  [
+
+                                    ],
+                         "complete":  true
+                     },
+                     {
+                         "profile":  5,
+                         "critical_passed":  4,
+                         "critical_expected":  8,
+                         "measured_total":  4,
+                         "control_failures":  0,
+                         "successful_latency_ms":  1578,
+                         "errors":  [
+                                        "Probe report was not produced."
+                                    ],
+                         "complete":  false
+                     },
+                     {
+                         "profile":  6,
+                         "critical_passed":  0,
+                         "critical_expected":  8,
+                         "measured_total":  0,
+                         "control_failures":  0,
+                         "successful_latency_ms":  0,
+                         "errors":  [
+                                        "Probe report was not produced."
+                                    ],
+                         "complete":  false
+                     },
+                     {
+                         "profile":  7,
+                         "critical_passed":  0,
+                         "critical_expected":  8,
+                         "measured_total":  0,
+                         "control_failures":  0,
+                         "successful_latency_ms":  0,
+                         "errors":  [
+                                        "Probe report was not produced."
+                                    ],
+                         "complete":  false
+                     }
+                 ],
+    "interpretation":  "Measured HTTP/SChannel probes. Playback, browser stack and Discord voice still require manual verification."
+}

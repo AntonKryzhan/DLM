@@ -1,0 +1,140 @@
+﻿**********************
+Начало записи сценария Windows PowerShell
+Время начала: 20261101101739
+Имя пользователя: DESKTOP-IKDK7HV\Ark
+Запуск от имени пользователя: DESKTOP-IKDK7HV\Ark
+Имя конфигурации: 
+Компьютер: DESKTOP-IKDK7HV (Microsoft Windows NT 10.0.19045.0)
+Ведущее приложение: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File M:\users\Ark\Desktop\DLM\DLM-UNIVERSE\Build.ps1
+ИД процесса: 14120
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Compiler: dlm 0.131.0
+SDK:      M:\users\Ark\Desktop\DLM\DLM-OUT
+Project:  M:\users\Ark\Desktop\DLM\DLM-UNIVERSE
+DLM build: tests.dlm -> M:\users\Ark\Desktop\DLM\DLM-UNIVERSE\build\tests.exe
+functions: 328  globals: 0  erased statements: 0
+PASS eight keyboard scenes
+PASS new scenes keep bounded valid state
+PASS field clock is native at low quality
+PASS Milky Way native count is explicit
+PASS MW rotates with trailing arms
+PASS MW radius has no clamp pile-up
+PASS rotating bar breaks axial symmetry
+PASS bar force varies continuously in time
+PASS MW midplane gravity attracts
+PASS initial invariant
+PASS count clamps low
+PASS count clamps high
+PASS seed normalizes
+PASS mode wraps
+PASS same seed reproduces initial state
+PASS different seeds differ
+PASS broad phase matches all-pairs force exactly
+PASS near boxes produce one candidate
+PASS same-species pair forces cancel
+PASS attraction has expected direction
+PASS coincident pair remains finite
+PASS finite interaction cutoff
+PASS short distance repels
+PASS five species have asymmetric rules
+PASS history bounded
+PASS trails off drops history
+PASS pause freezes complete model
+PASS pause toggles back
+PASS auto advances and wraps scene
+PASS manual selection disables auto
+PASS manual mode remains selected
+PASS invalid action preserves model
+PASS unknown key preserves model
+PASS keyboard scene selects correct index
+PASS space pauses
+PASS speed cycles 1 2 3 1
+PASS quality cycles 120 240 400
+PASS GPU count does not allocate a million DLM records
+PASS GPU mode ticks without CPU physics
+PASS GPU quality cycles 400 to one million
+PASS GPU count cap is sixteen million
+PASS GPU five million uses bounded DLM state
+PASS GPU advanced quality sequence 2 5 10 16
+PASS GPU advanced quality cycles back to 120
+PASS source attraction direction
+PASS source repulsion direction
+PASS source at exact center is finite
+PASS inactive pointer has no force
+PASS wall clamps and reflects
+PASS sea dispersion satisfies finite-depth equation
+PASS JONSWAP spectrum is positive
+PASS wave height is bounded by spectral amplitudes
+PASS field quality uses three meaningful levels
+PASS Lorenz midpoint step changes position
+PASS mode 0
+PASS mode 1
+PASS mode 2
+PASS mode 3
+PASS mode 4
+Failures: 0
+DLM build: ui-tests.dlm -> M:\users\Ark\Desktop\DLM\DLM-UNIVERSE\build\ui-tests.exe
+functions: 397  globals: 0  erased statements: 0
+PASS balanced scene concatenation preserves bytes
+PASS empty scene concatenation
+PASS eight scene buttons hit correct modes
+PASS field quality label is resolution
+PASS GPU flags preserve compact 15 operand protocol
+PASS cosmic local zoom clamps at eight
+PASS horizon view supports thirty-two fold zoom
+PASS scale change preserves catalogue and refits camera
+PASS button hit
+PASS button gap has no hit
+PASS canvas excludes sidebar
+PASS press waits for release
+PASS release triggers action
+PASS release without press ignored
+PASS drag out cancels action
+PASS right click cannot activate UI
+PASS half scale hit maps to same button
+PASS horizontal letterbox offsets hit
+PASS vertical letterbox offsets hit
+PASS attraction source set
+PASS repulsion source set
+PASS middle button clears source
+PASS X clears source on Win32
+PASS source leaves canvas safely
+PASS source release stays placed
+PASS wheel preserves world point at cursor
+PASS wheel switches camera to manual
+PASS wheel on sidebar ignored
+PASS maximum zoom clamps
+PASS minimum zoom clamps
+PASS camera reset restores auto
+PASS arrow key pans left
+PASS pan clamps bounds
+PASS native key preserves key code under scale
+PASS resize preserves simulation
+PASS zero size event ignored
+PASS valid vector frame
+PASS raster width matches target
+PASS raster height matches target
+PASS frame has opaque background
+PASS dynamic frame matches full scene in dirty region
+PASS canvas pointer does not invalidate shell
+PASS UI action invalidates shell
+UI failures: 0
+DLM build: main.dlm -> M:\users\Ark\Desktop\DLM\DLM-UNIVERSE\build\Universe.c
+Native GPU particle scene handler installed in generated C.
+
+
+
+READY: M:\users\Ark\Desktop\DLM\DLM-UNIVERSE\Universe.exe
+Start Run.cmd or Universe.exe.
+**********************
+Конец записи протокола Windows PowerShell
+Время окончания: 20261101101813
+**********************

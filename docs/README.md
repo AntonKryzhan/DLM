@@ -7,6 +7,33 @@
 названии этого документа относится к исторической спецификации MVP и не
 означает, что универсальный DLM v1.0 выпущен.
 
+v0.139: [`DLN_QUIC.md`](DLN_QUIC.md) — общий QUIC v1/v2: клиент/сервер,
+потоки, датаграммы, проверка сертификатов, лимиты и миграция пути.
+Проверки — [`DLN_QUIC_TEST_RESULTS.md`](DLN_QUIC_TEST_RESULTS.md).
+
+v0.138: [`DLN_CRYPTO.md`](DLN_CRYPTO.md) — X25519, HKDF, AES-256-GCM,
+владеющие ключи, лимиты и защита записей от повторов. Проверки —
+[`DLN_CRYPTO_TEST_RESULTS.md`](DLN_CRYPTO_TEST_RESULTS.md).
+
+v0.137: [`DLN_ASYNC.md`](DLN_ASYNC.md) — сетевые группы с IOCP для Windows,
+межпоточными сигналами, ограниченной очередью и join. Проверки и границы —
+[`DLN_ASYNC_TEST_RESULTS.md`](DLN_ASYNC_TEST_RESULTS.md).
+
+v0.136: [`DLN_REACTOR.md`](DLN_REACTOR.md) — владеющий реактор TCP/UDP,
+ограниченные очереди, таймеры, deadlines и отмена. Фактические проверки —
+[`DLN_REACTOR_TEST_RESULTS.md`](DLN_REACTOR_TEST_RESULTS.md).
+
+v0.135: [`DLN_FOUNDATION.md`](DLN_FOUNDATION.md) — типизированные владельцы
+сокетов и потоковые кодеки. [`DLN_STATUS.md`](DLN_STATUS.md),
+[`DLN_DEPENDENCIES.md`](DLN_DEPENDENCIES.md) и
+[`DLN_TEST_RESULTS.md`](DLN_TEST_RESULTS.md) фиксируют статус плана, границы
+изменений и воспроизводимые проверки.
+
+v0.134: [`NATIVE_NETWORKING.md`](NATIVE_NETWORKING.md) — бинарные TCP/UDP,
+ожидание/отмена и клиентские TLS 1.3, HTTPS, HTTP/2, HTTP/3, WebSocket через
+проверяемый backend. [`NATIVE_NETWORK_TEST_RESULTS.md`](NATIVE_NETWORK_TEST_RESULTS.md)
+фиксирует проведённые проверки и ограничения платформ.
+
 v0.99: [`SOURCE_IDENTITY.md`](SOURCE_IDENTITY.md) — идентичность исходных файлов,
 физические диагностики и проверка происхождения узлов IR (A/B).
 

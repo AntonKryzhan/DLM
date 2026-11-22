@@ -1,0 +1,32 @@
+[
+    {
+        "gene":  "1,0,0,0,0,0,1048576,0",
+        "score":  0,
+        "passed":  0,
+        "total":  5,
+        "controls_passed":  6,
+        "controls_total":  6,
+        "attributable":  0,
+        "generation":  1
+    },
+    {
+        "gene":  "0,1,5,0,0,0,1048576,0",
+        "score":  0,
+        "passed":  0,
+        "total":  5,
+        "controls_passed":  6,
+        "controls_total":  6,
+        "attributable":  0,
+        "generation":  1
+    },
+    {
+        "gene":  "1,1,64,8,1,2,65536,0",
+        "score":  0,
+        "passed":  0,
+        "total":  5,
+        "controls_passed":  6,
+        "controls_total":  6,
+        "attributable":  0,
+        "generation":  1
+    }
+]

@@ -1,0 +1,80 @@
+﻿**********************
+Начало записи сценария Windows PowerShell
+Время начала: 20261119164647
+Имя пользователя: DESKTOP-IKDK7HV\Ark
+Запуск от имени пользователя: DESKTOP-IKDK7HV\Ark
+Имя конфигурации: 
+Компьютер: DESKTOP-IKDK7HV (Microsoft Windows NT 10.0.19045.0)
+Ведущее приложение: powershell.exe -NoProfile -ExecutionPolicy Bypass -File M:\users\Ark\Desktop\DLM\DPI\Build.ps1 -Run
+ИД процесса: 17852
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Compiler: dlm 0.133.0
+C compiler: M:\users\Ark\Desktop\DLM\DLM-OUT\toolchain\mingw64\bin\gcc.exe
+CPU dispatch: auto
+DLM build: tests\core.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\core-tests.exe
+DPI DLM: all core tests passed
+DLM build: tests\adaptive.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\adaptive-tests.exe
+DPI DLM 2.0: adaptive tests passed
+DLM build: tests\automatic_checks.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\automatic_checks-tests.exe
+DPI DLM 2.1: automatic scope and legacy-fake regression tests passed
+DLM build: tests\evolution_checks.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\evolution_checks-tests.exe
+DPI DLM 2.2: evolution, packet invariants, scoped QUIC and metrics tests passed
+DLM build: tests\capture_checks.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\capture_checks-tests.exe
+DPI DLM 2.0: 32 capture filter combinations passed
+DLM build: tests\telegram_checks.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\telegram_checks-tests.exe
+DPI DLM 2.3: Telegram scope, exact TCP bytes, profile compatibility and MTProto verifier passed
+DLM build: tests\cloud_checks.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\cloud_checks-tests.exe
+DPI 2.4 cloud scope, byte preservation, MWO ownership and probe semantics passed
+DLM build: tests\startup_checks.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\startup_checks-tests.exe
+DPI 2.4 startup status and failure classification passed
+PS>TerminatingError(): "Invalid abridged response header"
+PS>TerminatingError(): "Invalid abridged response header"
+PS>TerminatingError(): "Noncanonical abridged response length"
+PS>TerminatingError(): "Telegram response exceeds probe limit"
+PS>TerminatingError(): "Telegram TCP closed before resPQ"
+>> TerminatingError(): "Telegram TCP closed before resPQ"
+>> TerminatingError(): "fixture"
+>> TerminatingError(): "Probe cancelled by training controller: fixture"
+>> TerminatingError(): "Probe cancelled by training controller: fixture"
+Telegram helper tests passed: NIST CTR, chunk continuity, obfuscation directions, framing limits and cancellation.
+Telegram training integration passed: protocol totals, attribution, profile preservation and report selection.
+PS>TerminatingError(): "Controller network changed"
+>> TerminatingError(): "Probe cancelled by training controller: Controller network changed"
+>> TerminatingError(): "Probe cancelled by training controller: Controller network changed"
+Active network identity and Telegram controller cancellation tests passed.
+PS>TerminatingError(): "CDN prefix is too broad"
+>> TerminatingError(): "Non-public CDN address"
+>> TerminatingError(): "CDN prefix has host bits set"
+>> TerminatingError(): "CDN prefix is too broad"
+>> TerminatingError(): "Non-public IPv6 CDN address"
+>> TerminatingError(): "Invalid CDN prefix syntax"
+>> TerminatingError(): "Invalid CDN prefix syntax"
+>> TerminatingError(): "Non-public CDN address"
+PS>TerminatingError(): "CDN prefix is too broad"
+PS>TerminatingError(): "Offline fixture"
+>> TerminatingError(): "Offline fixture"
+>> TerminatingError(): "Offline fixture"
+PS>TerminatingError(): "CDN prefix is too broad"
+PS>TerminatingError(): "CDN prefix is too broad"
+Provider metadata validation, official-format selection, offline fallback and candidate normalization passed.
+MWO training totals, attribution, profile preservation and diagnostic report selection passed.
+PS>TerminatingError(): "WinDivert preflight: component=WinDivertFalseProbe; Win32=58. No training candidate was started. Run Check-Driver.cmd."
+PS>TerminatingError(): "Driver preflight exited 0 without a report. Rebuild version 2.4 or check application loading."
+Driver preflight failure, stale-report rejection and native error propagation passed.
+DLM build: engine.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\NoDPI.new.exe
+DLM build: main.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\NoDPIGui.new.exe
+DLM build: probe-main.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\NoDPIProbe.new.exe
+DLM build: trainer-main.dlm -> M:\users\Ark\Desktop\DLM\DPI\build\DPITrainer.new.exe
+READY: NoDPIGui.exe / NoDPI.exe / NoDPIProbe.exe / DPITrainer.exe
+**********************
+Конец записи протокола Windows PowerShell
+Время окончания: 20261119164753
+**********************

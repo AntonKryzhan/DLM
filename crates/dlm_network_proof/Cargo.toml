@@ -1,0 +1,12 @@
+[package]
+name = "dlm_network_proof"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "dlm_network_proof"
+
+[[bin]]
+name = "dlm-network-check"
+path = "src/main.rs"

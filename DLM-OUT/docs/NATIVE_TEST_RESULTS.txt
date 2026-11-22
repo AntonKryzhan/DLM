@@ -1,0 +1,76 @@
+DLM Native Application Foundation v0.133.0 — validation record
+
+Linux x86-64
+- Full release workspace regression: 151 harness results, 1006 passed,
+  0 failed, 1 GUI test requiring a desktop ignored in the generic run.
+- The GUI test was explicitly run against Xvfb + software OpenGL: passed.
+  Independent C host verified child and attached windows, CPU/GPU pixels,
+  ARGB32, resize, focus, keyboard/mouse/wheel, independent editor destruction,
+  wrong-thread destruction rejection, host GL/FPU preservation and restart.
+- Independent-module fixture: passed
+  with RTLD_GLOBAL; each function table binds its own module, and shutting
+  down one module leaves the other usable.
+- Resource acquisition allocation-failure injection: passed under ASan/UBSan.
+  Control allocation fails before acquisition; later Box allocation failure
+  releases the acquired handle. Native allocation/free counters balance.
+- Managed callbacks: passed; 4 foreign threads, 16000 calls per context,
+  two contexts, cancellation/join, failure cleanup, 5 repetitions, restart.
+- Component function-table fixture: 8388608 samples, 0 hot-loop allocations.
+- Independent Python interoperability: 250 XML ElementTree roundtrips,
+  escaped Unicode edits, malformed XML; 100 binary schema migrations,
+  unknown-field/flag/order preservation, corrupt inputs: passed.
+- Ordinary bridge: VM/C scalars, owning records, Text, FloatVec/NatVec,
+  F32 signed zero, checked narrowing and malformed UTF-8: passed.
+- Machine scalar assembly and packed F64 traversal assembly: passed without
+  fast-math or contraction. Existing sanitizer, ABI, callback and IR tests
+  remain in the native_foundation suite.
+
+Windows x86-64
+- Cross-compilation of the complete Rust workspace test binaries succeeded.
+- Actual execution: Windows Server 2022 Standard Evaluation Desktop,
+  build 10.0.20348 x64, isolated QEMU guest with no network adapter.
+  The Windows compiler reports dlm 0.133.0. WinLibs GCC 16.2.0 UCRT
+  successfully compiled and ran native tests inside Windows. The distributed
+  compiler was linked with MinGW-w64 GCC 13.3.0; the existing SDK C toolchain
+  was not replaced.
+- Focused native acceptance: 44 checks passed. These comprise 23 independently
+  cross-built native C programs executed on Windows with their exit/stdout
+  compared against Linux reference results; scalar/SSE2/AVX2/AVX-512 profiles;
+  an executable built without an output extension; independent static and
+  plugin C ABI roundtrips; managed callbacks; component hot loop; two loaded
+  modules; live GUI; independent XML/binary interoperation; five VM examples;
+  and four negative checker/MIR tests. No AVX is exposed by this guest CPU,
+  so AVX profiles exercise the required safe fallback, not AVX hardware.
+- Managed callbacks: 4 foreign threads, two independent contexts, repeated
+  lifetime/cancellation/join/error-cleanup and shutdown/restart checks passed.
+- Component function-table fixture: 8388608 samples, 0.100 CPU seconds,
+  0 hot-loop allocations in the recorded cross-built fixture.
+- GUI: passed with Mesa 26.2.6 llvmpipe / LLVM 23.1.4, OpenGL 4.6.
+  Verified child and attached CPU/GPU surfaces, actual CPU/GPU pixels, input,
+  resize/DPI/focus, wrong-thread destruction rejection, independent lifetimes,
+  host GL/FPU preservation, unload/reinit, and nested creation retained across
+  an outer allocation failure. The host fixture keeps its test surface above
+  the console so GetPixel reads a visible surface.
+- Independent Python interoperability: 250 XML ElementTree roundtrips,
+  Unicode edits and 14 malformed cases; 100 binary migrations, unknown fields,
+  order/flags and corrupt inputs: passed.
+- Selected existing regression: 165 tests passed in 7 complete harnesses:
+  machine_arithmetic (5), integers (6), ordinary_recursion_records (11),
+  patterns_let (6), structural_types (7), source_identity (14),
+  checker_smoke (116).
+- Limits: the full Windows workspace regression was not completed. An initial
+  native_foundation run exceeded its 1200-second runner limit after 13 tests
+  passed; effect_functions and symbolic_kernel_soundness exceeded their
+  300-second limits in a later selective run. None is counted as a passed
+  harness. An unsupported softpipe configuration failed pixel-format setup;
+  a later pixel read had an empty visible region while covered by the console.
+  These attempts are recorded separately from the completed llvmpipe GUI run.
+- Machine-readable evidence, command results, fixture/compiler hashes and
+  incomplete attempts: NATIVE_WINDOWS_VALIDATION.json.
+
+Scope of evidence
+- ASan/UBSan runs disable LeakSanitizer because this environment restricts
+  its process-inspection facilities. Native allocation counters and external
+  registration counters are also checked. This does not claim LSan coverage.
+- FFI and host-address operations execute in compiled programs; the reference
+  VM reports an explicit limitation for arbitrary foreign calls.

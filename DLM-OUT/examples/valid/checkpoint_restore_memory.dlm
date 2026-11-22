@@ -1,0 +1,16 @@
+module examples.checkpoint_restore_memory
+
+theory Cluster {
+    let x86 = node_x86_64_with(8, 32768)
+    let arm = node_aarch64_with(16, 65536)
+    let pool = virtual_pool(x86, arm)
+
+    let mem = distributed_memory(pool, 4096)
+    let snap = checkpoint_memory(mem)
+    let restored = restore_checkpoint(snap)
+    let cap = memory_region_mib(restored)
+
+    print_decimal(cap)
+    print_symbolic(snap)
+    print_symbolic(restored)
+}

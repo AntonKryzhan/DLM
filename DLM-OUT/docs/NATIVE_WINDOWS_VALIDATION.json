@@ -1,0 +1,675 @@
+{
+  "schema": "dlm.native-validation.v1",
+  "dlm_version": "0.133.0",
+  "recorded_utc": "2026-11-02T01:29:48.771919+00:00",
+  "platform": {
+    "os": "sys.getwindowsversion(major=10, minor=0, build=20348, platform=2, service_pack='')",
+    "execution": "Actual Windows Server 2022 Standard Evaluation Desktop x64 in QEMU TCG; no network adapter",
+    "cpu": "Nehalem, one vCPU; no AVX exposed",
+    "graphics": "Mesa 26.2.6 llvmpipe / LLVM 23.1.4, OpenGL 4.6 compatibility"
+  },
+  "compiler": {
+    "dlm_exe_sha256": "3022383ee9171cc90717d65c23f04eac851ba25b5480ebecd9b98ee9aa4ccdfe",
+    "rust_target": "x86_64-pc-windows-gnu",
+    "cross_c_compiler": "MinGW-w64 GCC 13.3.0 win32",
+    "windows_c_compiler": "gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r3) 16.2.0\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+    "sdk_c_toolchain_replaced": false
+  },
+  "workspace_test_executables_cross_compiled": true,
+  "full_windows_workspace_regression_completed": false,
+  "focused_native_acceptance": {
+    "passed_checks": 44,
+    "failed_checks": 0,
+    "checks": [
+      {
+        "name": "case-009ea98b7d10ccf6",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 7.971,
+        "expected_exit": 0,
+        "expected_stdout": "serialization OK\n",
+        "generated_c_sha256": "84a9e8fd6b9a61214d21d23cbcb45c2b6126c8e19b17efab220e6ffda075f99c",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-2038467a57173a01",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 5.755,
+        "expected_exit": 0,
+        "expected_stdout": "",
+        "generated_c_sha256": "1244aa8aea3cedd4ffd3be79711bb8e46b9a90d68b0e759b5f16b509f40cd0fd",
+        "c_flags": [
+          "-std=gnu11",
+          "-O2"
+        ]
+      },
+      {
+        "name": "case-2a2a7f93b3f41d54",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 7.242,
+        "expected_exit": 0,
+        "expected_stdout": "derived OK\n",
+        "generated_c_sha256": "853e2a913b28ea14c78acea2d7994880afef31197bbbde71b3b0778ee152aa6a",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-35fec06fc42d8a4a",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 7.991,
+        "expected_exit": 0,
+        "expected_stdout": "",
+        "generated_c_sha256": "e8f8cc88e1bcf47406cb429b9c12b55bb74ca38a12c254243a437f5fbabb261d",
+        "c_flags": [
+          "-std=gnu11"
+        ]
+      },
+      {
+        "name": "case-3c170dc2e40b9c1b",
+        "exit": 0,
+        "process_exit": 1,
+        "seconds": 5.002,
+        "expected_exit": 1,
+        "expected_stdout": "",
+        "generated_c_sha256": "14bf0ded23e230454bb4683743da834e1af5842c695b8a18f3d8bfe19d555716",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-599f8a6e9aa92907",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 5.023,
+        "expected_exit": 0,
+        "expected_stdout": "machine OK\n",
+        "generated_c_sha256": "304d7b95e1b0b1b0adb6d0b4093a82fae76bbd7fb6a8a79c938002b03b770c8a",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-5f7ff172de922b2a",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 3.489,
+        "expected_exit": 0,
+        "expected_stdout": "assignment OK\n",
+        "generated_c_sha256": "d5c67f3e6637ddb18203f548703c5fc5c63f18e0112f8755aaf4d24ee8c48287",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-7e700cd86b36a07a",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 3.762,
+        "expected_exit": 0,
+        "expected_stdout": "resource OK\n",
+        "generated_c_sha256": "73f462d7bba1bbeb55c20f9d516714bee504d9629cc377d88daeed8bae581ebf",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-808e0ec4b2cb4970",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 3.117,
+        "expected_exit": 0,
+        "expected_stdout": "trusted callback OK\n",
+        "generated_c_sha256": "ac32770719a8b7edda2451c1b34f698aaded6b3d245faa21ec31b5d596c742af",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-813a3172421b75fa",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 2.726,
+        "expected_exit": 0,
+        "expected_stdout": "",
+        "generated_c_sha256": "6080f233a7b1a4a72401ea345f6c93e20ba60385715b103d7445d1841dacd505",
+        "c_flags": [
+          "-std=gnu11",
+          "-O2"
+        ]
+      },
+      {
+        "name": "case-8517baa199b3f54e",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 4.557,
+        "expected_exit": 0,
+        "expected_stdout": "Native foundation OK\n",
+        "generated_c_sha256": "a799eaf5e02d5c404da96668a392f8c68dbb44fd53866e76af3c42ad6ac96da9",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-85b2981cc3c2e458",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 2.793,
+        "expected_exit": 0,
+        "expected_stdout": "",
+        "generated_c_sha256": "fa7adc33fab14db719fc9bcb125817c850f1c9b6592a0b43242be7df34eeeeb3",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-Werror=incompatible-pointer-types",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-8bcf6fc1dc82acd1",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 2.172,
+        "expected_exit": 0,
+        "expected_stdout": "copies OK\n",
+        "generated_c_sha256": "c4804561ebd5a195ef79d424c0f5767a8e4ae1bdffbd7889f255fc972e211593",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-97222b6adb2d67b7",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 2.134,
+        "expected_exit": 0,
+        "expected_stdout": "0.10000000000000001\n-0\n0.10000000149011612\n9.9999999999999995e-21\n1e+20\nnan\ninf\n",
+        "generated_c_sha256": "63b8bc272a5256dcbde43d4f9ab421bffaf76209a5fa41bb15384f93bf1dd190",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-a564facb6952c97e",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 3.697,
+        "expected_exit": 0,
+        "expected_stdout": "layout OK\n",
+        "generated_c_sha256": "60d08fde230409c8017efb7ade5c268cde1903b3e295d15ef243166ec6f42adc",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-a85973fd6b95dd3c",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 2.227,
+        "expected_exit": 0,
+        "expected_stdout": "lifetimes OK\n",
+        "generated_c_sha256": "1f9e7a602c48d1abc9f658b7c685019fbbf58a3f0fcdce020a553ea27bf177f0",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-c277961716f3e84b",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 4.092,
+        "expected_exit": 0,
+        "expected_stdout": "bounds OK\n",
+        "generated_c_sha256": "7a7e537162d7e7474cb69d1e2ae8c240380c570a946447c1641a16ad05f64147",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-c8a7def229c02cac",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 3.738,
+        "expected_exit": 0,
+        "expected_stdout": "ownership OK\n",
+        "generated_c_sha256": "97ad4f5463552318889d9cbd9a3fce59200cb066aa8f1513a46e8a73c27279ec",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-cb64f32c17cc06e7",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 2.806,
+        "expected_exit": 0,
+        "expected_stdout": "order OK\n",
+        "generated_c_sha256": "494a4bf3d5b186a5a391593514d0ae4399a3d9d85b57e6c0d47c22a06195375a",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-d30560649230fc77",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 4.01,
+        "expected_exit": 0,
+        "expected_stdout": "stdlib FFI OK\n",
+        "generated_c_sha256": "f826d79c416658a831741b43382ed043b3e22d10393f02813180b2bac36c8715",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-eddf71d5065353e6",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 3.501,
+        "expected_exit": 0,
+        "expected_stdout": "dense OK\n",
+        "generated_c_sha256": "66d01a9c616a2f160f98290d46152f368c333a7a2713e8f6527b51f5fb9f6cd6",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-f10fafab566e653b",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 3.904,
+        "expected_exit": 0,
+        "expected_stdout": "ordinary bridge OK\n",
+        "generated_c_sha256": "b9c085e2a9836f8ec1d34cca3fc31b48427e4a720cb4a0c5adac82a56ba2bba7",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "case-f9ac662cbfa4d4b5",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 6.396,
+        "expected_exit": 0,
+        "expected_stdout": "rounding OK\n",
+        "generated_c_sha256": "5042b1fc85876628a96174492cdf865e6e01fc5aa3552ecbf986d4d1f692ec1a",
+        "c_flags": [
+          "-std=gnu11",
+          "-O3",
+          "-ftree-vectorize",
+          "-DDN_CPU_PROFILE=0",
+          "-fno-fast-math",
+          "-ffp-contract=off"
+        ]
+      },
+      {
+        "name": "cpu-scalar",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 2.732,
+        "log": "cpu-scalar.log"
+      },
+      {
+        "name": "cpu-sse2",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 3.514,
+        "log": "cpu-sse2.log"
+      },
+      {
+        "name": "cpu-avx2",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 4.422,
+        "log": "cpu-avx2.log"
+      },
+      {
+        "name": "cpu-avx512",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 2.843,
+        "log": "cpu-avx512.log"
+      },
+      {
+        "name": "executable-suffix",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 4.062,
+        "log": "executable-suffix.log"
+      },
+      {
+        "name": "static-abi",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 8.941,
+        "log": "static-abi.log"
+      },
+      {
+        "name": "plugin-abi",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 9.55,
+        "log": "plugin-abi.log"
+      },
+      {
+        "name": "managed-callbacks",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 42.759,
+        "log": "managed-callbacks.log"
+      },
+      {
+        "name": "component-hot-loop",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 6.016,
+        "log": "component-hot-loop.log"
+      },
+      {
+        "name": "independent-modules",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 5.002,
+        "log": "independent-modules.log"
+      },
+      {
+        "name": "live-gui",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": null,
+        "log": "foreground.log"
+      },
+      {
+        "name": "external-formats",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 5.671,
+        "log": "external-formats.log"
+      },
+      {
+        "name": "vm-foundation",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 7.72,
+        "log": "vm-foundation.log"
+      },
+      {
+        "name": "vm-serialization",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 0.591,
+        "log": "vm-serialization.log"
+      },
+      {
+        "name": "vm-ordinary_bridge",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 0.623,
+        "log": "vm-ordinary_bridge.log"
+      },
+      {
+        "name": "vm-xml",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 1.845,
+        "log": "vm-xml.log"
+      },
+      {
+        "name": "vm-versioned_state",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 0.364,
+        "log": "vm-versioned_state.log"
+      },
+      {
+        "name": "checker-aliasing_existing_mutable_references_is_rejected",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 1.231,
+        "log": "checker-aliasing_existing_mutable_references_is_rejected.log"
+      },
+      {
+        "name": "checker-ownership_aliases_and_effect_lies_are_rejected",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 0.351,
+        "log": "checker-ownership_aliases_and_effect_lies_are_rejected.log"
+      },
+      {
+        "name": "checker-forged_native_ir_is_rejected",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 0.255,
+        "log": "checker-forged_native_ir_is_rejected.log"
+      },
+      {
+        "name": "checker-index_evaluation_cannot_invalidate_its_base_storage",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 0.19,
+        "log": "checker-index_evaluation_cannot_invalidate_its_base_storage.log"
+      }
+    ],
+    "method": "The 23 C programs were captured during a successful 32-test Linux native_foundation run, compiled for Windows, and executed on Windows with exit status and stdout compared to the Linux reference. Host fixtures, four compiler profiles, five VM examples and four negative checker/MIR tests also ran on Windows. The successful live GUI run replaces the earlier environment failures; it is not the timed-out generic test run."
+  },
+  "selected_existing_regression": {
+    "passed_tests": 165,
+    "complete_harnesses": [
+      {
+        "name": "compat-machine_arithmetic",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 8.659,
+        "passed_tests": 5,
+        "ignored_tests": 0
+      },
+      {
+        "name": "compat-integers",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 30.491,
+        "passed_tests": 6,
+        "ignored_tests": 0
+      },
+      {
+        "name": "compat-ordinary_recursion_records",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 62.978,
+        "passed_tests": 11,
+        "ignored_tests": 0
+      },
+      {
+        "name": "compat-patterns_let",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 75.876,
+        "passed_tests": 6,
+        "ignored_tests": 0
+      },
+      {
+        "name": "compat-structural_types",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 17.982,
+        "passed_tests": 7,
+        "ignored_tests": 0
+      },
+      {
+        "name": "compat-source_identity",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 42.528,
+        "passed_tests": 14,
+        "ignored_tests": 0
+      },
+      {
+        "name": "compat-checker_smoke",
+        "exit": 0,
+        "process_exit": 0,
+        "seconds": 202.736,
+        "passed_tests": 116,
+        "ignored_tests": 0
+      }
+    ]
+  },
+  "gui": {
+    "exit": 0,
+    "stdout": "host OpenGL: 4.6 (Compatibility Profile) Mesa 26.2.6 / llvmpipe (LLVM 23.1.4, 128 bits)\nCPU pixel=00563412 expected=00563412 error=0 visible=1 window=18,41,114,121 clip=2:0,0,96,80 parent_style=14cf0000\nembedded editor: CPU/GPU, input, attach, affinity, host GL/FPU, independent lifetimes OK\n",
+    "stderr": "",
+    "delivered_host_source_sha256": "35b365502f6e5936914ddd6a9c02fc7a4deb4c2ac70f0465d974659b30be8137",
+    "executed_host_exe_sha256": "560bf9e2a417c6844fd5997824c5f49f6ad814b48fc042b2ab779e9b9e288a46",
+    "executed_module_sha256": "2ca9d9e5f01724e84caf6ef0158f1f6f54aabe126526ca98baf1b09dd29d8cf8",
+    "visibility": "The test host uses HWND_TOPMOST so its GDI pixel read has a visible region. No product renderer change was needed for this test setup correction."
+  },
+  "selected_logs": {
+    "managed-callbacks.log": "managed callbacks: 4 threads, lifetime, failure, shutdown/restart OK\n",
+    "component-hot-loop.log": "component function table: 8388608 samples, 0.100 CPU seconds, 0 hot-loop allocations\n",
+    "independent-modules.log": "two modules: independent runtime, function tables and shutdown OK\n",
+    "external-formats.log": "XML: 250 ElementTree roundtrips, escaped Unicode edits, 14 malformed cases OK\nBinary: 100 independent Python encoders/decoders, version migration, unknown fields and flags, corrupt inputs OK\n"
+  },
+  "incomplete_or_superseded_attempts": [
+    {
+      "name": "initial-native-foundation",
+      "passed_before_timeout": 13,
+      "harness_test_count": 28,
+      "timeout_seconds": 1200,
+      "completed": false
+    },
+    {
+      "name": "compat-effect_functions",
+      "exit": 125,
+      "process_exit": null,
+      "seconds": 451.053,
+      "reason": "subprocess timeout; 300-second limit; not counted as passed"
+    },
+    {
+      "name": "compat-symbolic_kernel_soundness",
+      "exit": 125,
+      "process_exit": null,
+      "seconds": 323.632,
+      "reason": "subprocess timeout; 300-second limit; not counted as passed"
+    },
+    {
+      "name": "live-gui",
+      "exit": 3,
+      "process_exit": 3,
+      "seconds": 14.086,
+      "reason": "GALLIUM_DRIVER=softpipe was unsupported by the llvmpipe-only driver; host pixel-format setup failed before DLM was called"
+    },
+    {
+      "name": "llvmpipe-host-occluded",
+      "exit": 3,
+      "reason": "CPU GetPixel returned CLR_INVALID (0xffffffff) and GetClipBox NULLREGION while the console covered the host; an otherwise identical fixture with HWND_TOPMOST passed the entire GUI scenario"
+    },
+    {
+      "name": "llvmpipe-clipping-styles-only",
+      "exit": 3,
+      "reason": "Adding clipping styles did not change the empty visible region; this diagnostic variant was not retained"
+    }
+  ],
+  "limits": [
+    "The full Windows workspace regression and the timed-out harnesses are not reported as passed.",
+    "AVX2 and AVX-512 profiles exercised runtime fallback on the Windows guest; this record does not claim those hardware instruction sets were available.",
+    "ASan/UBSan evidence belongs to the Linux run. LeakSanitizer was disabled due restricted process inspection; explicit allocation and registration counters were checked.",
+    "Arbitrary host-address and FFI operations require compiled execution; the reference VM reports this limitation explicitly."
+  ]
+}

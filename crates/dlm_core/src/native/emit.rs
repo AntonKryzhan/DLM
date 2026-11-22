@@ -1296,6 +1296,21 @@ pub fn emit(m: &Mir, executable: bool) -> String {
         );
     }
     out.push_str(RUNTIME);
+    if m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.edge.v1")) {
+        out.push_str(include_str!("edge_headers.h"));
+    }
+    if m.unit.functions.iter().any(|f| matches!(f.library.as_deref(),Some("dlm.net.v1" | "dlm.nodes.v1"))) {
+        out.push_str(include_str!("network.c"));
+    }
+    if m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.nodes.v1")) {
+        out.push_str(include_str!("nodes.c"));
+    }
+    if m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.edge.v1")) {
+        if !m.unit.functions.iter().any(|f| matches!(f.library.as_deref(),Some("dlm.net.v1" | "dlm.nodes.v1"))) { out.push_str(include_str!("network.c")); }
+        if !m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.nodes.v1")) { out.push_str(include_str!("nodes.c")); }
+        out.push_str(include_str!("adaptive.c"));
+        out.push_str(include_str!("tun.c"));
+    }
     if legacy_needed {
         out.push_str(include_str!("window.c"));
     }

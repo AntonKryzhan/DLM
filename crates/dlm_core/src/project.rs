@@ -8,6 +8,7 @@
 //! lib = lib                      # comma-separated search paths for imports
 //! roots = lib/std, examples/valid # files, or directories (their *.dlm files)
 //! policy = research              # research | trusted_only
+//! unsafe_roots = src/client.dlm  # exact roots with explicitly admitted FFI
 //! ```
 //!
 //! Every root is loaded as a program (with its imports) and checked; the
@@ -33,6 +34,9 @@ pub struct ProjectManifest {
     /// Root files, in order.
     pub roots: Vec<PathBuf>,
     pub trusted_only: bool,
+    /// Exact canonical root files whose foreign/unsafe declarations are admitted.
+    /// A trusted-only override always takes precedence over these admissions.
+    pub unsafe_roots: Vec<PathBuf>,
 }
 
 fn project_error(message: impl Into<String>) -> Diagnostic {
@@ -49,6 +53,7 @@ pub fn parse_project_manifest(text: &str, dir: &Path) -> Result<ProjectManifest,
     let mut lib = Vec::new();
     let mut root_entries = Vec::new();
     let mut trusted_only = false;
+    let mut unsafe_entries = Vec::new();
     for (index, raw) in text.lines().enumerate() {
         let line = raw.split('#').next().unwrap_or("").trim();
         if line.is_empty() {
@@ -62,6 +67,7 @@ pub fn parse_project_manifest(text: &str, dir: &Path) -> Result<ProjectManifest,
             "name" if !value.is_empty() => name = Some(value.to_string()),
             "lib" => lib.extend(list(value).into_iter().map(|p| dir.join(p))),
             "roots" => root_entries.extend(list(value)),
+            "unsafe_roots" => unsafe_entries.extend(list(value)),
             "policy" => {
                 trusted_only = match value {
                     "research" => false,
@@ -103,7 +109,19 @@ pub fn parse_project_manifest(text: &str, dir: &Path) -> Result<ProjectManifest,
             return Err(project_error(format!("root '{entry}' does not exist ({})", path.display())));
         }
     }
-    Ok(ProjectManifest { name, dir: dir.to_path_buf(), lib, roots, trusted_only })
+    let mut unsafe_roots = Vec::new();
+    for entry in unsafe_entries {
+        let path = dir.join(&entry);
+        if !path.is_file() || path.extension().and_then(|e| e.to_str()) != Some("dlm") {
+            return Err(project_error(format!("unsafe root '{entry}' must name one .dlm file")));
+        }
+        let canonical = path.canonicalize().map_err(|e| project_error(format!("cannot resolve unsafe root '{entry}': {e}")))?;
+        if !roots.iter().any(|r| r.canonicalize().ok().as_ref() == Some(&canonical)) {
+            return Err(project_error(format!("unsafe root '{entry}' is not a project root")));
+        }
+        if !unsafe_roots.contains(&canonical) { unsafe_roots.push(canonical); }
+    }
+    Ok(ProjectManifest { name, dir: dir.to_path_buf(), lib, roots, trusted_only, unsafe_roots })
 }
 
 /// Read `dlm.project` from a directory, or a manifest file path.
@@ -188,9 +206,11 @@ impl ProjectReport {
 /// Check every root of `manifest`. `trusted_only` overrides the manifest
 /// policy when `Some`.
 pub fn check_project(manifest: &ProjectManifest, trusted_only: Option<bool>) -> ProjectReport {
-    let policy = if trusted_only.unwrap_or(manifest.trusted_only) { CheckPolicy::trusted_only() } else { CheckPolicy::research() };
+    let strict = trusted_only.unwrap_or(manifest.trusted_only);
     let mut entries = Vec::with_capacity(manifest.roots.len());
     for root in &manifest.roots {
+        let admitted = root.canonicalize().ok().is_some_and(|p| manifest.unsafe_roots.contains(&p));
+        let policy = if strict { CheckPolicy::trusted_only() } else if admitted { CheckPolicy::allow_unsafe() } else { CheckPolicy::research() };
         let entry = match load_program_with_paths(root, &manifest.lib) {
             Ok(program) => {
                 let report: CheckReport = Checker::with_policy(policy).check_program(&program);
@@ -219,6 +239,7 @@ mod tests {
         assert_eq!(manifest.roots, vec![dir.join("src/a.dlm")]);
         assert_eq!(manifest.lib, vec![dir.join("lib")]);
         assert!(manifest.trusted_only);
+        assert!(manifest.unsafe_roots.is_empty());
         for (text, needle) in [
             ("roots = src\n", "missing `name`"),
             ("name = x\n", "missing `roots`"),
@@ -226,10 +247,37 @@ mod tests {
             ("name = x\nroots = src\npolicy = lax\n", "unknown policy 'lax'"),
             ("name = x\nroots = src\ncolor = red\n", "unknown or empty key 'color'"),
             ("name x\n", "expected `key = value`"),
+            ("name = x\nroots = src\nunsafe_roots = src\n", "must name one .dlm file"),
         ] {
             let err = parse_project_manifest(text, &dir).unwrap_err();
             assert!(err.message.contains(needle), "{text:?}: {}", err.message);
         }
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn exact_unsafe_roots_are_explicit_audited_and_do_not_override_strict() {
+        let dir=std::env::temp_dir().join(format!("dlm_project_network_{}",std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let source="module foreign\nnative { trust \"fixture\";extern \"C\" fn foreign_call()->Unit from \"fixture\" guarantees(NoUnwind); }\n";
+        std::fs::write(dir.join("ffi.dlm"),source).unwrap();
+        std::fs::write(dir.join("other.dlm"),source.replace("module foreign","module other")).unwrap();
+        let base="name = native\nroots = ffi.dlm\npolicy = research\n";
+        let denied=parse_project_manifest(base,&dir).unwrap();
+        assert!(!check_project(&denied,None).ok());
+        let manifest=parse_project_manifest(&format!("{base}unsafe_roots = ./ffi.dlm, ffi.dlm\n"),&dir).unwrap();
+        assert_eq!(manifest.unsafe_roots.len(),1);
+        let report=check_project(&manifest,None);
+        assert!(report.ok(),"{}",report.render());
+        assert_eq!(report.status(),Some(AuditStatus::Unsafe));
+        assert!(!check_project(&manifest,Some(true)).ok());
+        let strict=parse_project_manifest("name = native\nroots = ffi.dlm\npolicy = trusted_only\nunsafe_roots = ffi.dlm\n",&dir).unwrap();
+        assert!(!check_project(&strict,None).ok());
+        let roots=parse_project_manifest("name = native\nroots = ffi.dlm, other.dlm\nunsafe_roots = ffi.dlm\n",&dir).unwrap();
+        let report=check_project(&roots,None);
+        assert!(report.entries[0].ok());assert!(!report.entries[1].ok());
+        let error=parse_project_manifest(&format!("{base}unsafe_roots = other.dlm\n"),&dir).unwrap_err();
+        assert!(error.message.contains("not a project root"));
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }

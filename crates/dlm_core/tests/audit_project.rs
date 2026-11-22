@@ -157,8 +157,15 @@ fn the_repository_project_checks() {
     assert_eq!(report.status(), Some(AuditStatus::Unsafe));
     let proved: usize = report.entries.iter().filter_map(|e| e.audit.as_ref()).map(|a| a.proved()).sum();
     assert!(proved >= 50, "library and examples prove many theorems: {proved}");
-    // The standard library itself is closed.
+    // Pure standard modules remain closed. The explicitly admitted native
+    // network provider must expose, not erase, its foreign trust boundary.
     for entry in report.entries.iter().filter(|e| e.path.to_string_lossy().contains("lib/std")) {
-        assert_eq!(entry.audit.as_ref().unwrap().status, AuditStatus::Closed, "{}", entry.path.display());
+        let audit = entry.audit.as_ref().unwrap();
+        if matches!(entry.path.file_name().and_then(|p| p.to_str()), Some("native_net.dlm" | "net_socket.dlm" | "net_reactor.dlm" | "net_async.dlm" | "net_crypto.dlm" | "net_quic.dlm" | "net_transport.dlm" | "net_session.dlm" | "net_identity.dlm" | "net_content.dlm" | "net_discovery.dlm" | "net_adaptive.dlm" | "net_tun.dlm" | "net_session_verified.dlm")) {
+            assert_eq!(audit.status, AuditStatus::Unsafe);
+            assert!(audit.tainted_values.iter().any(|v| v.contains("dlm.net.v1")));
+        } else {
+            assert_eq!(audit.status, AuditStatus::Closed, "{}", entry.path.display());
+        }
     }
 }

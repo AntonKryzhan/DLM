@@ -1,0 +1,26 @@
+{
+  "format": "DLM-DLN-PLATFORM-EVIDENCE-v1",
+  "version": "0.137.0",
+  "platform": "Windows x86_64 GNU",
+  "source": "User-provided build and validation console log",
+  "examples": [
+    "network_protocol",
+    "network_loopback",
+    "network_streaming",
+    "network_typed",
+    "network_reactor",
+    "network_scope",
+    "network_scope_control"
+  ],
+  "native_thread_host": {
+    "result": "passed",
+    "backend": 5,
+    "reported_line": "scoped threads queue cancel and close OK; backend=5"
+  },
+  "final_line": "Networking build and loopback checks passed: dlm 0.137.0",
+  "limits": [
+    "This is a smoke/lifecycle gate, not the full platform matrix.",
+    "It does not execute the new 0.138 crypto path.",
+    "It does not provide FreeBSD/macOS execution evidence."
+  ]
+}

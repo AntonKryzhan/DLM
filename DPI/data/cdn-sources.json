@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "checked_utc": "2026-11-19T16:00:00Z",
+  "cloudfront_create_date": "2026-11-19-00-57-06",
+  "azure_change_number": 427,
+  "azure_file": "ServiceTags_Public_20261116.json",
+  "sources": [
+    "https://www.cloudflare.com/ips/",
+    "https://ip-ranges.amazonaws.com/ip-ranges.json",
+    "https://download.microsoft.com/download/7/1/d/71d86715-5596-4529-9b13-da13a5de5b63/ServiceTags_Public_20261116.json"
+  ],
+  "counts": {
+    "cloudflare-cidr.txt": 22,
+    "cloudfront-cidr.txt": 149,
+    "azure-frontdoor-cidr.txt": 229,
+    "azure-cloud-cidr.txt": 4907
+  },
+  "azure_cloud_scope": "classification only; automatic handling requires MWO ownership or a named cloud domain"
+}

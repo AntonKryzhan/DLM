@@ -1,0 +1,394 @@
+{
+  "format": "DLM-DLN-COMPAT-v1",
+  "baseline_version": "0.136.0",
+  "protected_files": {
+    "crates/dlm_core/src/ast.rs": "652e50a82efe9a9cc2be6806082c1bb2de32bbd8023cbabb8b65f2ef099a1f3c",
+    "crates/dlm_core/src/audit.rs": "9f50f66052b0d444800631bc012b02f83771eb3f3444ff4c95bfdbe5ffa3808f",
+    "crates/dlm_core/src/axiom_registry.rs": "59bf3bdbc796b2139ab24e585d6a645ed6c87622a0c9570985565f7cc6d660cd",
+    "crates/dlm_core/src/backend_c.rs": "de59203e7209d5904b41680ca121dccad4b45260ea8701c544674f09ed608e45",
+    "crates/dlm_core/src/backend_c_embedding.c": "5b64cd91b4a54309d4654d01acafcbcd98c9ecdf2b720f34d345de99dc85b0e3",
+    "crates/dlm_core/src/backend_c_runtime.c": "3016d7a83573a04c009ddd4a9b6f5a1b8a7079b18276f58f0fe74b8ab1e6f50e",
+    "crates/dlm_core/src/backend_c_scalar.rs": "85bff00b8e534e7e603fe09c274f688dbd3d94414ede648a88d83867fa5db756",
+    "crates/dlm_core/src/backend_capability.rs": "a49c3252c7250c9a76d9f8f73744a9fe0ed28c3c2bbea49d5dd4649ddfc92bfb",
+    "crates/dlm_core/src/backend_layout.rs": "5812de476d3d179f99f1e4000d9f93a29cb0afca3540712b73e7b5f23dcdc12f",
+    "crates/dlm_core/src/bignum.rs": "b17b25d86ac727797ee3d93e45082d804b0c914722cd751ed2538484ab8c6479",
+    "crates/dlm_core/src/bridge.rs": "bcd26a73d965634eabde9a0598a9bbafb35f2ae5e633a5f4223ea96ee83fff7f",
+    "crates/dlm_core/src/bridge_assumption.rs": "462f1e28b9255dad31d5feca7d88a192755e04c2372dacf744e657b4021fc39d",
+    "crates/dlm_core/src/bvh.rs": "e3e12e563f126153e7a107d951f7fee9820941322ad81b4cd2171e46bc2bbafe",
+    "crates/dlm_core/src/callback.rs": "fd1a728f24622b71cadc18d01d4822669e8983a9790ec94c778f55a9e699a811",
+    "crates/dlm_core/src/certificate.rs": "af1ab9fb74f92d5ef5f8b7970a7e993173dd580686833402fe5bad30fcc96d58",
+    "crates/dlm_core/src/certificate_audit.rs": "263f4bbe9eada4f4cf382bf80ba84ea04bbf25a91b813efe919dc7b62db243bb",
+    "crates/dlm_core/src/checker.rs": "bcc417b252db57fbbf3f8d0b2a775132f31ce3a1ba6c8d05f7e83a74dbd85d3b",
+    "crates/dlm_core/src/checker/modules.rs": "9cd017ff6e6c79add47df950efc53798974818ab4164da6d1a5657a1c5029420",
+    "crates/dlm_core/src/checker/ordinary_surface.rs": "88ace1a86883f7652f50424812e8ef2c23e2efc99198cdb560e025ebc2e21c83",
+    "crates/dlm_core/src/checker/statements.rs": "dae7d5f3b51d6ac2966ea38760e085bb2cfb9487ba565315d141332c6ff24d31",
+    "crates/dlm_core/src/combinatorics.rs": "a0ce91fd12015b29e9dc30f254e7899dd6f5130a19f4af9a944d69b3d9780027",
+    "crates/dlm_core/src/compile.rs": "804a48db6971ff861e426a0cf930d85a412d1f875e3b1f0737efec0af4d7fe2e",
+    "crates/dlm_core/src/conservative_extension.rs": "7ec128492f4ef0967bb8579b6da8c2ed94946dab0d5a34a22515c2a112295e1f",
+    "crates/dlm_core/src/contracts.rs": "f425cf9071636c602c604c22de9dc663c929a307b55e1b0e6b2c1ebc7cff05cb",
+    "crates/dlm_core/src/dense_nat.rs": "a761ad21d9523f73ca9a225c1a8bae47d24e439c26de0da8debb8b22b3969bcc",
+    "crates/dlm_core/src/dense_runtime.rs": "0e6f09b7043318f5c5dff0fe41bb49cd00b378896ab744b175c3b55e8bc4cf65",
+    "crates/dlm_core/src/diagnostics.rs": "11491125da89de43ba41a0fddebf6ff2c37d400bb31d3ebe7610f909e883bfc5",
+    "crates/dlm_core/src/equality.rs": "35d798764d6d1d9c0850f7e8af7353365364e7d93e3dfda4e2165646c79a2bfd",
+    "crates/dlm_core/src/float.rs": "089ff48d17c448031fe5a31f27c801ac55faebed747d586bbdde1f34b209bbe3",
+    "crates/dlm_core/src/font.rs": "2f751da38b9f4983a9d7e69c6059baf3898c8fe8e96404fc07c94df448e0029d",
+    "crates/dlm_core/src/function.rs": "04a5e63a3aef5a825abe53569eea3c11be55ca9718b435485adae36aafa6f870",
+    "crates/dlm_core/src/function_contract.rs": "aaa0a829e500b2ef194476e32db5ed49afd901f21e69ddcb732e00ba4bf59a52",
+    "crates/dlm_core/src/generics.rs": "67858020c6a8f2fd3f77119a966958f91e25a6cda724fd1f14b8fce73ff5fbe0",
+    "crates/dlm_core/src/geometry.rs": "39ca403aa64fb26194f1b265bd65250a8c53e3f462de89d407691fab90c02f24",
+    "crates/dlm_core/src/gfx.rs": "4f4c7fb6a84a5b4221a1df500d2653934517b93c786474190573d0a04d737444",
+    "crates/dlm_core/src/graph.rs": "85701a16bacd8c1ae3a07800c2ac9c890188e8b7f86972583320fae16770c066",
+    "crates/dlm_core/src/groebner.rs": "cf7dac43b1de8e338b40f36f7acca128854af8757bd178ff14c189a6fc1601f3",
+    "crates/dlm_core/src/ids.rs": "95193d2c99b6aee516c28ef4aea2c27300ca19cc8d817c7c8a62ce5c693e2025",
+    "crates/dlm_core/src/induction.rs": "118e02bc5fa66fdfcda4d485e234ca82d64cb2d661b017002b77db0563077176",
+    "crates/dlm_core/src/ir_verify.rs": "2c644a21fe44a1385905ce0714880d3db4ec67bddfd1349cb2b0bdf07044051a",
+    "crates/dlm_core/src/ir_verify/builtins.rs": "3e3babd0fe59adf4770fc94e0632ed5ee78c58ea754377f344dfbe481dca5f9d",
+    "crates/dlm_core/src/ir_verify/guards.rs": "bf5fd9b1d4c0c73b2d276254f13061230203b4ed4672c77b2d2c1a55b16c94c6",
+    "crates/dlm_core/src/lib.rs": "4e75a842b05d350d88173451c2ce29678fc3eb327d39184557b818349add6c84",
+    "crates/dlm_core/src/linalg.rs": "0b759ce0cfa1534836f4ac73747ed2366e11b522dcb341d8ab9098c3f944aac2",
+    "crates/dlm_core/src/logic.rs": "9e6152a5592f13a2806ed605b7fbf1f1c56d62459cd7e7d6f74c542450342b58",
+    "crates/dlm_core/src/machine_arithmetic.rs": "ad217c45162a88a6babea4496a5d24ee941e470dd7e79c0316c5ea8ddd6f51cc",
+    "crates/dlm_core/src/maps.rs": "c79c6bf250fc0cc3dd621ac0b4ed45769c96f9326c4237a5e9a436fdabae7146",
+    "crates/dlm_core/src/math/acceptance.rs": "5dbcef09444757b85f778b3f7103399d29855674abb56e7c5fb65977a1fa4a08",
+    "crates/dlm_core/src/math/algebra.rs": "481b349d85d8d087600a25bd1703e580f9d504cbe5a195c709e196c19e68fc62",
+    "crates/dlm_core/src/math/category.rs": "4a433c2197feec47fd3d4b5e95e3c163fc801928c805bca2d6cbd39548899ed0",
+    "crates/dlm_core/src/math/ccomplex.rs": "237abc5ae4538fb783b93ea8eecbb0ee71426369b4f3e68bca4d78f59827a071",
+    "crates/dlm_core/src/math/complex.rs": "9afce89f57ccf5f5119cf3f6c67efd89b2eba76f75dbff49f0f4c854fdb73749",
+    "crates/dlm_core/src/math/complex_q.rs": "353b85e666dfe6d9badf4564a4665901b713032135373636226e2622d22ef2a4",
+    "crates/dlm_core/src/math/contract.rs": "026bdf2fb4829f2adacc3be7b49cb515ef74ab2a3ac660c4dd20f3821482fc74",
+    "crates/dlm_core/src/math/convert.rs": "ffd03d7ac1eac926279a1e19516b098fe82aaaafabe172d08c82a28ab0d250ce",
+    "crates/dlm_core/src/math/creal.rs": "17f7e7733e342cac59e91945d3e4d294cfa02f7c54c2c2cba6864c777a8e38f9",
+    "crates/dlm_core/src/math/elementary.rs": "1dec81299d30013b5d2ad4266cf6bcd75b1d6befe9d8f62346df51f4c1fd1618",
+    "crates/dlm_core/src/math/exact.rs": "99c824b798699aba63321fcf3d049aee79a7a3bb1ca90b1f53b98e5283a0e5b5",
+    "crates/dlm_core/src/math/f2.rs": "1771c32d791a7a47375f0f09a350965b5d38ce2128fa31d0293ae58a79c4285c",
+    "crates/dlm_core/src/math/interval_q.rs": "6c5668ae7e17cb32dc48417325c70bd451be92279056c74e14d4bde2c5e9df97",
+    "crates/dlm_core/src/math/mod.rs": "47147433a38e294c0537806cf83dc32dadc9ccae7948ddd17d33bdf04ae81014",
+    "crates/dlm_core/src/math/portable.rs": "604c7828b534dcd6ee62fe6bed5d05b9f534b5644bce5b1ff8ddd295a77a91d8",
+    "crates/dlm_core/src/math/prime.rs": "b691966f1393b93d5cbcd3ad97f95209489168af9b97b74dc77f9710d8e30a6d",
+    "crates/dlm_core/src/math/prime_topology.rs": "7cdf857f89688674434b0c32e4f4d9b3279af792f9ebd3515ab81c2ee88ae7e2",
+    "crates/dlm_core/src/math/profile.rs": "bdc89394480d5c058cf4fb4bcbdbcfc475d68708de80619076185a2dd417beb9",
+    "crates/dlm_core/src/math/rational.rs": "8ca22d99a5ca3ea80f4a2bd3c1a310a3f355becd9815395bdd7eb894feed38ff",
+    "crates/dlm_core/src/math/rational_matrix.rs": "bdb81646180b9ef55bc27ba5ef722584e34d82a274033ac42d681b9587e6f52d",
+    "crates/dlm_core/src/math/rational_witness.rs": "ef79ce12e9ecbe9ec6aa25fdd0a8c96f900884c133cca1c312f7c2bca01473db",
+    "crates/dlm_core/src/math/rational_witness/codec.rs": "0cd507a462f8c18879fc05dd6426f7642fa1b324a221b88453cd0b83645b71fd",
+    "crates/dlm_core/src/math/rational_witness/producer.rs": "a50c8f611c25417e58e1b28334e892ed9c82fc33f30fab5cad3c4fde2954b543",
+    "crates/dlm_core/src/math/scalar_witness.rs": "c198c9000a00062709bcf2b783266d9266d8d98dfd361a13eebdf0abf5836e51",
+    "crates/dlm_core/src/math/topology.rs": "72c4dd383452dac87c233fce38945ef9235570fe969993eda9da4ea349950a0f",
+    "crates/dlm_core/src/math/witness.rs": "d99b8e7557609f54ce1ca0a4070d23f3cef49fc3064e1fda22df3f92a144ffa8",
+    "crates/dlm_core/src/math/witness/codec.rs": "607c5053f9c1ed2ec66c6752587b772d0cd11c0ecc2af43b3ea706589d9037b9",
+    "crates/dlm_core/src/math/witness/producer.rs": "9213e7ce697a13112d0fd5271269b4e691c3e2f21ddb2680c7d3367a8030b655",
+    "crates/dlm_core/src/meta_level.rs": "56a8e0607c42c54e15e6c99c319f57890eb1e6a2e566dfedaa3e68d4b78e6d52",
+    "crates/dlm_core/src/metatheory_closure.rs": "68b676647aabb9231316454bcbb4250456f1c6d8e2c1dbc1290c626b710d6bb8",
+    "crates/dlm_core/src/metatheory_foundation.rs": "f7856c08a3f0729d3d75091dd82ae138f41756298ef72b525e1b3de11a906372",
+    "crates/dlm_core/src/module_interface.rs": "012b41fc8887a61a1ec925bc7cfac9924b5634bdfc07f9e2c4616ff3a384ccbb",
+    "crates/dlm_core/src/module_system.rs": "83ff15e295827fe4da2fc9a4dd59a363af0ddd68ad037d7307c0e2702b43cc4b",
+    "crates/dlm_core/src/native/bridge.rs": "f4942f886cbcbd3d89d6f9a8cf994bd9c7ca8f5ec364bae1f06ae3838429d0cd",
+    "crates/dlm_core/src/native/build.rs": "96d491892c36bd52f0127432b69ab6df0578e9604fa3f797474364bf958262bd",
+    "crates/dlm_core/src/native/check.rs": "d524a11875ddc1d881b6316073a28926d75772ec21ffdc6cd151e02c8a2dc99c",
+    "crates/dlm_core/src/native/emit.rs": "ff5bf192c9ffdf52a3cd1a8282ff73c5c7ca085ec6426a31d069a8223906aed5",
+    "crates/dlm_core/src/native/mod.rs": "2e9c9ad203bd2ef252fd9d0f076e1bdea8a4df548826a84422fd2098dc46d9ed",
+    "crates/dlm_core/src/native/runtime.c": "1b8621c82b50a824cb5fab5bfac89689a5fe7ce9e0339a8c3eb1b52946c43265",
+    "crates/dlm_core/src/native/syntax.rs": "5757b4aa201ce0754f8202e22d818ddc18bad905897bd40078ccfd5f58496e16",
+    "crates/dlm_core/src/native/vm.rs": "bf1ad257925ec86e6cf590cd4417f14447adbe6d0452d49d161cbc7de4f15250",
+    "crates/dlm_core/src/native/window.c": "fd31c81362fb0914ba777b16653b5b7dc462232024b7c4805376dcec684adf8b",
+    "crates/dlm_core/src/number.rs": "f8dd088777b1330238d6f26ffbc1d87afea9b892fccdbdd432c302d05d47ab1f",
+    "crates/dlm_core/src/ordinary.rs": "b5ecbcff1b95cd30a06dbcdff11bcb350d7f4966be1c7c936b43a7dfe745428b",
+    "crates/dlm_core/src/os.rs": "95a0083920938dcca4dd0411133915b43405efbe71763323cf961c5df601f9e4",
+    "crates/dlm_core/src/ownership.rs": "adea24989507b23738d83458079c6c13d61b89ecbf4886288422386e66efc3fe",
+    "crates/dlm_core/src/parser.rs": "b1649d39bddd72912d24ad63ef63cb2752218a0ff90360150156b0481bd0db8c",
+    "crates/dlm_core/src/partiality.rs": "c0255dce5f428ec3320901ca539621f00b7b47b4014849b9d7550ad3fa1f0f64",
+    "crates/dlm_core/src/passes.rs": "e0a2c1cc2600a68e018658631d4de5c5ef7f251674b013217d2881b3e98214ae",
+    "crates/dlm_core/src/passport.rs": "014e26945627ca6e9358cfc3cdb2b385cb4e38cab562c8a7b43724df0188aa2a",
+    "crates/dlm_core/src/passport_rules.rs": "3164613d0ab40f5c500bf30b675a7b7cf920dcf284fa97dbe9cc990088b345a4",
+    "crates/dlm_core/src/policy.rs": "285472bc2a84da1f4a9d349f52a51b3c37375897e6e0ff3e2c4b8f7fd9776d81",
+    "crates/dlm_core/src/prelude_eval.rs": "0689f00136295210cd78798338663d8fa2a9c81c60ecccd9569ef9f8a062429c",
+    "crates/dlm_core/src/prelude_lowering.rs": "189b59c788f3e31ea4edb8096d1451a3a1efef061714d109e4bbb1ef247e4070",
+    "crates/dlm_core/src/program.rs": "d343feaeb3cece5dd85e0570d1dc158b1fbacf5bcf0ba8c46c9b8ee2aa3bb06e",
+    "crates/dlm_core/src/project.rs": "3bc011dbaae46485fd0dd960e5f19e12db44b839b4e87076a8db296f651eeb50",
+    "crates/dlm_core/src/proof_context.rs": "3f61e8b0c7917d8974772f0667d004a57480950ebf0fa892a30901fd83511acf",
+    "crates/dlm_core/src/proof_kernel.rs": "5e7f608fcf54814e7cf4265dc9f63c447a47ce60e656a93a2784420f3d829d68",
+    "crates/dlm_core/src/proof_kernel/builder.rs": "7779ccb5ebcb7ea7e689e1fa5244c53b3b7fa1dcb914be9c066c5b39662dd39c",
+    "crates/dlm_core/src/proof_kernel/codec.rs": "07925f9282ae6ad33c1faf347e69d056625f2ac59388a4bddccb4dd7c7509d7d",
+    "crates/dlm_core/src/recursion.rs": "c390056138249fd741c6f1d88ce51ff719f1d51f8e566bd8ad656891d8e692a9",
+    "crates/dlm_core/src/reflection.rs": "19eab25eb1bb073b3ec420d1b5d95a0fb8086c19b2bbaaaea5e7014b2691be7d",
+    "crates/dlm_core/src/resolve.rs": "d9ddb7129d9feb0fa78b379fe63910ba903fec816b04205e982e7e17e8bb2544",
+    "crates/dlm_core/src/rewrite_normalization.rs": "5af783ec884d0cfbb4d2f6d34b2429dd5b2c5e7d9dd54cc75c2a1f2130f31261",
+    "crates/dlm_core/src/runtime.rs": "ce2b1acb4ca6224db4f7681f83753acc58b0157ff2715576101ce7f4fb391f47",
+    "crates/dlm_core/src/runtime/effect_traversal.rs": "53b6df3892009b2ed1827b3e4dbe8eeff3c2de16489797e1a79d97c25dfe5cd2",
+    "crates/dlm_core/src/runtime/ordinary_surface.rs": "f5e1741e2070194d7c3d3b7635d410cf3cae3bbcc37f7fae10c59f744f4a5bad",
+    "crates/dlm_core/src/sequence.rs": "f30941eca8efcca7c301b89a9985a7d9bb0829d72344c1da35eae8b21b16a395",
+    "crates/dlm_core/src/soundness.rs": "76b6d898f706039f5adabd13f3e2e6ca5ca4aa677b227dad06fcbd579859b5b3",
+    "crates/dlm_core/src/sparse.rs": "5028672667be3cdbae168a9833599a8cbe46632d51f66c6247c7fb4680cb6f47",
+    "crates/dlm_core/src/spectral.rs": "7e0b9ca688f0059dd1176a3926ae118ca061b6e1ecda7c1c591b147ecafff1ce",
+    "crates/dlm_core/src/standard_prelude.rs": "42ad14f5e87a93ee09b5d3f3b83813bdb8cf5d0962f5bfcbedaea0ca37d90e17",
+    "crates/dlm_core/src/statement.rs": "4f657f2bc2ff7c9add504991581c3df05d0150d45ca9a4974d23a1b1e22bb5ed",
+    "crates/dlm_core/src/structural.rs": "4e4c8a809a5de3be6c94491898c1e7e690fd03e29e1bc28f45555b92dac73f58",
+    "crates/dlm_core/src/structural_elimination.rs": "0a5819d0e71f63b45be21b0fbaa4a28dc13e81376370f16844f3e1142b5f26a8",
+    "crates/dlm_core/src/substitution.rs": "19d6bdcb3978780b61bd2a4e23f69d73773ed3152f522b17acf6805f95cc92c7",
+    "crates/dlm_core/src/symbolic.rs": "eeb237c19caf5cf4301ceb618c98e0626c8d26b23a08174812dc88a0e5112625",
+    "crates/dlm_core/src/tactic.rs": "e212d992d53ff458ccd28ab72ab6f20cce067c5939642f83b907fa88c2086e43",
+    "crates/dlm_core/src/termination_budget.rs": "5e0aca92a409e8b28b317a8ce2850060d9db74bc1d2bb3b686f3b4d1c26da0a6",
+    "crates/dlm_core/src/theorem_dependency.rs": "6b755cab04fa05c58675c19181837092d8db87bf859153eae90f030040b2c9e1",
+    "crates/dlm_core/src/traversal.rs": "c7cbcc5a4bc93431499db37200d3eb2028423db65a18acf86c43e28519a8ebe7",
+    "crates/dlm_core/src/trusted_base.rs": "62dbddad6ff93097f811c921285ce32803f0ccf9e084f7aa17f23f5890996abc",
+    "crates/dlm_core/src/typed_core.rs": "49cc3ed3734fecd7f413ba2de3985d604dff4b2e3cb6045fed7928f14c33822f",
+    "crates/dlm_core/src/vector.rs": "b5572d5bfb9b8c55159021697c282ea2d616089c054eb3ab99ca674d53d0e0f7",
+    "crates/dlm_core/src/window.rs": "1348b326b583b3b4fc0786d38234850becb7e24b588972034b861f148076ceff",
+    "lib/std/native_binary.dlm": "e09d329ec7c02ed80c6f6f095024f4481452746a9c5254c75d707136a7df4219",
+    "lib/std/native_net.dlm": "e9b39ec2fc4c028c52d7632b06c359572b13509e3ed23fe6f2bad2e67a5d6f21",
+    "lib/std/native_protocol.dlm": "7c7e619848c65279ad9a6eceadee4d73db5074f88836d336e603fb417c746e2f",
+    "lib/std/net.dlm": "487786a6e5d5862b3c0f98361c7a82b550f7862893976de342327a4cbe10b6aa",
+    "lib/std/net_bytes.dlm": "0af4057e3bc77671db7177e13765069052830e21607554440281c807243ab49b",
+    "lib/std/net_codec.dlm": "9894b6c67649a6113a60863b6a90b5b68382ef378e6b04a30ecf994b456e069c",
+    "lib/std/net_error.dlm": "0f24b704b5b2a60b052d3730edb3a48056da01dd569d16dce193f056d6c41d62",
+    "lib/std/net_socket.dlm": "09cbf1127b8e720af1e971c18316d265d1c47c10d75045cd55abcc18114c300d",
+    "lib/std/net_reactor.dlm": "9691cdf598f8a4b4457d4f58d1e414fe9ae360327adfc553f4cdbf69dc772324"
+  },
+  "network_c_source": "crates/dlm_core/src/native/network.c",
+  "network_c_abi": {
+    "dlm_net_clock_ms": {
+      "declaration": "uint64_t dlm_net_clock_ms(void)",
+      "body_sha256": "e8da7d768754656403ef71b053b3944905a2ab59fcf0f3395994adf5544898ef"
+    },
+    "dlm_net_cancel_new": {
+      "declaration": "void * dlm_net_cancel_new(void)",
+      "body_sha256": "a7d6d9356d067dd916e97938579a4aaf397ec58b53848061ce288936d21efc80"
+    },
+    "dlm_net_cancel_close": {
+      "declaration": "void dlm_net_cancel_close(void *p)",
+      "body_sha256": "8ebb9f903007c2a8a6159daeeff358c649a1f03be5dc45559ec1af82b8c563ea"
+    },
+    "dlm_net_cancel_signal": {
+      "declaration": "void dlm_net_cancel_signal(void *p)",
+      "body_sha256": "3db980b6567d700371040e70f8d16219ae37e9d4608ab0f5c0a11c6581de41ee"
+    },
+    "dlm_net_cancel_reset": {
+      "declaration": "void dlm_net_cancel_reset(void *p)",
+      "body_sha256": "fa6b8b90ae31459c8c77e67bc6b543e18318d8f5d9bdd5e124c7628e2258a430"
+    },
+    "dlm_net_resolve": {
+      "declaration": "dnn_resolved dlm_net_resolve(dnn_text host,uint16_t port,uint32_t index)",
+      "body_sha256": "16ac324c44662d26d6ffde1b983598dac0dd4de6ffa6c9fade8eabad8c8fd6b0"
+    },
+    "dlm_net_poll": {
+      "declaration": "dnn_io dlm_net_poll(dnn_poll *items,size_t count,uint32_t ms,void *cancel)",
+      "body_sha256": "309e892117239f63934e43b7f0a0e1d64f13cde5483b18425a997b2870e74e4d"
+    },
+    "dlm_net_wait": {
+      "declaration": "dnn_io dlm_net_wait(void *handle,uint32_t events,uint32_t ms,void *cancel)",
+      "body_sha256": "5d648d8a3909f87e79c55eee734c85bafacabae41659857453c82e01362d8f32"
+    },
+    "dlm_net_tcp": {
+      "declaration": "dnn_open dlm_net_tcp(dnn_text host,uint16_t port,uint32_t ms)",
+      "body_sha256": "16a72380e4a625f3839880a917ce2443a9dbcb5e4f37ca990f2fa73536b53a88"
+    },
+    "dlm_net_listen": {
+      "declaration": "dnn_open dlm_net_listen(dnn_text host,uint16_t port,uint32_t backlog)",
+      "body_sha256": "3baf4ceb4104319eb0c4c6240cce83f420c8e01a41b94a078a42c9fc8897b13a"
+    },
+    "dlm_net_udp": {
+      "declaration": "dnn_open dlm_net_udp(dnn_text host,uint16_t port)",
+      "body_sha256": "8ea2d1e938da0b653616bc33b9a01923b3acdb741a02c0369867662927ddd5c2"
+    },
+    "dlm_net_accept": {
+      "declaration": "dnn_open dlm_net_accept(void *handle)",
+      "body_sha256": "b7d5523c3cfe2169a8d2d959572a97cd8ea3f7c9bef8ffb7bc5a4763a59a36f6"
+    },
+    "dlm_net_local": {
+      "declaration": "dnn_resolved dlm_net_local(void *handle)",
+      "body_sha256": "15a8aabde51ca7b07df83b808539883e79c2344c2bf9bb191add5e238c74f90a"
+    },
+    "dlm_net_nodelay": {
+      "declaration": "dnn_io dlm_net_nodelay(void *handle,bool enabled)",
+      "body_sha256": "1cdfb1fc9f23052fab7005887f97b46d92115e00c0b7823dd27163ba91bf83e8"
+    },
+    "dlm_net_connect_address": {
+      "declaration": "dnn_open dlm_net_connect_address(dnn_addr address,uint32_t ms)",
+      "body_sha256": "3169c2067f19b2f36b3b3b08299a2835a83e6e5cb1095e59d1893639b0c44f29"
+    },
+    "dlm_net_bind_address": {
+      "declaration": "dnn_open dlm_net_bind_address(dnn_addr address,uint32_t kind,uint32_t backlog,bool dual_stack)",
+      "body_sha256": "ce793adb9c035690a55e46aa22f2f5b29bfa3d61a04632f4c3c6c11797926fd8"
+    },
+    "dlm_net_resolve_family": {
+      "declaration": "dnn_resolved dlm_net_resolve_family(dnn_text host,uint16_t port,uint32_t family,uint32_t index)",
+      "body_sha256": "6e35b928278cfa6fb55d7ef4d212e63faa2e59ccad79b8a065b137ad50c979a1"
+    },
+    "dlm_net_peer": {
+      "declaration": "dnn_resolved dlm_net_peer(void *handle)",
+      "body_sha256": "138b591ef18ef8ff06781c66f7f94eb0675e6bcc50337a437663e93a1dd2119d"
+    },
+    "dlm_net_configure": {
+      "declaration": "dnn_io dlm_net_configure(void *handle,dnn_options options)",
+      "body_sha256": "efcb1112b931d1856ee54a750ced97eb7f6fade3756644d965bfadff68cdadfb"
+    },
+    "dlm_net_get_options": {
+      "declaration": "dnn_options_result dlm_net_get_options(void *handle)",
+      "body_sha256": "695d26e9afa8c7af1a39818d22e9ec96042915a6e3e629d8a7d639969cb628f2"
+    },
+    "dlm_net_address_text": {
+      "declaration": "dnn_io dlm_net_address_text(dnn_addr address,uint8_t *target,size_t capacity,bool with_port)",
+      "body_sha256": "06b27ef0ac2e10de69a15d8bbe6d049078017e7d3183ac12c46dfc66722aaf6b"
+    },
+    "dlm_net_udp_send": {
+      "declaration": "dnn_io dlm_net_udp_send(void *handle,dnn_addr peer,const uint8_t *data,size_t count)",
+      "body_sha256": "21e638c21a468757b0e8f166f408a5dd419da96ca2a98c3ae38e52a00fcb7eac"
+    },
+    "dlm_net_udp_recv": {
+      "declaration": "dnn_datagram dlm_net_udp_recv(void *handle,uint8_t *data,size_t capacity)",
+      "body_sha256": "5c19e76c3782e4008e16db2254fecd7f97eb43a9d69fbb44398249a0e8f5e465"
+    },
+    "dlm_net_shutdown": {
+      "declaration": "dnn_io dlm_net_shutdown(void *handle)",
+      "body_sha256": "88bcd8455fe04cd2c87e34fe4da8ab51b944266003d347e27a9f0708b392bd5a"
+    },
+    "dlm_net_capabilities": {
+      "declaration": "uint32_t dlm_net_capabilities(void)",
+      "body_sha256": "7d59aa39484fefe727e6ad0d2c8d7501352a0d25d6c4ebb7005b27b85f8143a3"
+    },
+    "dlm_net_curl_version": {
+      "declaration": "uint32_t dlm_net_curl_version(void)",
+      "body_sha256": "b566d9c6d4b47b4adfa83ee685e55b5af5370976c0e9c9582c131ed57502236e"
+    },
+    "dlm_net_provider_shutdown": {
+      "declaration": "dnn_io dlm_net_provider_shutdown(void)",
+      "body_sha256": "27a17037f25155822715d3c1c0d308fe14393a4006a528435dfb284bbaf0ec38"
+    },
+    "dlm_net_close": {
+      "declaration": "void dlm_net_close(void *handle)",
+      "body_sha256": "871c9a59923f6554aeaeb52fbe68883b7922839f42a1a2395a7ee527c89e3e97"
+    },
+    "dlm_net_tls": {
+      "declaration": "dnn_open dlm_net_tls(dnn_text url,uint32_t ms,dnn_text ca,dnn_text pin)",
+      "body_sha256": "12fd46de69ba7fc7302f0ad541b62f98f31f683753c8e9bd249b378e7170c312"
+    },
+    "dlm_net_send": {
+      "declaration": "dnn_io dlm_net_send(void *handle,const uint8_t *data,size_t count)",
+      "body_sha256": "2521f3a51ce2c780508d7b9c41d21e3079557ee069135108c8797a3212d6857f"
+    },
+    "dlm_net_recv": {
+      "declaration": "dnn_io dlm_net_recv(void *handle,uint8_t *data,size_t capacity)",
+      "body_sha256": "a0374c06738005b2bc8e14361cb87a5c491872f1100969ae8db58b6c0544393a"
+    },
+    "dlm_net_transfer": {
+      "declaration": "dnn_io dlm_net_transfer(void *handle,uint8_t *data,size_t count,uint32_t ms,void *cancel,bool sending)",
+      "body_sha256": "9352be7c56103fcd8efee21f4d4331d791c3e255affd5da3a320c06997aefe92"
+    },
+    "dlm_net_http": {
+      "declaration": "dnn_open dlm_net_http(dnn_text url,uint32_t ms,size_t maximum,dnn_text ca,dnn_text pin)",
+      "body_sha256": "c3059258750fd5bba22f88272703786b5126b907fe3fc2288ceaaf1a737e6886"
+    },
+    "dlm_net_http_version": {
+      "declaration": "dnn_io dlm_net_http_version(void *handle,uint32_t version)",
+      "body_sha256": "00069c3d385203d92fb17b970a4a77c97d5383715f11d4cf17ba8016c47be142"
+    },
+    "dlm_net_http_header": {
+      "declaration": "dnn_io dlm_net_http_header(void *handle,dnn_text header)",
+      "body_sha256": "46bb57435be038dc03a16daec4358fea08f48792196b4d881394501660a0c2b0"
+    },
+    "dlm_net_http_body": {
+      "declaration": "dnn_io dlm_net_http_body(void *handle,const uint8_t *data,size_t count)",
+      "body_sha256": "589856bef302cf427f963de3a7d9e6318b0aeca15d17c748e92d37b744811bb4"
+    },
+    "dlm_net_http_method": {
+      "declaration": "dnn_io dlm_net_http_method(void *handle,dnn_text method)",
+      "body_sha256": "57660f7b96d3b98326803244aa3d4c518eeebe650d41bb393ff57fd44bcbe5df"
+    },
+    "dlm_net_http_ech": {
+      "declaration": "dnn_io dlm_net_http_ech(void *handle,dnn_text config)",
+      "body_sha256": "78a9c07ba779126902623f05ae32303d12de591ef543102911c65d806765bd1e"
+    },
+    "dlm_net_http_perform": {
+      "declaration": "dnn_io dlm_net_http_perform(void *handle,void *cancel)",
+      "body_sha256": "96289f4da4de00f851614390991296e6602e31d75d75c0cf9d3896e0cf3b2b45"
+    },
+    "dlm_net_http_info": {
+      "declaration": "dnn_io dlm_net_http_info(void *handle,uint32_t field)",
+      "body_sha256": "016637b7a07204826bfb64d08cccfe3c4d41e6e7dd271bfc71f13500bceb7172"
+    },
+    "dlm_net_http_read": {
+      "declaration": "dnn_io dlm_net_http_read(void *handle,bool headers,size_t offset,uint8_t *target,size_t capacity)",
+      "body_sha256": "bbf830fbdfbf081bdc6a8b059c19360c38f84622041bb733d72ca673197c342e"
+    },
+    "dlm_net_websocket": {
+      "declaration": "dnn_open dlm_net_websocket(dnn_text url,uint32_t ms,dnn_text ca,dnn_text pin)",
+      "body_sha256": "a45083b1d7305ed764cfb107830ded33a44306300bd2a20e342791bf814b0b7b"
+    },
+    "dlm_net_ws_start": {
+      "declaration": "dnn_io dlm_net_ws_start(void *handle)",
+      "body_sha256": "595a944aa3ac10e73eb723e51c8bcf0e25fc4567e7cecf575bbcea21da3f0f62"
+    },
+    "dlm_net_ws_send": {
+      "declaration": "dnn_io dlm_net_ws_send(void *handle,const uint8_t *data,size_t count,uint32_t flags,uint32_t ms,void *cancel)",
+      "body_sha256": "e719ef086902dc2fd5b814ff4e0f508e8a93f01242ccd5aa57831799e6f852b2"
+    },
+    "dlm_net_ws_recv": {
+      "declaration": "dnn_ws_io dlm_net_ws_recv(void *handle,uint8_t *data,size_t capacity)",
+      "body_sha256": "1749c36b659fafd2e370b97aa99a148aa2959346bd279857075b61d966116b1c"
+    },
+    "dlm_net_random": {
+      "declaration": "dnn_io dlm_net_random(uint8_t *target,size_t count)",
+      "body_sha256": "28d383ee0c68e81d2e4d4e3f1bed2a6ef280f922b2970f62eac644988ccc703d"
+    },
+    "dlm_net_reactor_close": {
+      "declaration": "void dlm_net_reactor_close(void *handle)",
+      "body_sha256": "412441cf788f853cde53020b0f026bbcb6b1002ded56a3cc3b1973afefd6cf7d"
+    },
+    "dlm_net_reactor_new": {
+      "declaration": "dnn_open dlm_net_reactor_new(uint32_t channels,uint32_t operations,size_t byte_limit)",
+      "body_sha256": "ec9c6cdbfb76c4936efd4b8e2f6978a833ab76077dc4976264f71b9a998b7a9e"
+    },
+    "dlm_net_reactor_adopt": {
+      "declaration": "dnr_request dlm_net_reactor_adopt(void *handle,dnn_open socket,uint32_t kind)",
+      "body_sha256": "2c73f51a28a742aa278e1088528deeb489a59ba3d273a66a7f60ce4d2b113708"
+    },
+    "dlm_net_reactor_submit": {
+      "declaration": "dnr_request dlm_net_reactor_submit(void *handle,uint64_t channel,uint32_t kind,const uint8_t *bytes,size_t count,bool exact,uint32_t ms,dnn_addr peer)",
+      "body_sha256": "541525af9c546f0eb1510d76e5bb9c3088c696b5d633159a720a6883006a8947"
+    },
+    "dlm_net_reactor_connect": {
+      "declaration": "dnr_request dlm_net_reactor_connect(void *handle,dnn_addr address,uint32_t ms)",
+      "body_sha256": "6d3c0206b8afba23090a9068a1bf142c3e05ed55878b3dc18189a4c5d09d34ca"
+    },
+    "dlm_net_reactor_timer": {
+      "declaration": "dnr_request dlm_net_reactor_timer(void *handle,uint32_t ms,bool event)",
+      "body_sha256": "96d35a083d6bb825442c9f0b82f659c5c703c114d696e94e759c2835cffc4df5"
+    },
+    "dlm_net_reactor_signal": {
+      "declaration": "dnn_io dlm_net_reactor_signal(void *handle,uint64_t operation)",
+      "body_sha256": "fe234641708917b30f1f09a35c60f16ef91cb83509a0ae0a7e966b9b500ee159"
+    },
+    "dlm_net_reactor_cancel": {
+      "declaration": "dnn_io dlm_net_reactor_cancel(void *handle,uint64_t operation)",
+      "body_sha256": "2134305638481868e334fb5eecf4ed4c88906b94de987b297676b81b93e9da20"
+    },
+    "dlm_net_reactor_poll": {
+      "declaration": "dnn_io dlm_net_reactor_poll(void *handle,uint32_t ms,void *cancel)",
+      "body_sha256": "c31b172efada643e8b33ca350a0d2bfe858bdeeaf2c4703a0b6430598cdcbbcc"
+    },
+    "dlm_net_reactor_result": {
+      "declaration": "dnr_completion dlm_net_reactor_result(void *handle,uint64_t operation)",
+      "body_sha256": "02c2fd169ebd3791005c1b4de6b5f70c05f7db2f6e6958404da010e373626c2c"
+    },
+    "dlm_net_reactor_copy": {
+      "declaration": "dnn_io dlm_net_reactor_copy(void *handle,uint64_t operation,size_t offset,uint8_t *target,size_t capacity)",
+      "body_sha256": "6dd9ee716227a5d592b7721a23f7b7e3147fbf27536b3791f3bc62bfb854de27"
+    },
+    "dlm_net_reactor_ack": {
+      "declaration": "dnn_io dlm_net_reactor_ack(void *handle,uint64_t operation)",
+      "body_sha256": "f51662e13ed5969e3933533510f508af1e453cb27d47ebe9da3b8d9e91426a59"
+    },
+    "dlm_net_reactor_channel_close": {
+      "declaration": "dnn_io dlm_net_reactor_channel_close(void *handle,uint64_t channel)",
+      "body_sha256": "b7c2cb4324dbda4085b060d1b0565f236665da25f1061b68bbfac78af3fe73c4"
+    },
+    "dlm_net_reactor_release": {
+      "declaration": "dnn_open dlm_net_reactor_release(void *handle,uint64_t channel,uint32_t kind)",
+      "body_sha256": "4c764c08ab6d6d15d43431b08d7683b92a92689e34fb9b78ab2ea57662651da5"
+    },
+    "dlm_net_reactor_stats": {
+      "declaration": "dnr_stats dlm_net_reactor_stats(void *handle)",
+      "body_sha256": "f9dec85d86e574490f33d20eccf73fb9179230f4022da05c810f31ef06faa958"
+    }
+  }
+}

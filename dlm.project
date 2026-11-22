@@ -3,3 +3,4 @@ name = DLM
 lib = lib
 roots = lib/std, examples/valid
 policy = research
+unsafe_roots = lib/std/native_net.dlm, lib/std/net_socket.dlm, lib/std/net_reactor.dlm, lib/std/net_async.dlm, lib/std/net_crypto.dlm, lib/std/net_quic.dlm, lib/std/net_transport.dlm, lib/std/net_session.dlm, lib/std/net_identity.dlm, lib/std/net_content.dlm, lib/std/net_discovery.dlm, lib/std/net_adaptive.dlm, lib/std/net_tun.dlm, lib/std/net_session_verified.dlm

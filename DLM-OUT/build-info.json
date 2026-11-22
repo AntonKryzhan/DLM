@@ -1,0 +1,12 @@
+{
+    "version":  "dlm 0.145.0",
+    "built_utc":  "2026-11-22T09:51:57.9628522Z",
+    "source":  "M:\\users\\Ark\\Desktop\\DLM\\DLM-main",
+    "target":  "x86_64-pc-windows-gnu",
+    "rust":  "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+    "gcc":  "15.2.0",
+    "gcc_bundle_sha256":  "2cdfb0a28c905f2913453dc0be62ff148bf828414f2468c68c62811319275633",
+    "compiler_sha256":  "9b63e2a84d12b3330d395bb5811ebd9a8496ada1bf9141a3ff9b1fe57d4dc38d",
+    "smoke":  "check, interpreter, native build, standalone native execution: passed",
+    "full_tests_requested":  false
+}

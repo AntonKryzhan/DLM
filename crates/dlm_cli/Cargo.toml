@@ -10,3 +10,4 @@ path = "src/main.rs"
 
 [dependencies]
 dlm_core = { path = "../dlm_core" }
+dlm_network_proof = { path = "../dlm_network_proof" }

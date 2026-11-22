@@ -1,0 +1,12 @@
+[package]
+name = "dlm_transport_proof"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "dlm-transport-check"
+path = "src/main.rs"
+
+[dependencies]
+dlm_network_proof = { path = "../dlm_network_proof" }
