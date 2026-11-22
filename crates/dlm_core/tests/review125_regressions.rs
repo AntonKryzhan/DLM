@@ -8,7 +8,7 @@ fn run_both(name: &str, body: &str) -> Vec<String> {
     let dir = std::env::temp_dir().join(format!("dlm-review125-{}-{name}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let work = dir.join("data");
-    let source = format!("module review125\nimport std.files\ntheory T extends StdFiles {{\n{body}\n}}\n").replace("{D}", work.to_str().unwrap());
+    let source = format!("module review125\nimport std.files\ntheory T extends StdFiles {{\n{body}\n}}\n").replace("{D}", &work.to_string_lossy().replace('\\', "/"));
     let path = dir.join("main.dlm");
     std::fs::write(&path, source).unwrap();
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");

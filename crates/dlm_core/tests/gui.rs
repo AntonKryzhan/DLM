@@ -17,7 +17,7 @@ fn run_both(name: &str, source: &str) -> (Vec<String>, Vec<(String, Vec<u8>)>) {
     let work = dir.join("work");
     std::fs::create_dir_all(&work).unwrap();
     let path = dir.join("main.dlm");
-    std::fs::write(&path, source.replace("{D}", &work.display().to_string())).unwrap();
+    std::fs::write(&path, source.replace("{D}", &work.display().to_string().replace('\\', "/"))).unwrap();
     let p = load_program_with_paths(&path, &[repo().join("lib")]).unwrap();
     let report = Checker::with_policy(CheckPolicy::trusted_only()).check_program(&p);
     assert!(report.ok(), "{:?}", report.diagnostics);

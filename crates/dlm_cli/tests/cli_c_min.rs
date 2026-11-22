@@ -26,8 +26,8 @@ fn standalone_replay_exit_codes_and_empty_axiom_context() {
     let dir = std::env::temp_dir().join(format!("dlm-cli-c-min-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let sample = root().join("examples/proofs/identity.kproof");
-    let (code, stdout, _) = check(&sample);
-    assert_eq!(code, 0, "{stdout}");
+    let (code, stdout, stderr) = check(&sample);
+    assert_eq!(code, 0, "{stdout}\n{stderr}");
     assert!(stdout.contains("kernel proof: checked") && stdout.contains("axioms: []"));
     assert!(stdout.contains("machine definedness is a separate obligation"));
     let text = std::fs::read_to_string(&sample).unwrap();

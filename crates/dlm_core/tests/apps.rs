@@ -19,7 +19,7 @@ fn repo() -> PathBuf {
 fn run_both(name: &str, source: &str, stdin: &str) -> Vec<String> {
     let dir = std::env::temp_dir().join(format!("dlm-v125-{}-{name}", std::process::id()));
     let work = dir.join("work");
-    let d = work.display().to_string();
+    let d = work.display().to_string().replace('\\', "/");
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("main.dlm");
     std::fs::write(&path, source.replace("{D}", &d)).unwrap();
