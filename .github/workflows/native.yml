@@ -1,14 +1,59 @@
 name: Native compiler
 on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  CARGO_BUILD_JOBS: '2'
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_TEST_DEBUG: '0'
+  RUST_MIN_STACK: '33554432'
 jobs:
   linux:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update && sudo apt-get install -y libgnutls28-dev nettle-dev libcurl4-openssl-dev
       - run: cargo test --workspace --locked --no-fail-fast
+      - run: cargo build --workspace --release --locked
+      - run: python3 tools/package_release.py --build-dir target/release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DLM-linux-x86_64
+          path: dist/*.zip
+          if-no-files-found: error
+  dln:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: debian:trixie
+      options: --cap-add=SYS_PTRACE
+    steps:
+      - run: apt-get update && apt-get install -y git curl ca-certificates build-essential libgnutls28-dev nettle-dev libcurl4-openssl-dev nodejs python3 python3-venv
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: python3 -m venv /tmp/dln-ci-python && /tmp/dln-ci-python/bin/python -m pip install aioquic==1.8.0 websockets==16.0
+      - run: /tmp/dln-ci-python/bin/python tools/dln_acceptance.py --profile debug --skip-rust --sanitizers --leak-sanitizer --soak-seconds 60
+      - run: /tmp/dln-ci-python/bin/python tools/dln_experiment_acceptance.py --profile debug --skip-build --sanitizers
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dln-linux-acceptance
+          path: |
+            target/dln-acceptance/*.json
+            target/dln-acceptance/*.log
+            target/dln-experiment-acceptance/*.json
+            target/dln-experiment-acceptance/*.log
+            target/dln-experiment-acceptance/comparison/*.json
+            target/dln-experiment-acceptance/comparison/*.dlct
   windows:
     runs-on: windows-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -21,12 +66,31 @@ jobs:
             mingw-w64-ucrt-x86_64-gnutls
             mingw-w64-ucrt-x86_64-nettle
             mingw-w64-ucrt-x86_64-curl
+      - name: Check Windows runtime regressions first
+        shell: pwsh
+        run: |
+          $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;${{ runner.temp }}\msys64\usr\bin;$env:PATH"
+          if (-not $env:HOME) { $env:HOME = $env:USERPROFILE }
+          $env:DLM_LIBGNUTLS = "${{ runner.temp }}\msys64\ucrt64\bin\libgnutls-30.dll"
+          $env:DLM_LIBHOGWEED = (Get-ChildItem "${{ runner.temp }}\msys64\ucrt64\bin\libhogweed-*.dll" | Sort-Object Name -Descending | Select-Object -First 1).FullName
+          $env:DLM_LIBCURL = "${{ runner.temp }}\msys64\ucrt64\bin\libcurl-4.dll"
+          ./tools/build_windows.ps1 -TestOnly -TestTargets @('apps', 'os_records', 'audit_project')
       - name: Build and test native Windows executables
         shell: pwsh
         run: |
           $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;${{ runner.temp }}\msys64\usr\bin;$env:PATH"
           if (-not $env:HOME) { $env:HOME = $env:USERPROFILE }
           $env:DLM_LIBGNUTLS = "${{ runner.temp }}\msys64\ucrt64\bin\libgnutls-30.dll"
-          $env:DLM_LIBHOGWEED = "${{ runner.temp }}\msys64\ucrt64\bin\libhogweed-7.dll"
+          $env:DLM_LIBHOGWEED = (Get-ChildItem "${{ runner.temp }}\msys64\ucrt64\bin\libhogweed-*.dll" | Sort-Object Name -Descending | Select-Object -First 1).FullName
           $env:DLM_LIBCURL = "${{ runner.temp }}\msys64\ucrt64\bin\libcurl-4.dll"
           ./tools/build_windows.ps1
+      - name: Package Windows runtime and native dependencies
+        shell: pwsh
+        run: |
+          $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;${{ runner.temp }}\msys64\usr\bin;$env:PATH"
+          python tools/package_release.py --build-dir target/x86_64-pc-windows-gnu/release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DLM-windows-x86_64
+          path: dist/*.zip
+          if-no-files-found: error

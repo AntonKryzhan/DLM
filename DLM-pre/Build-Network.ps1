@@ -1,17 +1,18 @@
 #requires -Version 5.1
 [CmdletBinding()]
-param([switch]$SkipCompilerBuild)
+param([switch]$SkipCompilerBuild, [ValidateRange(0, 259200)][int]$SoakSeconds = 0)
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 $root = Split-Path -Parent $PSScriptRoot
 $source = Join-Path $root 'DLM-main'
+if (-not (Test-Path -LiteralPath (Join-Path $source 'Cargo.toml') -PathType Leaf) -and (Test-Path -LiteralPath (Join-Path $root 'Cargo.toml') -PathType Leaf)) { $source = $root }
 $sdk = Join-Path $root 'DLM-OUT'
 if (-not (Test-Path -LiteralPath (Join-Path $source 'Cargo.toml') -PathType Leaf)) {
     throw 'Extract this patch over the directory containing DLM-main and DLM-pre.'
 }
 $examples = @('network_protocol', 'network_loopback', 'network_streaming', 'network_typed', 'network_reactor', 'network_scope', 'network_scope_control', 'network_crypto', 'network_crypto_limits', 'network_quic', 'network_transport_policy', 'network_transport', 'network_transport_quic', 'network_spec', 'network_spec_versions', 'network_spec_session', 'network_codec', 'network_codec_limits', 'network_codec_session')
-$modules = @('native_net', 'native_protocol', 'net_bytes', 'net_codec', 'net_error', 'net_socket', 'net_reactor', 'net_async', 'net_crypto', 'net_quic', 'net_transport_policy', 'net_transport', 'net_spec', 'net_spec_wire', 'net_spec_compat', 'net_spec_laws', 'net_codec_runtime', 'net_session_machine', 'net_session', 'net_identity', 'net_content', 'net_discovery', 'net_optimizer', 'net_adaptive', 'net_tun', 'net_session_verified')
+$modules = @('native_net', 'native_protocol', 'net_bytes', 'net_codec', 'net_error', 'net_socket', 'net_reactor', 'net_async', 'net_crypto', 'net_quic', 'net_transport_policy', 'net_transport', 'net_spec', 'net_spec_wire', 'net_spec_compat', 'net_spec_laws', 'net_codec_runtime', 'net_session_machine', 'net_session', 'net_identity', 'net_content', 'net_discovery', 'net_optimizer', 'net_adaptive', 'net_tun', 'net_session_verified', 'dln_gateway', 'dln_continuity', 'dln_proxy')
 $required = @($examples | ForEach-Object { Join-Path $source ('examples\native\' + $_ + '.dlm') })
 $required += @($modules | ForEach-Object { Join-Path $source ('lib\std\' + $_ + '.dlm') })
 $specProofs = @('repeated', 'zero', 'padding')
@@ -32,6 +33,13 @@ foreach ($generation in $codecGenerations) {
         $required += @(Join-Path $source ('examples\native\generated\' + $generation[1] + $suffix))
     }
 }
+$releaseHostSource = Join-Path $source 'crates\dlm_core\tests\native_hosts\dln_release_host.c'
+$required += @($releaseHostSource)
+$gatewayHostSource = Join-Path $source 'crates\dlm_core\tests\native_hosts\dln_gateway_host.c'
+$gatewayFixtureSource = Join-Path $source 'crates\dlm_core\tests\native_hosts\gateway_continuity_boundary.dlm'
+$proxyHostSource = Join-Path $source 'crates\dlm_core\tests\native_hosts\dln_proxy_host.c'
+$proxyFixtureSource = Join-Path $source 'crates\dlm_core\tests\native_hosts\gateway_proxy_boundary.dlm'
+$required += @($proxyHostSource, $proxyFixtureSource, $gatewayHostSource, $gatewayFixtureSource, (Join-Path $source 'crates\dlm_gateway\include\dlm_gateway.h'))
 $adaptiveHostSource = Join-Path $source 'crates\dlm_core\tests\native_hosts\dln_adaptive_host.c'
 $tunHostSource = Join-Path $source 'crates\dlm_core\tests\native_hosts\dln_tun_host.c'
 $adaptiveAbiHostSource = Join-Path $source 'crates\dlm_core\tests\native_hosts\dln_adaptive_abi_host.c'
@@ -54,7 +62,7 @@ if ($SkipCompilerBuild) {
 }
 $missing = @($required | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) })
 if ($missing.Count) {
-    throw ("Incomplete networking files. Apply the complete 0.144 base patch, then this 0.145 patch over the project. Missing:`n" + ($missing -join "`n"))
+    throw ("Incomplete networking files. Apply the complete 0.149 patch over the 0.148 project. Missing:`n" + ($missing -join "`n"))
 }
 if (-not $SkipCompilerBuild) {
     & (Join-Path $PSScriptRoot 'Build-DLM.ps1') -SourcePath $source -OutputPath $sdk
@@ -67,7 +75,7 @@ if ($LASTEXITCODE -ne 0 -or -not $versionMatch.Success) {
     throw 'Cannot identify the built DLM compiler.'
 }
 $builtVersion = [version]($versionMatch.Groups[1].Value)
-if ($builtVersion -lt [version]'0.145.0') { throw 'Networking requires DLM 0.145.0 or later; rebuild the compiler.' }
+if ($builtVersion -lt [version]'0.149.0') { throw 'Networking requires DLM 0.149.0 or later; rebuild the compiler.' }
 $names = @('PATH', 'CC', 'AR', 'DLM_PATH', 'DLM_LIBCURL', 'DLM_LIBGNUTLS', 'DLM_LIBHOGWEED', 'DLM_LIBQUIC')
 $saved = @{}
 foreach ($name in $names) { $saved[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
@@ -217,6 +225,149 @@ try {
         & $compiler proof-check (Join-Path $source ('examples\native\fixtures\network-spec-' + $proof + '.kproof'))
         if ($LASTEXITCODE -ne 0) { throw ('NetworkSpec independent kernel check failed: ' + $proof) }
     }
+    $gatewayCli = Join-Path $sdk 'bin\dlm-net.exe'
+    $gatewayLibraryDirectory = Join-Path $sdk 'bin'
+    foreach ($name in @('dlm-net.exe', 'dlm_gateway.dll', 'libdlm_gateway.dll.a')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $gatewayLibraryDirectory $name) -PathType Leaf)) { throw ('SDK gateway output is missing: ' + $name + '. Rebuild without -SkipCompilerBuild.') }
+    }
+    $gatewayFixture = Join-Path $validation 'gateway_boundary.a'
+    & $compiler build $gatewayFixtureSource --lib $env:DLM_PATH --allow-unsafe --target staticlib -o $gatewayFixture
+    if ($LASTEXITCODE -ne 0) { throw 'Gateway DLM boundary compilation failed.' }
+    $gatewayHost = Join-Path $validation 'network_gateway_host.exe'
+    & $env:CC '-std=gnu11' '-O1' '-Wall' '-Wextra' '-Werror' '-UNDEBUG' '-DDLN_CONTINUITY_ACCEPTANCE' $gatewayHostSource $gatewayFixture ('-L' + $gatewayLibraryDirectory) '-ldlm_gateway' '-lshell32' '-lws2_32' '-lgdi32' '-luser32' '-o' $gatewayHost
+    if ($LASTEXITCODE -ne 0) { throw 'Gateway DLM/C ABI host compilation failed.' }
+    $gatewayKeys = Join-Path $validation ('gateway-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $gatewayKeys | Out-Null
+    $serverIdentityPath = Join-Path $gatewayKeys 'server.identity'
+    $clientIdentityPath = Join-Path $gatewayKeys 'client.identity'
+    $serverPublic = (& $gatewayCli keygen --identity $serverIdentityPath | ConvertFrom-Json)
+    if ($LASTEXITCODE -ne 0) { throw 'Gateway server key generation failed.' }
+    $clientPublic = (& $gatewayCli keygen --identity $clientIdentityPath | ConvertFrom-Json)
+    if ($LASTEXITCODE -ne 0) { throw 'Gateway client key generation failed.' }
+    $gatewayServerConfig = Join-Path $gatewayKeys 'server.cfg'
+    $gatewayClientConfig = Join-Path $gatewayKeys 'client.cfg'
+    $gatewaySpoolKey = Join-Path $gatewayKeys 'spool.key'
+    & $gatewayCli journal-keygen --output $gatewaySpoolKey
+    if ($LASTEXITCODE -ne 0) { throw 'Gateway journal key generation failed.' }
+    $gatewayResults = @()
+    foreach ($carrier in @('tls', 'quic-stream', 'quic-datagram', 'websocket', 'https-connect')) {
+        $serverText = @(
+            'listen=127.0.0.1:0', ('transport=' + $carrier), ('identity=' + $serverIdentityPath),
+            ('certificate=' + (Join-Path $source 'examples\native\fixtures\quic-test-server.pem')),
+            ('key=' + (Join-Path $source 'examples\native\fixtures\quic-test-key.pem')),
+            ('allow_client=' + $clientPublic.root), 'allow_target=tcp,127.0.0.0/8,__ECHO_PORT__', 'allow_private=true',
+            ('spool=' + (Join-Path $gatewayKeys ('inbox-' + $carrier))), ('spool_key=' + $gatewaySpoolKey)
+        ) -join "`n"
+        $clientText = @(
+            'gateway=__GATEWAY__', 'hostname=localhost', ('transport=' + $carrier), ('identity=' + $clientIdentityPath),
+            ('ca=' + (Join-Path $source 'examples\native\fixtures\quic-test-ca.pem')), ('peer=' + $serverPublic.root)
+        ) -join "`n"
+        [IO.File]::WriteAllText($gatewayServerConfig, $serverText, [Text.UTF8Encoding]::new($false))
+        [IO.File]::WriteAllText($gatewayClientConfig, $clientText, [Text.UTF8Encoding]::new($false))
+        $gatewayOutput = @(& $gatewayHost $gatewayServerConfig $gatewayClientConfig)
+        if ($LASTEXITCODE -ne 0 -or $gatewayOutput.Count -ne 1) { throw ('Gateway runtime acceptance failed: ' + $carrier) }
+        $gatewayResult = $gatewayOutput[0] | ConvertFrom-Json
+        if ($gatewayResult.status -cne 'PASS') { throw ('Gateway acceptance result failed: ' + $carrier) }
+        $gatewayResults += [ordered]@{ carrier = $carrier; result = $gatewayResult }
+        Write-Host ($carrier + ': ' + $gatewayOutput[0])
+    }
+    $proxyFixture = Join-Path $validation 'proxy_boundary.a'
+    & $compiler build $proxyFixtureSource --lib $env:DLM_PATH --allow-unsafe --target staticlib -o $proxyFixture
+    if ($LASTEXITCODE -ne 0) { throw 'Proxy DLM boundary compilation failed.' }
+    $proxyHost = Join-Path $validation 'network_proxy_host.exe'
+    & $env:CC '-std=gnu11' '-O1' '-Wall' '-Wextra' '-Werror' '-UNDEBUG' $proxyHostSource $proxyFixture ('-L' + $gatewayLibraryDirectory) '-ldlm_gateway' '-lshell32' '-lws2_32' '-lgdi32' '-luser32' '-o' $proxyHost
+    if ($LASTEXITCODE -ne 0) { throw 'Proxy DLM/C ABI host compilation failed.' }
+    $proxyToken = Join-Path $gatewayKeys 'proxy.key'
+    & $gatewayCli proxy-keygen --output $proxyToken
+    if ($LASTEXITCODE -ne 0) { throw 'Proxy credential generation failed.' }
+    $proxyServerConfig = Join-Path $gatewayKeys 'proxy-server.cfg'
+    $proxyClientConfig = Join-Path $gatewayKeys 'proxy-client.cfg'
+    $proxyServerText = @(
+        'listen=127.0.0.1:0', ('token=' + $proxyToken), 'allow_private=true', 'allow_target=udp,127.0.0.0/8,__ECHO_PORT__',
+        ('certificate=' + (Join-Path $source 'examples\native\fixtures\quic-test-server.pem')),
+        ('key=' + (Join-Path $source 'examples\native\fixtures\quic-test-key.pem'))
+    ) -join "`n"
+    $proxyClientText = @(
+        'proxy_address=__PROXY__', 'proxy_hostname=localhost', ('proxy_token=' + $proxyToken),
+        ('proxy_ca=' + (Join-Path $source 'examples\native\fixtures\quic-test-ca.pem'))
+    ) -join "`n"
+    [IO.File]::WriteAllText($proxyServerConfig, $proxyServerText, [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($proxyClientConfig, $proxyClientText, [Text.UTF8Encoding]::new($false))
+    $proxyOutput = @(& $proxyHost $proxyServerConfig $proxyClientConfig)
+    if ($LASTEXITCODE -ne 0 -or $proxyOutput.Count -ne 1) { throw 'Proxy runtime acceptance failed.' }
+    $proxyResult = $proxyOutput[0] | ConvertFrom-Json
+    if ($proxyResult.status -cne 'PASS') { throw 'Proxy acceptance result failed.' }
+    Write-Host ('HTTP/1.1 MASQUE: ' + $proxyOutput[0])
+    $capabilityOutput = @(& $gatewayCli capabilities)
+    if ($LASTEXITCODE -ne 0 -or $capabilityOutput.Count -ne 1) { throw 'Carrier capability query failed.' }
+    $carrierCapabilities = $capabilityOutput[0] | ConvertFrom-Json
+    $continuityModelPath = Join-Path $gatewayKeys 'continuity-model.json'
+    & $gatewayCli continuity-model --output $continuityModelPath
+    if ($LASTEXITCODE -ne 0) { throw 'Continuity ownership and durable ACK model validation failed.' }
+    $continuityModel = [IO.File]::ReadAllText($continuityModelPath) | ConvertFrom-Json
+    if ($continuityModel.status -cne 'PASS' -or $continuityModel.false_committed_acks -ne 0) { throw 'Continuity model reported a false committed acknowledgement.' }
+    $releaseExecutable = Join-Path $validation 'network_release_host.exe'
+    & $env:CC '-std=gnu11' '-O1' '-g' '-Wall' '-Wextra' '-Werror' '-Wno-misleading-indentation' '-UNDEBUG' $releaseHostSource '-lws2_32' '-o' $releaseExecutable
+    if ($LASTEXITCODE -ne 0) { throw 'DLN release impairment host compilation failed.' }
+    $releaseCases = @(
+        @{ Name = 'delayed_probes'; Arguments = @('probes') },
+        @{ Name = 'silent_failover'; Arguments = @('blackhole') },
+        @{ Name = 'lost_authentication'; Arguments = @('auth-loss') },
+        @{ Name = 'hostile_input'; Arguments = @('fuzz') }
+    )
+    foreach ($loss in @(0, 1, 5, 10)) {
+        foreach ($delivery in @(1, 2)) {
+            $releaseCases += @{ Name = ('transfer_' + $loss + '_' + $delivery); Arguments = @('transfer', [string](14600 + $loss * 10 + $delivery), [string]$loss, [string]$delivery, '320') }
+        }
+    }
+    $releaseResults = @()
+    foreach ($releaseCase in $releaseCases) {
+        $caseArguments = $releaseCase.Arguments
+        $caseOutput = @(& $releaseExecutable @caseArguments)
+        if ($LASTEXITCODE -ne 0 -or $caseOutput.Count -eq 0) { throw ('DLN release case failed: ' + $releaseCase.Name) }
+        foreach ($line in $caseOutput) {
+            Write-Host $line
+            $result = $line | ConvertFrom-Json
+            if ($result.status -cne 'PASS') { throw ('DLN release result failed: ' + $releaseCase.Name) }
+            $releaseResults += $result
+        }
+    }
+    $soak = [ordered]@{ status = 'NOT_RUN'; requested_seconds = $SoakSeconds; cycles = 0; elapsed_seconds = 0 }
+    if ($SoakSeconds -gt 0) {
+        $soakOutput = @(& $releaseExecutable 'soak' ([string]$SoakSeconds))
+        if ($LASTEXITCODE -ne 0 -or $soakOutput.Count -ne 1) { throw 'DLN reconnect/ownership soak failed.' }
+        $soakResult = $soakOutput[0] | ConvertFrom-Json
+        if ($soakResult.status -cne 'PASS' -or -not $soakResult.single_process) { throw 'DLN reconnect/ownership soak result failed.' }
+        $soak.status = 'PASS'
+        $soak.cycles = $soakResult.cycles
+        $soak.elapsed_seconds = $soakResult.elapsed_ms / 1000.0
+        Write-Host ('DLN reconnect/ownership soak passed: ' + $soak.cycles + ' cycles')
+    }
+    $sourceHashes = [ordered]@{}
+    foreach ($directory in @('lib', 'crates', 'native')) {
+        foreach ($file in @(Get-ChildItem -LiteralPath (Join-Path $source $directory) -File -Recurse | Where-Object { $_.Extension -in @('.rs', '.c', '.h', '.dlm', '.toml') } | Sort-Object FullName)) {
+            $relative = $file.FullName.Substring($source.Length + 1).Replace('\', '/')
+            $sourceHashes[$relative] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+        }
+    }
+    foreach ($relative in @('Cargo.toml', 'Cargo.lock')) {
+        $sourceHashes[$relative] = (Get-FileHash -LiteralPath (Join-Path $source $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    $releaseReport = [ordered]@{
+        format = 'DLM-DLN-ACCEPTANCE-v1'; scope = 'local native Windows engineering release gate'; status = 'PASS'
+        version = $versionText; finished_utc = [DateTime]::UtcNow.ToString('o'); platform = [Environment]::OSVersion.VersionString
+        compiler_sha256 = (Get-FileHash -LiteralPath $compiler -Algorithm SHA256).Hash.ToLowerInvariant()
+        gateway_sha256 = (Get-FileHash -LiteralPath $gatewayCli -Algorithm SHA256).Hash.ToLowerInvariant()
+        gateway_library_sha256 = (Get-FileHash -LiteralPath (Join-Path $gatewayLibraryDirectory 'dlm_gateway.dll') -Algorithm SHA256).Hash.ToLowerInvariant()
+        quic_sha256 = (Get-FileHash -LiteralPath $env:DLM_LIBQUIC -Algorithm SHA256).Hash.ToLowerInvariant()
+        host_sha256 = (Get-FileHash -LiteralPath $releaseExecutable -Algorithm SHA256).Hash.ToLowerInvariant()
+        source_files = $sourceHashes; results = $releaseResults; gateway_results = $gatewayResults; proxy_result = $proxyResult; carrier_capabilities = $carrierCapabilities; continuity_model = $continuityModel; soak = $soak; transcript = $logPath
+        external_gates = [ordered]@{ privileged_tun_driver = 'NOT_RUN'; public_internet_two_hosts = 'NOT_RUN'; other_native_operating_systems = 'NOT_RUN'; independent_python_interoperability = 'NOT_RUN' }
+        formal_scope = 'finite model certificates only; native and cryptographic proofs pending'
+    }
+    $reportPath = Join-Path $validation ('release-report-' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.json')
+    [IO.File]::WriteAllText($reportPath, ($releaseReport | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
+    Write-Host ('DLN acceptance report: ' + $reportPath)
     Write-Host ('Networking build and loopback checks passed: ' + $versionText)
     Write-Host 'Protocol state model certificate checked; native machine, codec and cryptographic proof obligations remain pending.'
 } finally {

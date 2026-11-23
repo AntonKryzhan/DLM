@@ -27,3 +27,6 @@ __pycache__/
 
 # Separate local projects
 /DPI/
+
+# Release packages
+/dist/

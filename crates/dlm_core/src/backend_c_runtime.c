@@ -1263,7 +1263,11 @@ static DV *dvb_tbuf_finish(DV *t) {
  * when the program ends (only after a runtime error: File is linear) are
  * closed by dv_cleanup. DLM_FILE_TRACE prints the counts. */
 typedef struct dv_file dv_file;
-struct dv_file { FILE *f; char *path; char *error; size_t path_n, error_n; int mode, eof, buffered; nat_t written; dv_file *prev, *next; };
+struct dv_file {
+#ifdef _WIN32
+    HANDLE resize_handle;
+#endif
+    FILE *f; char *path; char *error; size_t path_n, error_n; int mode, eof, buffered; nat_t written; dv_file *prev, *next; };
 static dv_file *dv_files_live;
 static uint64_t dv_files_made, dv_files_closed;
 static void dv_file_unlink(dv_file *m) {
@@ -1272,6 +1276,9 @@ static void dv_file_unlink(dv_file *m) {
     if (m->next) m->next->prev = m->prev;
 }
 static void dv_file_free(dv_file *m) {
+#ifdef _WIN32
+    if (m->resize_handle) CloseHandle(m->resize_handle);
+#endif
     free(m->path);
     free(m->error);
     free(m);
@@ -1343,6 +1350,14 @@ static DV *dvb_file_open(DV *path, DV *mode) {
         dv_file_fail(m, "cannot open file ", "");
     } else {
         m->mode = md->u.text.s[0];
+#ifdef _WIN32
+        if (m->mode == 'a') {
+            if (_fseeki64(m->f, 0, SEEK_END) != 0) dv_file_fail(m, "cannot seek file ", "");
+            m->resize_handle = CreateFileA(m->path, GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, OPEN_EXISTING, 0, 0);
+            if (m->resize_handle == INVALID_HANDLE_VALUE) m->resize_handle = 0;
+        }
+#endif
 #ifndef _WIN32
         fcntl(fileno(m->f), F_SETFD, FD_CLOEXEC);
 #endif
@@ -1479,6 +1494,9 @@ static DV *dvb_file_remove(DV *path) {
  * Failures of path operations are `err("cannot <what> `path` (os error N)")`,
  * the same text as the interpreter (`raw_os_error`). */
 static DV *dvz_err(const char *what, const char *a, const char *mid, const char *b, int code) {
+#ifdef _WIN32
+    if (code == ENOTEMPTY) code = 39;
+#endif
     size_t n = strlen(what) + strlen(a) + (mid ? strlen(mid) + strlen(b) + 2 : 0) + 48;
     char *msg = malloc(n);
     if (!msg) dv_fail("out of memory");
@@ -1560,6 +1578,15 @@ static DV *dvb_file_size(DV *f) {
     ) { dv_file_fail(m, "cannot stat file ", ""); return dv_nat(0); }
     return dv_nat((nat_t)st.st_size);
 }
+#ifdef _WIN32
+static int dvz_truncate(dv_file *m, int64_t length) {
+    if (m->mode != 'a') return (int)_chsize_s(_fileno(m->f), (__int64)length);
+    if (!m->resize_handle) return -1;
+    LARGE_INTEGER position;
+    position.QuadPart = length;
+    return SetFilePointerEx(m->resize_handle, position, 0, FILE_BEGIN) && SetEndOfFile(m->resize_handle) ? 0 : -1;
+}
+#endif
 static DV *dvb_file_truncate(DV *f, DV *nv) {
     dv_file *m = dv_file_of(f, "file_truncate");
     nat_t n = dv_nat_of(nv, "file_truncate");
@@ -1568,7 +1595,7 @@ static DV *dvb_file_truncate(DV *f, DV *nv) {
     if (!dvz_flush(m)) return DV_FALSE;
     if (!m->f || n > (nat_t)INT64_MAX || fflush(m->f) != 0 ||
 #ifdef _WIN32
-        _chsize_s(_fileno(m->f), (__int64)n) != 0
+        dvz_truncate(m, (int64_t)n) != 0
 #else
         ftruncate(fileno(m->f), (off_t)n) != 0
 #endif
@@ -1832,6 +1859,10 @@ static DV *dvo_err(int code, const char *fmt, ...) {
     return out;
 }
 static DV *dvo_named_error(const char *what, DV *name, const char *port, int code) {
+#ifdef _WIN32
+    if (code == WSAECONNREFUSED) code = 111;
+    if (code == ERROR_PATH_NOT_FOUND) code = 2;
+#endif
     size_t n = name->u.text.n, extra = port ? strlen(port) + 1 : 0;
     char *value = malloc(n + extra + 1);
     if (!value) dv_fail("out of memory");
@@ -2243,9 +2274,17 @@ static DV *dvb_net_connect(DV *hv, DV *pv, DV *tv) {
                 int pending = e == EINPROGRESS;
 #endif
                 if (pending) {
+#ifdef _WIN32
+                    fd_set write_set, error_set;
+                    FD_ZERO(&write_set); FD_ZERO(&error_set);
+                    FD_SET(fd, &write_set); FD_SET(fd, &error_set);
+                    struct timeval timeout = { ms / 1000, (ms % 1000) * 1000 };
+                    int r = select(0, 0, &write_set, &error_set, &timeout);
+#else
                     struct pollfd p = { 0 };
                     p.fd = fd; p.events = POLLOUT;
                     int r = dvo_poll(&p, 1, ms);
+#endif
                     if (r == 0) { errno = 0; code = 0; dvo_closesock(fd); continue; }
                     int se = 0;
                     socklen_t sl = sizeof se;

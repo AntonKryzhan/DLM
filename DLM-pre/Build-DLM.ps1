@@ -218,7 +218,7 @@ try {
     if ($RunTests) {
         Invoke-Native $rustup @('run', $RustToolchain, 'cargo', 'test', '--manifest-path', $manifest, '--workspace', '--all-targets', '--locked', '--offline', '--target', $targetTriple)
     }
-    Invoke-Native $rustup @('run', $RustToolchain, 'cargo', 'build', '--manifest-path', $manifest, '--release', '--locked', '--offline', '--target', $targetTriple, '-p', 'dlm_cli', '-p', 'dlm_network_proof', '-p', 'dlm_transport_proof')
+    Invoke-Native $rustup @('run', $RustToolchain, 'cargo', 'build', '--manifest-path', $manifest, '--release', '--locked', '--offline', '--target', $targetTriple, '-p', 'dlm_cli', '-p', 'dlm_network_proof', '-p', 'dlm_transport_proof', '-p', 'dlm_gateway', '-p', 'dlm_channel_lab')
     $builtExe = Join-Path $env:CARGO_TARGET_DIR ($targetTriple + '\release\dlm.exe')
     if (-not (Test-Path -LiteralPath $builtExe -PathType Leaf)) { throw 'Cargo did not produce dlm.exe.' }
 
@@ -234,6 +234,20 @@ try {
     Copy-Item -LiteralPath $builtExe -Destination (Join-Path $sdkBin 'dlm.exe')
     Copy-Item -LiteralPath $builtNetworkChecker -Destination (Join-Path $sdkBin 'dlm-network-check.exe')
     Copy-Item -LiteralPath $builtTransportChecker -Destination (Join-Path $sdkBin 'dlm-transport-check.exe')
+    foreach ($gatewayFile in @('dlm-net.exe', 'dlm_gateway.dll', 'libdlm_gateway.dll.a')) {
+        $builtGateway = Join-Path $env:CARGO_TARGET_DIR ($targetTriple + '\release\' + $gatewayFile)
+        if (-not (Test-Path -LiteralPath $builtGateway -PathType Leaf)) { throw ('Cargo gateway output is missing: ' + $builtGateway) }
+        Copy-Item -LiteralPath $builtGateway -Destination (Join-Path $sdkBin $gatewayFile)
+    }
+    foreach ($labFile in @('dlm-channel-lab.exe', 'dlm_channel_lab.dll', 'libdlm_channel_lab.dll.a')) {
+        $builtLab = Join-Path $env:CARGO_TARGET_DIR ($targetTriple + '\release\' + $labFile)
+        if (-not (Test-Path -LiteralPath $builtLab -PathType Leaf)) { throw ('Cargo experiment output is missing: ' + $builtLab) }
+        Copy-Item -LiteralPath $builtLab -Destination (Join-Path $sdkBin $labFile)
+    }
+    $sdkInclude = Join-Path $stagePath 'include'
+    New-Item -ItemType Directory -Path $sdkInclude -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $sourceRoot 'crates\dlm_gateway\include\dlm_gateway.h') -Destination $sdkInclude
+    Copy-Item -LiteralPath (Join-Path $sourceRoot 'crates\dlm_channel_lab\include\dlm_channel_lab.h') -Destination $sdkInclude
     Copy-Tree $gccPackage (Join-Path $stagePath 'toolchain')
     Get-ChildItem -LiteralPath (Split-Path -Parent $gcc) -Filter '*.dll' -File | ForEach-Object {
         Copy-Item -LiteralPath $_.FullName -Destination $sdkBin

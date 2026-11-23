@@ -1,0 +1,12 @@
+[package]
+name = "dlm_channel_lab"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "dlm-channel-lab"
+path = "src/main.rs"

@@ -162,13 +162,13 @@ fn file_transformation_error_preserves_destination_and_success_is_atomic() {
     let done=transform_text("{}","{}",change)
     print_line(unwrap_or(read_text("{}"),"error"))
     "#,
-            dst.to_string_lossy().replace('\\', "/"),
-            src.to_string_lossy().replace('\\', "/"),
-            dst.to_string_lossy().replace('\\', "/"),
-            dst.to_string_lossy().replace('\\', "/"),
-            src.to_string_lossy().replace('\\', "/"),
-            dst.to_string_lossy().replace('\\', "/"),
-            dst.to_string_lossy().replace('\\', "/")
+            dlm_path(&dst),
+            dlm_path(&src),
+            dlm_path(&dst),
+            dlm_path(&dst),
+            dlm_path(&src),
+            dlm_path(&dst),
+            dlm_path(&dst)
         ),
         &dir,
     );
@@ -232,7 +232,7 @@ fn http_handler_can_read_a_file_and_log_the_request() {
     let closed=net_close(listener)
     print_line(concat("served ",unwrap_or(served,"error")))
     "#,
-            file.to_string_lossy().replace('\\', "/"),
+            dlm_path(&file),
             port
         ),
         &dir,
@@ -275,9 +275,9 @@ fn streaming_file_callbacks_close_on_success_failure_and_missing_input() {
     print_line(match try_each_line("{}",fallible) {{err(e)=>e,ok(n)=>"unexpected"}})
     print_line(if_then_else(is_err(each_line("{}/missing",action)),"missing","unexpected"))
     "#,
-            file.to_string_lossy().replace('\\', "/"),
-            file.to_string_lossy().replace('\\', "/"),
-            dir.to_string_lossy().replace('\\', "/")
+            dlm_path(&file),
+            dlm_path(&file),
+            dlm_path(&dir)
         ),
         &dir,
     );

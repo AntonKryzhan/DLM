@@ -2,13 +2,15 @@ use dlm_core::{load_program_with_paths,lower_program,CheckPolicy,native};
 use std::path::{Path,PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicUsize,Ordering};
+#[path = "support/dln_runtime.rs"]
+mod dln_runtime;
 static SERIAL:AtomicUsize=AtomicUsize::new(0);
 fn root()->PathBuf{Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")}
 struct Work(PathBuf);
 impl Work{fn new()->Self{let p=std::env::temp_dir().join(format!("dlm-nodes-{}-{}",std::process::id(),SERIAL.fetch_add(1,Ordering::Relaxed)));std::fs::create_dir_all(&p).unwrap();Self(p)}}
 impl Drop for Work{fn drop(&mut self){let _=std::fs::remove_dir_all(&self.0);}}
 fn link_run(source:&Path,work:&Path,library:Option<&Path>,provider:bool){
- let out=work.join(if cfg!(windows){"host.exe"}else{"host"});let mut command=Command::new(dlm_core::default_c_compiler());command.args(["-std=gnu11","-O1","-Wall","-Wextra","-Werror","-UNDEBUG"]);if provider{command.arg("-Wno-misleading-indentation");}command.arg(source).arg(format!("-I{}",work.display()));if let Some(lib)=library{command.arg(lib);}if cfg!(windows){command.args(["-lshell32","-lws2_32","-lgdi32","-luser32"]);}else{command.args(["-pthread","-lm","-ldl"]);}let built=command.arg("-o").arg(&out).output().unwrap();assert!(built.status.success(),"{}",String::from_utf8_lossy(&built.stderr));let ran=Command::new(out).output().unwrap();assert!(ran.status.success(),"{}",String::from_utf8_lossy(&ran.stderr));assert!(String::from_utf8_lossy(&ran.stdout).contains(" OK"));
+ let out=work.join(if cfg!(windows){"host.exe"}else{"host"});let mut command=Command::new(dlm_core::default_c_compiler());command.args(["-std=gnu11","-O1","-Wall","-Wextra","-Werror","-UNDEBUG"]);if provider{command.arg("-Wno-misleading-indentation");}command.arg(source).arg(format!("-I{}",work.display()));if let Some(lib)=library{command.arg(lib);}if cfg!(windows){command.args(["-lshell32","-lws2_32","-lgdi32","-luser32"]);}else{command.args(["-pthread","-lm","-ldl"]);}let built=command.arg("-o").arg(&out).output().unwrap();assert!(built.status.success(),"{}",String::from_utf8_lossy(&built.stderr));let mut run=Command::new(out);dln_runtime::configure(&mut run);let ran=run.output().unwrap();assert!(ran.status.success(),"{}",String::from_utf8_lossy(&ran.stderr));assert!(String::from_utf8_lossy(&ran.stdout).contains(" OK"));
 }
 #[test]
 fn identity_discovery_content_vectors_and_real_three_peer_exchange(){let w=Work::new();link_run(&root().join("crates/dlm_core/tests/native_hosts/dln_nodes_host.c"),&w.0,None,true);}

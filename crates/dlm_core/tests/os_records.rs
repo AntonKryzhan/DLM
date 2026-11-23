@@ -27,12 +27,7 @@ fn run_both(name: &str, source: &str) -> Vec<String> {
     let out = Command::new(exe).output().unwrap();
     assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
     let native: Vec<String> = String::from_utf8(out.stdout).unwrap().lines().map(str::to_string).collect();
-    let comparable = |s: &str| {
-        if cfg!(windows) && s.starts_with("cannot connect to `127.0.0.1:1` (os error ") {
-            "cannot connect to `127.0.0.1:1` (os error)".to_string()
-        } else { s.to_string() }
-    };
-    assert_eq!(interpreted.iter().map(|s| comparable(s)).collect::<Vec<_>>(), native.iter().map(|s| comparable(s)).collect::<Vec<_>>());
+    assert_eq!(interpreted, native);
     std::fs::remove_dir_all(dir).ok();
     native
 }
@@ -84,7 +79,7 @@ const NETWORK: &str = r#"    fn rn(r: Result<Nat, Text>) -> Text = match r { ok(
     print_line(match proc_env("DLM_SURELY_UNSET_VAR") { none => "unset", some(h) => h })
     print_line(rl(net_resolve("localhost")))
     print_line(rl(net_resolve("no-such-host.invalid")))
-    print_line(rn(net_connect("127.0.0.1", 1, 1000)))
+    print_line(rn(net_connect("127.0.0.1", 1, 5000)))
     print_line(rn(net_send(99, "x")))
     print_line(rn(net_listen("127.0.0.1", 70000)))
     print_line(exchange(0))
@@ -102,7 +97,7 @@ const HTTP: &str = r#"    fn page(path: Text) -> Text = concat("you asked for ",
         concat(concat(match served { ok(t) => t, err(e) => e }, " => "), rs(match resp { ok(t) => parse_http(t), err(e) => err(e, HttpResponse) }))
     print_line(roundtrip())
     print_line(rs(parse_http("HTTP/1.1 404 Not Found\r\nA: b\r\n\r\nmissing")))
-    print_line(rs(http_get("127.0.0.1", 1, "/", 500)))
+    print_line(rs(http_get("127.0.0.1", 1, "/", 5000)))
     print_line(match output_of(shell("echo hi; echo there")) { ok(t) => t, err(e) => e })
     print_line(match output_of(shell("exit 4")) { ok(t) => t, err(e) => e })
     print_line(if_then_else(succeeded(run("true", empty_list(Text))), "ok", "fail"))
@@ -158,7 +153,7 @@ fn network_agree_between_interpreter_and_native() {
         "unset",
         addresses.as_str(),
         "cannot resolve `no-such-host.invalid`",
-        if cfg!(windows) { "cannot connect to `127.0.0.1:1` (os error 0)" } else { "cannot connect to `127.0.0.1:1` (os error 111)" },
+        "cannot connect to `127.0.0.1:1` (os error 111)",
         "no connection 99",
         "invalid port 70000",
         "GET /x HTTP/1.0;Host: a;;<eof>;HTTP/1.0 200 OK",

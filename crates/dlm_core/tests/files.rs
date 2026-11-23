@@ -84,9 +84,10 @@ fn files_agree_between_interpreter_and_native_and_are_closed_in_scope() {
     let (out, err, code) = native(&program(&body(&native_dir.to_string_lossy().replace('\\', "/"))), &native_dir);
     assert_eq!(code, 0, "{err}");
     let fix = |lines: Vec<String>, dir: &PathBuf| {
+        let dlm_dir = dir.to_string_lossy().replace('\\', "/");
         lines
             .into_iter()
-            .map(|l| l.replace(&dir.to_string_lossy().replace('\\', "/"), "<dir>"))
+            .map(|l| l.replace(&dlm_dir, "<dir>").replace(dir.to_str().unwrap(), "<dir>"))
             .collect::<Vec<_>>()
     };
     let interpreted = fix(interpreted, &run_dir);

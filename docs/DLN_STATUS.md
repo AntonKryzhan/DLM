@@ -1,9 +1,9 @@
-# DLN roadmap status after DLM 0.142.0
+# DLN roadmap status after DLM 0.146.0
 
 Scope follows the supplied DLN-00..17 plan. DLM version numbers and DLN milestone
 numbers are separate. A library feature does not close unexecuted platform gates.
 
-| Stage | State after 0.142 | Remaining acceptance/work |
+| Stage | Current implementation | Remaining acceptance/work |
 | --- | --- | --- |
 | 00 Baseline and compatibility | 0.134 baseline rerun; API/source snapshot; dependency map; new regression matrix | Windows 0.137 seven-example/IOCP-thread smoke confirmed by user; execute 0.138 crypto and full Windows/FreeBSD matrix; engineering evidence is not formal proof |
 | 01 Network binary foundation | Implemented library surface: endian integers, two varint formats, ZigZag, bounds, zero-copy spans and constant-memory streaming | Maintain independent corpus/fuzz tests; formal codec certificates belong to 09/11 |
@@ -15,14 +15,14 @@ numbers are separate. A library feature does not close unexecuted platform gates
 | 07 Transport requirements | Pure hard-property selection and six common message profiles over TCP/TLS/UDP/QUIC; bounded owned queues, retained receive and independent QUIC channels | Native platform acceptance, whole-process quotas and TLS server/common listener remain open; cost hints are not measured latency; no formal certificate |
 | 08 NetworkSpec | Pure bounded schema/version/wire/session/security/resource objects, descriptor metadata, directional compatibility and explicit pending-proof admission; ordinary Nat laws reuse the current checker | Generated payload codecs added in 09; executed state machine (10), independent native protocol certificates (11) and native platform acceptance remain separate |
 | 09 Codec generator | Engineering implementation: typed all-kind codecs from checked NetworkSpec, bounded pure preflight/encode, versioned plan and independent wrapper/runtime-binding check, VM/native and TCP tests | Generic runtime/machine proofs remain pending and proof-required generation refuses; native platform/fault/performance gates remain open |
-| 10 State machines | Not implemented | Formal transitions, auth, timeout, cleanup and termination checking |
-| 11 Network proof checker | Not implemented | Small independent certificate checker and source/code identity binding |
-| 12 Identity | Not implemented | Keys, signed locator records, freshness/replay/key rotation |
-| 13 Peer discovery | Not implemented | Private interoperable P2P/DHT first, bounded abuse/privacy model |
-| 14 Content addressing | Not implemented | Hash/Merkle integrity, identifiers and bounded caching |
-| 15 Optimizer | Not implemented | Mandatory-property filtering, measured cost choice and valid state migration |
-| 16 Virtual interfaces | Not implemented | Explicit TUN/TAP/Wintun privileges and routing lifecycle |
-| 17 Release acceptance | Foundation regression/interoperability expanded | Full platform/fault/fuzz/performance/network-impairment matrix |
+| 10 State machines | Executable bounded sessions, authentication gates, deadlines, message budgets and cleanup; generated state bundles | Independent model evidence does not prove native runtime, codec or crypto |
+| 11 Network proof checker | Independent bounded certificate checker with source/code binding and negative mutation tests | Finite model properties only; generic/native/cryptographic proofs remain pending |
+| 12 Identity | Ed25519 logical identity, authenticated locator records, freshness, replay control, encrypted key backup and key rotation | Other native OS and production deployment acceptance |
+| 13 Peer discovery | Private bounded authenticated/encrypted UDP discovery, pinned peers and independent peer interoperability | Public/global DHT, Internet topology and abuse/load acceptance |
+| 14 Content addressing | SHA-256/Merkle content, independent verification, bounded owned cache and peer retrieval | Long-duration distributed deployment acceptance |
+| 15 Optimizer | Measured authenticated paths, mandatory-property filtering, hysteresis, encrypted fragmentation, ACK/dedup and session migration; delayed probes and silent-path expiry fixed in 0.146 | Native model/protocol proof is not claimed; Internet performance and failure-domain matrix remain open |
+| 16 Virtual interfaces | Linux/FreeBSD TUN/TAP and Windows Wintun adapters, explicit authority, packet validation, ownership and adaptive bridge | Privileged driver/routing lifecycle must be executed on each native OS; packet-fd tests do not close it |
+| 17 Release acceptance | Automated native loss/reorder/duplicate/failover, SHA-256 file integrity, hostile inputs, independent Python suites, certificate checks, compatibility snapshots and ASan/UBSan; Windows build gate and CI integrated | See revision-bound report: other native OS, privileged driver, two-host Internet and 24-hour soak are separate unexecuted gates |
 
 DLN-04 now has a scoped operation lifecycle, cross-thread notification and join.
 New Windows scopes identify IOCP as backend 5; legacy NetworkReactor remains
