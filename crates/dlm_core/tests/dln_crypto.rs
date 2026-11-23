@@ -3,6 +3,8 @@ use dlm_core::native;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
+#[path = "support/dln_runtime.rs"]
+mod dln_runtime;
 
 static SERIAL: AtomicUsize = AtomicUsize::new(0);
 fn repo() -> PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).join("../..") }
@@ -23,7 +25,9 @@ fn execute(name: &str, expected: &str) {
     let lowered=lower_program(&program,CheckPolicy::allow_unsafe()).unwrap();
     let directory=temp();let executable=directory.join(if cfg!(windows) {"crypto.exe"} else {"crypto"});
     native::build::build(&lowered.native,&executable,&Default::default(),false).unwrap();
-    let result=Command::new(executable).output().unwrap();
+    let mut command=Command::new(executable);
+    dln_runtime::configure(&mut command);
+    let result=command.output().unwrap();
     assert!(result.status.success(),"{}",String::from_utf8_lossy(&result.stderr));
     assert_eq!(String::from_utf8(result.stdout).unwrap().replace("\r\n","\n"),format!("{expected}\n"));
     std::fs::remove_dir_all(directory).unwrap();

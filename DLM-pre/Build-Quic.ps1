@@ -2,13 +2,14 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$SourcePath,
-    [Parameter(Mandatory = $true)][string]$SdkPath
+    [Parameter(Mandatory = $true)][string]$SdkPath,
+    [string]$CCompiler = ''
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 $sourceRoot = (Resolve-Path -LiteralPath $SourcePath).ProviderPath
 $sdkRoot = (Resolve-Path -LiteralPath $SdkPath).ProviderPath
-$gcc = Join-Path $sdkRoot 'toolchain\mingw64\bin\gcc.exe'
+$gcc = if ($CCompiler) { (Get-Command $CCompiler -ErrorAction Stop).Source } else { Join-Path $sdkRoot 'toolchain\mingw64\bin\gcc.exe' }
 $gnutls = Join-Path $sdkRoot 'bin\libgnutls-30.dll'
 foreach ($path in @($gcc, $gnutls)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw ('QUIC build dependency is missing: ' + $path) }

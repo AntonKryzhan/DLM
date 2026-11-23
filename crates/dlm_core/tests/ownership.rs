@@ -169,6 +169,7 @@ fn runtime_errors_end_the_program_and_release_live_buffers() {
             "{i}: {diagnostics:?}"
         );
         let (out, err, code) = native(&p, &format!("error{i}"));
+        let out = out.replace("\r\n", "\n");
         let err = err.replace("\r\n", "\n");
         assert_eq!(code, 1, "{i}: {err}");
         assert!(

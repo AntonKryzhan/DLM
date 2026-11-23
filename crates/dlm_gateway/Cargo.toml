@@ -1,0 +1,15 @@
+[package]
+name = "dlm_gateway"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "dlm-net"
+path = "src/main.rs"
+
+[dependencies]
+dlm_network_proof = { path = "../dlm_network_proof" }

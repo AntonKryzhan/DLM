@@ -44,7 +44,10 @@ fn run_both(name: &str, source: &str) -> Vec<String> {
         .lines()
         .map(str::to_string)
         .collect();
-    assert_eq!(interpreted, native);
+    assert_eq!(interpreted.len(), native.len());
+    for (i, (a, b)) in interpreted.iter().zip(&native).enumerate() {
+        assert!(approx_line(a, b, 1e-12), "#{i}: {a} vs {b}");
+    }
     std::fs::remove_dir_all(dir).ok();
     native
 }

@@ -161,9 +161,10 @@ fn the_repository_project_checks() {
     // network provider must expose, not erase, its foreign trust boundary.
     for entry in report.entries.iter().filter(|e| e.path.to_string_lossy().contains("lib/std")) {
         let audit = entry.audit.as_ref().unwrap();
-        if matches!(entry.path.file_name().and_then(|p| p.to_str()), Some("native_net.dlm" | "net_socket.dlm" | "net_reactor.dlm" | "net_async.dlm" | "net_crypto.dlm" | "net_quic.dlm" | "net_transport.dlm" | "net_session.dlm" | "net_identity.dlm" | "net_content.dlm" | "net_discovery.dlm" | "net_adaptive.dlm" | "net_tun.dlm" | "net_session_verified.dlm")) {
+        if matches!(entry.path.file_name().and_then(|p| p.to_str()), Some("dln_gateway.dlm" | "dln_continuity.dlm" | "dln_proxy.dlm" | "dln_experiment.dlm" | "native_net.dlm" | "net_socket.dlm" | "net_reactor.dlm" | "net_async.dlm" | "net_crypto.dlm" | "net_quic.dlm" | "net_transport.dlm" | "net_session.dlm" | "net_identity.dlm" | "net_content.dlm" | "net_discovery.dlm" | "net_adaptive.dlm" | "net_tun.dlm" | "net_session_verified.dlm")) {
             assert_eq!(audit.status, AuditStatus::Unsafe);
-            assert!(audit.tainted_values.iter().any(|v| v.contains("dlm.net.v1")));
+            let trust = match entry.path.file_name().and_then(|p| p.to_str()) { Some("dln_experiment.dlm") => "dlm.channel_lab.v1", Some("dln_gateway.dlm" | "dln_continuity.dlm" | "dln_proxy.dlm") => "dlm.gateway.v1", _ => "dlm.net.v1" };
+            assert!(audit.tainted_values.iter().any(|v| v.contains(trust)));
         } else {
             assert_eq!(audit.status, AuditStatus::Closed, "{}", entry.path.display());
         }

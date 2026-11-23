@@ -61,7 +61,7 @@ fn run_and_build(example: &str, expected: &str) {
         String::from_utf8(native.stdout).unwrap().trim_end(),
         expected
     );
-    let trace = String::from_utf8(native.stderr).unwrap();
+    let trace = String::from_utf8(native.stderr).unwrap().replace("\r\n", "\n");
     assert!(
         trace.trim_end().ends_with(" released at exit") && trace.contains(", 0 released at exit"),
         "{trace}"

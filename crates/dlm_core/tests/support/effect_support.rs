@@ -11,6 +11,9 @@ pub fn scratch(name: &str) -> PathBuf {
     std::fs::create_dir_all(&dir).unwrap();
     dir
 }
+pub fn dlm_path(path: &Path) -> String {
+    path.to_string_lossy().replace('\\', "/")
+}
 pub fn program(body: &str) -> Program {
     let source = format!("module test.effects\ntheory App {{\n{body}\n}}\n");
     Program::single(parse_module(&source).unwrap_or_else(|d| panic!("{d:?}\n{source}")))
