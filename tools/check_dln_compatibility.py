@@ -12,13 +12,27 @@ from pathlib import Path
 import re
 import sys
 
-# Audited source revision already present in the uploaded 0.145 Windows fix.
-# Keep historical snapshots intact; accept only this exact old/new digest pair.
+# Keep historical snapshots intact; admit only reviewed Windows revisions.
 REVIEWED_SOURCE_UPDATES = {
     "crates/dlm_core/src/backend_c_runtime.c": (
         "3016d7a83573a04c009ddd4a9b6f5a1b8a7079b18276f58f0fe74b8ab1e6f50e",
-        "3084761ba1492db3f029e10544017b6f4ab2d10b7687af4a1e5d7646acf047e3",
-        "0.145 Windows append, filesystem and process error compatibility fixes",
+        "e905d6e42c9a1a4fefdfd15202ed4fc3d579a0310386106981b9f5421a3b1ba5",
+        "Windows append position/resize ownership, filesystem/process and TCP error compatibility fixes",
+    ),
+    "crates/dlm_core/src/native/network.c": (
+        "39834f4c0ff5a87dfba895c96595ffcfd503991deea91b5caa096b0ca897c129",
+        "50655336e7c20d8adae261a0f92569589392e9fcf4db3c9c50c3e9611b188fb8",
+        "Windows Hogweed 7/6 dynamic loader compatibility; existing network C ABI unchanged",
+    ),
+    "crates/dlm_core/src/os.rs": (
+        "95a0083920938dcca4dd0411133915b43405efbe71763323cf961c5df601f9e4",
+        "6b80f90a38259a6e8f71eae2ccfc8a006f4dc2e5b5b830d45c28ae0d9102d2ff",
+        "Windows interpreter NotFound and ConnectionRefused error normalization",
+    ),
+    "crates/dlm_core/src/runtime/ordinary_surface.rs": (
+        "f5e1741e2070194d7c3d3b7635d410cf3cae3bbcc37f7fae10c59f744f4a5bad",
+        "5741421408c70832a99908040ac3f7636549ebf88041f139a4890fcfd54d03b7",
+        "Windows interpreter append resize ownership and filesystem error normalization",
     ),
 }
 

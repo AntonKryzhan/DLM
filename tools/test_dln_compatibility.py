@@ -7,7 +7,6 @@ import unittest
 import check_dln_compatibility as compatibility
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME = 'crates/dlm_core/src/backend_c_runtime.c'
 
 
 class ReviewedSourceTests(unittest.TestCase):
@@ -15,23 +14,30 @@ class ReviewedSourceTests(unittest.TestCase):
         for snapshot in sorted((ROOT / 'docs').glob('DLN_BASELINE_*.json')):
             result = compatibility.check(ROOT, snapshot)
             self.assertEqual(result['status'], 'passed', result['failures'])
-            self.assertEqual(len(result['reviewed_source_updates']), 1)
-            self.assertEqual(result['reviewed_source_updates'][0]['path'], RUNTIME)
+            protected = json.loads(snapshot.read_text())['protected_files']
+            expected = set(protected) & set(compatibility.REVIEWED_SOURCE_UPDATES)
+            self.assertEqual({entry['path'] for entry in result['reviewed_source_updates']}, expected)
 
     def test_runtime_exception_rejects_mutations_other_paths_and_other_baselines(self):
-        original = (ROOT / RUNTIME).read_bytes()
-        old, new, _ = compatibility.REVIEWED_SOURCE_UPDATES[RUNTIME]
+        for relative, (old, new, _) in compatibility.REVIEWED_SOURCE_UPDATES.items():
+            with self.subTest(path=relative):
+                self.check_reviewed_source(relative, old, new)
+
+    def check_reviewed_source(self, reviewed_path, old, new):
+        original = (ROOT / reviewed_path).read_bytes()
         self.assertEqual(compatibility.digest(original), new)
+        mutation = bytearray(original)
+        mutation[len(mutation) // 2] ^= 1
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             network = root / 'network.c'
             network.write_text('int dlm_net_stable(void) { return 1; }\n')
             snapshot = root / 'baseline.json'
             for relative, expected, content, status in [
-                (RUNTIME, old, original, 'passed'),
-                (RUNTIME, old, original + b'\n/* unreviewed */\n', 'failed'),
-                (RUNTIME, old, original.replace(b'cannot open file ', b'cannot open fail ', 1), 'failed'),
-                (RUNTIME, '0' * 64, original, 'failed'),
+                (reviewed_path, old, original, 'passed'),
+                (reviewed_path, old, original + b'\n/* unreviewed */\n', 'failed'),
+                (reviewed_path, old, bytes(mutation), 'failed'),
+                (reviewed_path, '0' * 64, original, 'failed'),
                 ('other.c', old, original, 'failed'),
             ]:
                 path = root / relative
