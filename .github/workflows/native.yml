@@ -34,7 +34,7 @@ jobs:
       image: debian:trixie
       options: --cap-add=SYS_PTRACE
     steps:
-      - run: apt-get update && apt-get install -y git ca-certificates build-essential libgnutls28-dev nettle-dev libcurl4-openssl-dev nodejs python3 python3-venv
+      - run: apt-get update && apt-get install -y git curl ca-certificates build-essential libgnutls28-dev nettle-dev libcurl4-openssl-dev nodejs python3 python3-venv
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - run: python3 -m venv /tmp/dln-ci-python && /tmp/dln-ci-python/bin/python -m pip install aioquic==1.8.0 websockets==16.0
