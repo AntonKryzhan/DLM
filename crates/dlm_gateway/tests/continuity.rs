@@ -616,11 +616,11 @@ fn signed_gateway_epoch_high_water_survives_pool_restart() {
 #[cfg(unix)]
 #[test]
 fn atomic_store_write_failure_never_becomes_a_committed_ack() {
-    use std::os::unix::fs::PermissionsExt;
-    struct Restore(PathBuf);
+    struct Restore(PathBuf, PathBuf);
     impl Drop for Restore {
         fn drop(&mut self) {
-            let _ = fs::set_permissions(&self.0, fs::Permissions::from_mode(0o700));
+            let _ = fs::remove_file(&self.0);
+            let _ = fs::rename(&self.1, &self.0);
         }
     }
     let w = Work::new();
@@ -643,13 +643,16 @@ fn atomic_store_write_failure_never_becomes_a_committed_ack() {
         shard: code.shards[0].clone(),
         digest: code.digest,
     };
-    let _restore = Restore(dir.clone());
-    fs::set_permissions(&dir, fs::Permissions::from_mode(0o500)).unwrap();
+    let saved = w.0.join("store-saved");
+    fs::rename(&dir, &saved).unwrap();
+    let restore = Restore(dir.clone(), saved);
+    fs::write(&dir, b"not a directory").unwrap();
     let ack = store.accept(&[19; 32], &packet.encode()).unwrap();
     assert_eq!(ack.status, 5);
     assert_eq!(ack.state, DeliveryState::AcceptedRemote);
     assert_eq!(store.complete(&[19; 32], &d).unwrap_err().code, 1);
-    fs::set_permissions(&dir, fs::Permissions::from_mode(0o700)).unwrap();
+    drop(restore);
+    assert!(dir.is_dir());
     assert_eq!(
         store.accept(&[19; 32], &packet.encode()).unwrap().state,
         DeliveryState::Committed

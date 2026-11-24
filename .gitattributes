@@ -1,1 +1,3 @@
 *.kproof text eol=lf
+/vendor/ngtcp2/** -text
+/vendor/gnutls-headers/** -text

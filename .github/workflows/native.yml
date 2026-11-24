@@ -75,7 +75,7 @@ jobs:
           $env:DLM_LIBHOGWEED = (Get-ChildItem "${{ runner.temp }}\msys64\ucrt64\bin\libhogweed-*.dll" | Sort-Object Name -Descending | Select-Object -First 1).FullName
           $env:DLM_LIBCURL = "${{ runner.temp }}\msys64\ucrt64\bin\libcurl-4.dll"
           ./tools/build_windows.ps1 -TestOnly -TestTargets @('apps', 'os_records', 'audit_project')
-      - name: Build and test native Windows executables
+      - name: Build native Windows executables
         shell: pwsh
         run: |
           $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;${{ runner.temp }}\msys64\usr\bin;$env:PATH"
@@ -83,12 +83,21 @@ jobs:
           $env:DLM_LIBGNUTLS = "${{ runner.temp }}\msys64\ucrt64\bin\libgnutls-30.dll"
           $env:DLM_LIBHOGWEED = (Get-ChildItem "${{ runner.temp }}\msys64\ucrt64\bin\libhogweed-*.dll" | Sort-Object Name -Descending | Select-Object -First 1).FullName
           $env:DLM_LIBCURL = "${{ runner.temp }}\msys64\ucrt64\bin\libcurl-4.dll"
-          ./tools/build_windows.ps1
+          ./tools/build_windows.ps1 -SkipTests
       - name: Package Windows runtime and native dependencies
         shell: pwsh
         run: |
           $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;${{ runner.temp }}\msys64\usr\bin;$env:PATH"
           python tools/package_release.py --build-dir target/x86_64-pc-windows-gnu/release
+      - name: Test the complete Windows workspace
+        shell: pwsh
+        run: |
+          $env:PATH = "${{ runner.temp }}\msys64\ucrt64\bin;${{ runner.temp }}\msys64\usr\bin;$env:PATH"
+          if (-not $env:HOME) { $env:HOME = $env:USERPROFILE }
+          $env:DLM_LIBGNUTLS = "${{ runner.temp }}\msys64\ucrt64\bin\libgnutls-30.dll"
+          $env:DLM_LIBHOGWEED = (Get-ChildItem "${{ runner.temp }}\msys64\ucrt64\bin\libhogweed-*.dll" | Sort-Object Name -Descending | Select-Object -First 1).FullName
+          $env:DLM_LIBCURL = "${{ runner.temp }}\msys64\ucrt64\bin\libcurl-4.dll"
+          ./tools/build_windows.ps1 -TestOnly
       - uses: actions/upload-artifact@v4
         with:
           name: DLM-windows-x86_64
