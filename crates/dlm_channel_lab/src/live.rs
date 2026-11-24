@@ -36,6 +36,17 @@ fn wait(target: Instant, end: Instant, cancel: &Cancellation) -> Result<()> {
         }
     }
 }
+fn bind_receivers() -> Result<(TcpListener, UdpSocket)> {
+    for _ in 0..32 {
+        let listener = TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0))?;
+        match UdpSocket::bind(listener.local_addr()?) {
+            Ok(udp) => return Ok((listener, udp)),
+            Err(e) if e.kind() == std::io::ErrorKind::AddrInUse => continue,
+            Err(e) => return Err(e.into()),
+        }
+    }
+    Err(Error::new(17, "cannot reserve a shared TCP/UDP loopback port"))
+}
 pub fn run(planned: &Trace, config: &Config, cancel: &Cancellation) -> Result<Observation> {
     planned.validate()?;
     config.validate()?;
@@ -59,10 +70,9 @@ pub fn run(planned: &Trace, config: &Config, cancel: &Cancellation) -> Result<Ob
         7,
         "physical experiment exceeds configured short loopback deadline",
     )?;
-    let udp = UdpSocket::bind((std::net::Ipv4Addr::LOCALHOST, 0))?;
+    let (listener, udp) = bind_receivers()?;
     let address = udp.local_addr()?;
     udp.set_nonblocking(true)?;
-    let listener = TcpListener::bind(address)?;
     let mut tcp_tx = TcpStream::connect(address)?;
     tcp_tx.set_nodelay(true)?;
     tcp_tx.set_nonblocking(true)?;
