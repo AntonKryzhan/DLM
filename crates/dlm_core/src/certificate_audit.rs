@@ -1,4 +1,4 @@
-use crate::certificate::{verify_certificate_against_theorem, ProofCertificate};
+use crate::certificate::{verify_certificate_against_theorem, ProofCertificate, ProofCertificateStatus};
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 use crate::passport::{Passport, TypeKind};
 
@@ -53,7 +53,14 @@ pub fn export_certificate_text_unchecked(certificate: &ProofCertificate) -> Stri
     push_field(&mut out, "fingerprint", &certificate.fingerprint);
     push_field(&mut out, "axiom_tainted", &certificate.is_axiom_tainted().to_string());
     push_field(&mut out, "trace_len", &certificate.trace_len.to_string());
-    push_field(&mut out, "proof_evidence", if certificate.kernel.is_some() { "kernel-replay" } else { "legacy-trusted" });
+    let evidence = if certificate.status == ProofCertificateStatus::ExternallyVerified {
+        "external-lean"
+    } else if certificate.kernel.is_some() {
+        "kernel-replay"
+    } else {
+        "legacy-trusted"
+    };
+    push_field(&mut out, "proof_evidence", evidence);
     push_line(&mut out, "trace:");
     for (index, step) in certificate.trace.iter().enumerate() {
         push_line(&mut out, &format!("  {index}: {step}"));
@@ -125,7 +132,7 @@ pub fn render_certificate_audit_report(report: &CertificateAuditReport) -> Strin
 }
 
 fn validate_exportable_certificate(certificate: &ProofCertificate, line: usize) -> Result<(), Diagnostic> {
-    certificate.verify_kernel_evidence(line)?;
+    certificate.verify_evidence(line)?;
     if certificate.trace_len != certificate.trace.len() {
         return Err(Diagnostic::error(
             DiagnosticKind::ProofCertificateAuditError,

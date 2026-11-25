@@ -429,6 +429,7 @@ fn parse_module_inner(source: &str) -> Result<Module, Vec<Diagnostic>> {
                         TheoryItem::Fn(decl) => (&decl.name, decl.line),
                         TheoryItem::Record(record) => (&record.name, record.line),
                         TheoryItem::Statement(statement) => (&statement.name, statement.line),
+                        TheoryItem::ExternalTheorem(decl) => (&decl.name, decl.line),
                         TheoryItem::Let(_) | TheoryItem::Expr(_) => continue,
                     };
                     if private_lines.contains(&line) {
@@ -502,6 +503,12 @@ fn parse_module_inner(source: &str) -> Result<Module, Vec<Diagnostic>> {
             if let Some(kind) = statement_kind {
                 let keyword = kind.keyword();
                 let rest = &line[keyword.len() + 1..];
+                if kind == StatementItemKind::Theorem {
+                    if let Some(decl) = external_theorem(rest, line_no) {
+                        theory.items.push(TheoryItem::ExternalTheorem(decl));
+                        continue;
+                    }
+                }
                 match parse_statement(kind, rest, line_no, find_column(raw_line, keyword).unwrap_or(1) + keyword.len() + 1) {
                     Ok(item) => theory.items.push(TheoryItem::Statement(item)),
                     Err(diag) => diagnostics.push(diag),
@@ -714,6 +721,17 @@ fn parse_let(rest: &str, line: usize, rest_col: usize) -> Result<LetDecl, Diagno
     Ok(LetDecl { name: name_text.to_string(), expr, line })
 }
 
+fn external_theorem(rest: &str, line: usize) -> Option<ExternalTheoremDecl> {
+    let mut words = rest.trim().trim_end_matches(';').split_whitespace();
+    let name = words.next()?;
+    let from = words.next()?;
+    let source = words.next()?;
+    if from != "from" || !is_ident(name) || !source.split('.').all(is_ident) || words.next().is_some() {
+        return None;
+    }
+    Some(ExternalTheoremDecl { name: name.into(), source: source.into(), line })
+}
+
 /// v0.76: `theorem name[(x: T, ...)] [below N]: P`, `axiom name[(...)]: P`,
 /// `conjecture name(...) tested N: P` (single line).
 fn parse_statement(kind: StatementItemKind, rest: &str, line: usize, rest_col: usize) -> Result<StatementItem, Diagnostic> {
@@ -722,7 +740,7 @@ fn parse_statement(kind: StatementItemKind, rest: &str, line: usize, rest_col: u
     let statement_error = |message: String| {
         Diagnostic::error_at(DiagnosticKind::ParseError, SourceSpan::line_col(line, rest_col, text.len().max(1)), message)
             .with_help(match kind {
-                StatementItemKind::Theorem => "expected: theorem name: P  or  theorem name(x: Nat, ...) below N: P",
+                StatementItemKind::Theorem => "expected: theorem name: P, theorem name(x: Nat, ...) below N: P, or theorem name from Lean.riemannHypothesis",
                 StatementItemKind::Axiom => "expected: axiom name(x: Type, ...): P",
                 StatementItemKind::Conjecture => "expected: conjecture name(x: Nat, ...) tested N: P",
             })

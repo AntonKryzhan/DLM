@@ -230,7 +230,7 @@ impl TypedFacts {
                         TheoryItem::Expr(expr) => pending.push(expr),
                         TheoryItem::Fn(decl) => pending.push(&decl.body),
                         TheoryItem::Statement(statement) => pending.push(&statement.body),
-                        TheoryItem::Record(_) => {}
+                        TheoryItem::Record(_) | TheoryItem::ExternalTheorem(_) => {}
                     }
                 }
             }

@@ -272,6 +272,7 @@ impl Checker {
                 TheoryItem::Fn(decl) => Some((&decl.name, decl.line)),
                 TheoryItem::Record(record) => Some((&record.name, record.line)),
                 TheoryItem::Statement(statement) => Some((&statement.name, statement.line)),
+                TheoryItem::ExternalTheorem(decl) => Some((&decl.name, decl.line)),
                 TheoryItem::Expr(_) => None,
             };
             if let Some((name, line)) = declared {
@@ -324,6 +325,15 @@ impl Checker {
                             }
                             self.theories.entry(theory.name.clone()).or_default().insert(statement.name.clone(), passport.clone());
                             self.inferred.push((format!("{}.{}", theory.name, statement.name), passport));
+                        }
+                        Err(diag) => self.diagnostics.push(diag),
+                    }
+                }
+                TheoryItem::ExternalTheorem(decl) => {
+                    match self.check_external_theorem(&theory.name, decl) {
+                        Ok(passport) => {
+                            self.theories.entry(theory.name.clone()).or_default().insert(decl.name.clone(), passport.clone());
+                            self.inferred.push((format!("{}.{}", theory.name, decl.name), passport));
                         }
                         Err(diag) => self.diagnostics.push(diag),
                     }

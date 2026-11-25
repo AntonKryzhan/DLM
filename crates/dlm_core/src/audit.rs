@@ -28,6 +28,8 @@ pub enum TrustedComponent {
     Oracle,
     /// Unsafe trust or provenance.
     Unsafe,
+    /// External proof checking and statement comparison for a pinned Lean export.
+    ExternalLean,
 }
 
 impl fmt::Display for TrustedComponent {
@@ -39,6 +41,7 @@ impl fmt::Display for TrustedComponent {
             TrustedComponent::Axioms => "axioms",
             TrustedComponent::Oracle => "oracle",
             TrustedComponent::Unsafe => "unsafe",
+            TrustedComponent::ExternalLean => "external-lean",
         })
     }
 }
@@ -186,6 +189,9 @@ fn statement_audit(qualified: &str, passport: &Passport) -> Option<StatementAudi
                 components.insert(TrustedComponent::SymbolicKernel);
             } else if rest.starts_with("kernel-replay:") {
                 components.insert(TrustedComponent::EquationalReplayKernel);
+            } else if event.starts_with(crate::math::riemann::PROOF_EVENT) {
+                push_unique(&mut method_parts, "external-lean".to_string());
+                components.insert(TrustedComponent::ExternalLean);
             }
         } else if let Some(rest) = event.strip_prefix("crosscheck:runtime:") {
             if event.ends_with(&own_suffix) {
@@ -193,6 +199,8 @@ fn statement_audit(qualified: &str, passport: &Passport) -> Option<StatementAudi
             }
         } else if let Some(lemma) = event.strip_prefix("lemma:use:") {
             push_unique(&mut lemmas, lemma.to_string());
+        } else if let Some(axiom) = event.strip_prefix(crate::math::riemann::AXIOM_EVENT) {
+            push_unique(&mut axioms, format!("Lean.{axiom}"));
         } else if let Some(rest) = event.strip_prefix("theorem:axiom:") {
             let (name, proposition) = rest.split_once(':').unwrap_or((rest, ""));
             if kind == StatementAuditKind::Axiom && name == short {
@@ -243,6 +251,9 @@ pub fn audit_check_report(report: &CheckReport, imports: Vec<String>) -> Program
             Some(statement) => statements.push(statement),
             None if passport.trust >= TrustLevel::Axiom => {
                 tainted_values.push(format!("{name} ({:?})", passport.trust));
+                if passport.history.events().iter().any(|event| event.starts_with(crate::math::riemann::PROOF_EVENT)) {
+                    value_components.insert(TrustedComponent::ExternalLean);
+                }
                 value_components.insert(if passport.trust >= TrustLevel::Unsafe {
                     TrustedComponent::Unsafe
                 } else if passport.trust >= TrustLevel::Oracle {

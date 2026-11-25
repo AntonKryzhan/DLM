@@ -1154,6 +1154,12 @@ pub fn lower_checked_program(program: &Program, facts: &TypedFacts) -> Result<Ir
                                     erased += 1;
                                 }
                             }
+                            TheoryItem::ExternalTheorem(decl) => {
+                                statements.push(decl.name.clone());
+                                if std::ptr::eq(module, root) {
+                                    erased += 1;
+                                }
+                            }
                             TheoryItem::Record(record) => {
                                 if !declarations.insert(record.id) {
                                     return Err(vec![compile_error(Some(record.line), "duplicate source declaration identity").in_source(&module.source)]);

@@ -71,6 +71,24 @@ fn render_assignment(assignment: &[(String, String)]) -> String {
 }
 
 impl Checker {
+    pub(super) fn check_external_theorem(&mut self, theory: &str, decl: &ExternalTheoremDecl) -> Result<Passport, Diagnostic> {
+        use crate::math::riemann;
+
+        if self.is_builtin_name(&decl.name, theory, decl.line) {
+            return Err(Diagnostic::error(
+                DiagnosticKind::NameError,
+                Some(decl.line),
+                format!("theorem '{}' shadows a builtin", decl.name),
+            ));
+        }
+        riemann::require_source(&decl.source, decl.line)?;
+        let (passport, certificate) = riemann::certify(theory, &decl.name);
+        self.validate_policy(&passport, decl.line)?;
+        verify_certificate_against_theorem(&certificate, &passport, decl.line)?;
+        self.certificates.push(certificate);
+        Ok(passport)
+    }
+
     pub(super) fn check_statement_item(&mut self, theory: &str, item: &StatementItem) -> Result<Passport, Diagnostic> {
         let line = item.line;
         let keyword = item.kind.keyword();

@@ -136,6 +136,7 @@ impl Checker {
                     (expr_names(&decl.body, &decl.params), types, decl.line)
                 }
                 TheoryItem::Record(record) => (Vec::new(), record.fields.iter().map(|f| f.ty.clone()).collect(), record.line),
+                TheoryItem::ExternalTheorem(_) => continue,
                 TheoryItem::Statement(statement) => {
                     let mut names = expr_names(&statement.body, &statement.params);
                     if let Some(hint) = &statement.proof {

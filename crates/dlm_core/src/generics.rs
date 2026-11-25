@@ -467,6 +467,7 @@ fn names_in_item(item: &TheoryItem, out: &mut Vec<String>) {
             s.params.iter().for_each(|p| names_in_type(&p.ty, out));
             names_in_expr(&s.body, out);
         }
+        TheoryItem::ExternalTheorem(_) => {}
     }
 }
 
@@ -500,6 +501,7 @@ pub fn expand_program(program: &mut Program) -> Vec<Diagnostic> {
                     TheoryItem::Record(r) => (&r.name, r.line, !r.type_params.is_empty()),
                     TheoryItem::Let(l) => (&l.name, l.line, false),
                     TheoryItem::Statement(s) => (&s.name, s.line, false),
+                    TheoryItem::ExternalTheorem(decl) => (&decl.name, decl.line, false),
                     TheoryItem::Expr(_) => continue,
                 };
                 if let Some(was_generic) = declared.insert(name.clone(), generic) {
@@ -584,6 +586,7 @@ pub fn expand_program(program: &mut Program) -> Vec<Diagnostic> {
                     TheoryItem::Record(r) => r.line,
                     TheoryItem::Let(l) => l.line,
                     TheoryItem::Statement(s) => s.line,
+                    TheoryItem::ExternalTheorem(decl) => decl.line,
                     TheoryItem::Expr(e) => e.line,
                 };
                 diagnostics.push(error(line, format!("generic type expansion exceeds {MAX_INSTANCE_NAME_BYTES} bytes (polymorphic recursion?)")));
@@ -1344,7 +1347,7 @@ pub fn infer_type_arguments(program: &mut Program) -> Vec<Diagnostic> {
                         env.extend(s.params.iter().map(|p| (p.name.clone(), ty(&p.ty))));
                         s.body = inf.rewrite(&s.body, &env);
                     }
-                    TheoryItem::Record(_) => {}
+                    TheoryItem::Record(_) | TheoryItem::ExternalTheorem(_) => {}
                 }
             }
             diagnostics.append(&mut inf.diagnostics);

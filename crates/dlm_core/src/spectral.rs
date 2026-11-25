@@ -628,20 +628,13 @@ const K: [u32; 64] = [
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ];
 
-/// SHA-256 of bytes as 64 lowercase hex digits.
-pub fn sha256(data: &[u8]) -> String {
-    let mut h: [u32; 8] = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
-        0x5be0cd19,
-    ];
-    let mut msg = data.to_vec();
-    let bits = (data.len() as u64).wrapping_mul(8);
-    msg.push(0x80);
-    while msg.len() % 64 != 56 {
-        msg.push(0);
-    }
-    msg.extend_from_slice(&bits.to_be_bytes());
-    for block in msg.chunks(64) {
+const SHA256_INITIAL: [u32; 8] = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
+    0x5be0cd19,
+];
+
+fn sha256_blocks(h: &mut [u32; 8], blocks: &[[u8; 64]]) {
+    for block in blocks {
         let mut w = [0u32; 64];
         for t in 0..16 {
             w[t] = u32::from_be_bytes([
@@ -659,7 +652,7 @@ pub fn sha256(data: &[u8]) -> String {
                 .wrapping_add(w[t - 7])
                 .wrapping_add(s1);
         }
-        let mut v = h;
+        let mut v = *h;
         for t in 0..64 {
             let s1 = v[4].rotate_right(6) ^ v[4].rotate_right(11) ^ v[4].rotate_right(25);
             let ch = (v[4] & v[5]) ^ (!v[4] & v[6]);
@@ -686,5 +679,48 @@ pub fn sha256(data: &[u8]) -> String {
             h[i] = h[i].wrapping_add(v[i]);
         }
     }
+}
+
+fn sha256_finish(mut h: [u32; 8], tail: &[u8], length: u64) -> String {
+    let mut block = [0; 64];
+    block[..tail.len()].copy_from_slice(tail);
+    block[tail.len()] = 0x80;
+    if tail.len() >= 56 {
+        sha256_blocks(&mut h, &[block]);
+        block = [0; 64];
+    }
+    block[56..].copy_from_slice(&length.wrapping_mul(8).to_be_bytes());
+    sha256_blocks(&mut h, &[block]);
     h.iter().map(|x| format!("{x:08x}")).collect()
+}
+
+/// SHA-256 of bytes as 64 lowercase hex digits.
+pub fn sha256(data: &[u8]) -> String {
+    let mut h = SHA256_INITIAL;
+    let (blocks, tail) = data.as_chunks::<64>();
+    sha256_blocks(&mut h, blocks);
+    sha256_finish(h, tail, data.len() as u64)
+}
+
+/// SHA-256 of a stream using fixed-size storage, including on short reads.
+pub fn sha256_reader(mut reader: impl std::io::Read) -> std::io::Result<String> {
+    let mut h = SHA256_INITIAL;
+    let mut buffer = [0; 64 * 1024];
+    let mut pending = 0;
+    let mut length = 0u64;
+    loop {
+        let read = match reader.read(&mut buffer[pending..]) {
+            Ok(0) => break,
+            Ok(read) => read,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(error),
+        };
+        length = length.wrapping_add(read as u64);
+        let available = pending + read;
+        let (blocks, tail) = buffer[..available].as_chunks::<64>();
+        sha256_blocks(&mut h, blocks);
+        pending = tail.len();
+        buffer.copy_within(available - pending..available, 0);
+    }
+    Ok(sha256_finish(h, &buffer[..pending], length))
 }

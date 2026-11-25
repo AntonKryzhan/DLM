@@ -3,6 +3,7 @@ mod rational_commands;
 mod q_witness_commands;
 mod network_codegen;
 mod network_protocol;
+mod riemann_command;
 
 use std::env;
 use std::fs;
@@ -43,6 +44,12 @@ fn main() {
         "proof-export" if args.len() >= 4 => {
             let (policy, path) = parse_check_args(&args[2..args.len() - 1]);
             run_proof_export(&path, args.last().unwrap(), policy);
+        }
+        "proof-check" if args.get(2).map(String::as_str) == Some("--riemann") => {
+            let [checker, challenge, solution] = &args[3..] else {
+                print_usage_and_exit(2);
+            };
+            riemann_command::run(checker, challenge, solution);
         }
         "proof-check" if args.get(2).map(|p|network_protocol::is_certificate(p)).unwrap_or(false) => network_protocol::run_audit(&args[2..]),
         "proof-check" if args.len() == 3 => run_proof_check(&args[2]),
@@ -339,8 +346,12 @@ fn run_proof_export(path: &str, name: &str, policy: CheckPolicy) {
         for diagnostic in report.diagnostics { eprint!("{diagnostic}"); }
         process::exit(1);
     }
-    let proof = report.certificates.iter().find(|c| format!("{}.{}", c.theory, c.theorem_name) == name).and_then(|c| c.kernel.as_ref());
-    match proof {
+    let certificate = report.certificates.iter().find(|c| format!("{}.{}", c.theory, c.theorem_name) == name);
+    if certificate.is_some_and(|c| c.status == dlm_core::ProofCertificateStatus::ExternallyVerified) {
+        eprintln!("'{name}' uses an external Lean proof. Use dlm certify for its binding and dlm proof-check --riemann for replay.");
+        process::exit(1);
+    }
+    match certificate.and_then(|c| c.kernel.as_ref()) {
         Some(proof) => print!("{}", proof.to_text()),
         None => {
             eprintln!("no independently replayable proof for '{name}'; use a qualified Theory.theorem in the supported Nat equational fragment");
@@ -679,6 +690,8 @@ fn print_usage_and_exit(code: i32) -> ! {
     eprintln!("  dlm certify [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm>");
     eprintln!("  dlm proof-export [--trusted-only] <file.dlm> <Theory.theorem>");
     eprintln!("  dlm proof-check <proof.kproof>");
+    eprintln!("  dlm proof-check --riemann <con-leche> <challenge.ndjson> <solution.ndjson>");
+    eprintln!("    con-leche compare revision {}. Exports: {}", dlm_core::math::riemann::CHECKER_REVISION, dlm_core::math::riemann::VERIFICATION_URL);
     eprintln!("  dlm matrix-q-export <input.qmat> <out.qproof>");
     eprintln!("  dlm matrix-q-check <proof.qproof> [expected.qmat]");
     eprintln!("  dlm matrix-q [--bits N] [--work N] [--inverse] [--solve rhs.qmat] <matrix.qmat>");
