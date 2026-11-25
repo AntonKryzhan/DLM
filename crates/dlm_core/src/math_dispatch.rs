@@ -18,12 +18,17 @@ pub enum MathOperation {
     Fourier,
     RealConvolution,
     ModularConvolution,
+    SparseMatvec,
+    LinearSolve,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum NumericalContract {
     OrderedBinary64,
     ExactModular,
+    BoundedAbsolute,
+    ExactSigned,
+    CertifiedResidual,
 }
 
 impl fmt::Display for NumericalContract {
@@ -31,6 +36,9 @@ impl fmt::Display for NumericalContract {
         match self {
             Self::OrderedBinary64 => f.write_str("strict binary64"),
             Self::ExactModular => write!(f, "exact modulo {NTT_MODULUS}"),
+            Self::BoundedAbsolute => f.write_str("absolute error bounded against strict binary64"),
+            Self::ExactSigned => f.write_str("exact signed integer coefficients"),
+            Self::CertifiedResidual => f.write_str("certified forward error in the infinity norm"),
         }
     }
 }
@@ -45,6 +53,15 @@ pub enum Algorithm {
     FftConvolution,
     DirectModularConvolution,
     NttConvolution,
+    CsrMatvec,
+    ParallelCsrMatvec,
+    VulkanMatmul,
+    VulkanFourier,
+    VulkanRealConvolution,
+    VulkanCsrMatvec,
+    VulkanNttConvolution,
+    CertifiedIntegerConvolution,
+    CertifiedSolve,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -60,13 +77,14 @@ pub struct Registration {
 }
 
 use Algorithm::*;
-use BackendCapability::{Deterministic, Pure, ValuePreserving, Vectorizable};
+use BackendCapability::{Batchable, Deterministic, GpuResident, Pure, ValuePreserving, Vectorizable};
 use MathOperation::*;
-use NumericalContract::{ExactModular, OrderedBinary64};
-use PreludeLoweringTarget::{NativeScalar, NativeVector};
+use NumericalContract::{BoundedAbsolute, CertifiedResidual, ExactModular, ExactSigned, OrderedBinary64};
+use PreludeLoweringTarget::{GpuBatch, NativeScalar, NativeVector};
 
 const SCALAR: &[BackendCapability] = &[Deterministic, Pure, ValuePreserving];
 const VECTOR: &[BackendCapability] = &[Deterministic, Pure, ValuePreserving, Vectorizable];
+const GPU: &[BackendCapability] = &[Batchable, GpuResident];
 
 pub const ALGORITHMS: &[Registration] = &[
     Registration {
@@ -148,6 +166,96 @@ pub const ALGORITHMS: &[Registration] = &[
         numerical_contract: ExactModular,
         requirements: "Nat coefficients and padding within the prime's radix-2 order",
         complexity: "n log2(n) for padded length n",
+    },
+    Registration {
+        algorithm: CsrMatvec,
+        operation: SparseMatvec,
+        name: "csr-matvec",
+        target: NativeScalar,
+        capabilities: SCALAR,
+        numerical_contract: OrderedBinary64,
+        requirements: "validated CSR offsets and column indices",
+        complexity: "rows + nonzeros",
+    },
+    Registration {
+        algorithm: ParallelCsrMatvec,
+        operation: SparseMatvec,
+        name: "parallel-csr-matvec",
+        target: NativeScalar,
+        capabilities: &[Batchable, Deterministic, Pure, ValuePreserving],
+        numerical_contract: OrderedBinary64,
+        requirements: "large finite CSR operands and multiple CPU cores",
+        complexity: "rows + nonzeros, independent row ranges",
+    },
+    Registration {
+        algorithm: VulkanMatmul,
+        operation: Matmul,
+        name: "vulkan-matmul",
+        target: GpuBatch,
+        capabilities: GPU,
+        numerical_contract: BoundedAbsolute,
+        requirements: "compute queue, dense matrices, FP32 or shaderFloat64 within tolerance",
+        complexity: "rows * inner * columns",
+    },
+    Registration {
+        algorithm: VulkanFourier,
+        operation: Fourier,
+        name: "vulkan-radix2-fft",
+        target: GpuBatch,
+        capabilities: GPU,
+        numerical_contract: BoundedAbsolute,
+        requirements: "compute queue, power-of-two length and a sufficient tolerance",
+        complexity: "n log2(n)",
+    },
+    Registration {
+        algorithm: VulkanRealConvolution,
+        operation: RealConvolution,
+        name: "vulkan-fft-convolution",
+        target: GpuBatch,
+        capabilities: GPU,
+        numerical_contract: BoundedAbsolute,
+        requirements: "compute queue, supported padding and a sufficient tolerance",
+        complexity: "n log2(n) for padded length n",
+    },
+    Registration {
+        algorithm: VulkanCsrMatvec,
+        operation: SparseMatvec,
+        name: "vulkan-csr-matvec",
+        target: GpuBatch,
+        capabilities: GPU,
+        numerical_contract: BoundedAbsolute,
+        requirements: "compute queue, validated CSR and a sufficient tolerance",
+        complexity: "rows + nonzeros",
+    },
+    Registration {
+        algorithm: VulkanNttConvolution,
+        operation: ModularConvolution,
+        name: "vulkan-radix2-ntt-convolution",
+        target: GpuBatch,
+        capabilities: &[Batchable, GpuResident, Deterministic, ValuePreserving],
+        numerical_contract: ExactModular,
+        requirements: "compute queue, shaderInt64 and padding within the prime's radix-2 order",
+        complexity: "n log2(n) for padded length n",
+    },
+    Registration {
+        algorithm: CertifiedIntegerConvolution,
+        operation: RealConvolution,
+        name: "certified-integer-convolution",
+        target: NativeScalar,
+        capabilities: SCALAR,
+        numerical_contract: ExactSigned,
+        requirements: "integer coefficients with a verified signed residue bound",
+        complexity: "min(left * right, n log2(n))",
+    },
+    Registration {
+        algorithm: CertifiedSolve,
+        operation: LinearSolve,
+        name: "certified-linear-solve",
+        target: NativeScalar,
+        capabilities: &[Pure, Deterministic],
+        numerical_contract: CertifiedResidual,
+        requirements: "verified positive definiteness or row dominance, finite residual within tolerance",
+        complexity: "n^3",
     },
 ];
 
@@ -274,13 +382,21 @@ fn butterflies(points: usize) -> u128 {
 
 /// Shape-dependent kernels have the same typed call boundary for all implementations.
 pub(crate) fn builtin_signature(name: &str) -> Option<(Vec<OrdinaryType>, OrdinaryType)> {
-    use OrdinaryType::{FloatVec, Nat, NatVec, Option};
+    use OrdinaryType::{Bool, Float, FloatVec, Nat, NatVec, Option, Product};
+    let bounded = || Product(Box::new(FloatVec), Box::new(Product(Box::new(Float), Box::new(Bool))));
     let (parameters, elements) = match name {
         "fv_matmul" => (vec![FloatVec, FloatVec, Nat, Nat, Nat], FloatVec),
         "fft_forward" | "fft_inverse" => (vec![FloatVec], FloatVec),
         "fft_convolve" => (vec![FloatVec, FloatVec], FloatVec),
         "fft2_forward" | "fft2_inverse" => (vec![FloatVec, Nat, Nat], FloatVec),
         "ntt_convolve" => (vec![NatVec, NatVec], NatVec),
+        "fv_matmul_bounded" => (vec![FloatVec, FloatVec, Nat, Nat, Nat, Float], bounded()),
+        "fft_bounded" => (vec![FloatVec, Bool, Float], bounded()),
+        "fft_convolve_bounded" => (vec![FloatVec, FloatVec, Float], bounded()),
+        "la_csr_matvec_bounded" => (vec![NatVec, NatVec, FloatVec, FloatVec, Float], bounded()),
+        "ntt_convolve_accel" => (vec![NatVec, NatVec], Product(Box::new(NatVec), Box::new(Bool))),
+        "fft_convolve_integer" => (vec![FloatVec, FloatVec], FloatVec),
+        "la_solve_certified" => (vec![FloatVec, FloatVec, Nat, Float], bounded()),
         _ => return None,
     };
     Some((parameters, Option(Box::new(elements))))

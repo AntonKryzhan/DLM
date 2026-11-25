@@ -3991,7 +3991,11 @@ static DV *dvb_la_csr_matvec(DV *rp, DV *ix, DV *vl, DV *xv) {
     size_t r;
     if (!dvl_csr(rp, ix, vl, x->u.fv.n, &r, "la_csr_matvec")) return DV_NONE;
     double *y = dvf_scratch(r);
-    dvl_spmv(rp->u.nv.d, ix->u.nv.d, vl->u.fv.d, x->u.fv.d, r, y);
+    if (r < DLM_MATH_CSR_PARALLEL_ROWS || vl->u.fv.n < DLM_MATH_CSR_PARALLEL_NNZ
+        || !dvf_matmul_finite(vl->u.fv.d, vl->u.fv.n) || !dvf_matmul_finite(x->u.fv.d, x->u.fv.n)
+        || !dlm_math_csr_parallel(rp->u.nv.d, ix->u.nv.d, vl->u.fv.d, x->u.fv.d, r, y)
+        || !dvf_matmul_finite(y, r))
+        dvl_spmv(rp->u.nv.d, ix->u.nv.d, vl->u.fv.d, x->u.fv.d, r, y);
     return dv_some(dvf_vec_take(y, r));
 }
 static double dvl_dot(const double *a, const double *b, size_t n) {

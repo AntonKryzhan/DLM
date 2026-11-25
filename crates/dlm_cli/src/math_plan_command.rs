@@ -54,6 +54,10 @@ fn dimension(text: &str) -> Result<usize, String> {
 }
 
 fn show_vulkan() {
+    println!(
+        "Vulkan executor in this compiler: {}",
+        if dlm_core::math_compute::VULKAN_EXECUTOR_COMPILED { "enabled" } else { "unavailable" }
+    );
     match math::vulkan::probe() {
         Err(error) => println!("Vulkan device discovery: {error}"),
         Ok(devices) => {

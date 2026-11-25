@@ -243,6 +243,20 @@ impl FileSlot {
     }
 }
 
+fn math_checked(values: Vec<f64>, error: f64, kind: bool) -> RuntimeValue {
+    RuntimeValue::Pair(
+        Box::new(RuntimeValue::FloatVec(values.into_iter().map(f64::to_bits).collect())),
+        Box::new(RuntimeValue::Pair(
+            Box::new(RuntimeValue::Float(error.to_bits())),
+            Box::new(RuntimeValue::Bool(kind)),
+        )),
+    )
+}
+
+fn math_bounded(result: Option<crate::math_compute::BoundedVector>) -> RuntimeValue {
+    RuntimeValue::OptionValue(result.map(|v| Box::new(math_checked(v.values, v.error, v.vulkan))))
+}
+
 impl Runtime {
     pub(super) fn eval_ordinary_call(
         &mut self,
@@ -289,7 +303,7 @@ impl Runtime {
             buf if buf.starts_with("buf_") || buf.starts_with("tbuf_") => self.eval_ordinary_buffer(name, args, theory, line),
             dense if dense.starts_with("bn_") => self.eval_ordinary_dense(name, args, theory, line),
             float if float.starts_with("fl_") || float.starts_with("fv_") => self.eval_ordinary_float(name, args, theory, line),
-            graph if graph.starts_with("nv_") || graph.starts_with("gr_") || graph.starts_with("la_") || graph.starts_with("fft_") || graph == "ntt_convolve" || graph.starts_with("lp_") || graph.starts_with("nt_") || graph.starts_with("pf_") || graph.starts_with("pm_") || graph.starts_with("sat_") || graph.starts_with("tp_") || graph.starts_with("gb_") || graph.starts_with("mv_") || graph.starts_with("ilp_") || graph.starts_with("km_") || graph.starts_with("tm_") || graph.starts_with("geo_") || graph.starts_with("kd_") || graph.starts_with("fft2_") || graph.starts_with("sig_") || graph.starts_with("bvh_") || graph.starts_with("gx_") || graph.starts_with("vx_") => self.eval_ordinary_graph(name, args, theory, line),
+            graph if graph.starts_with("nv_") || graph.starts_with("gr_") || graph.starts_with("la_") || graph.starts_with("fft_") || graph.starts_with("ntt_") || graph.starts_with("lp_") || graph.starts_with("nt_") || graph.starts_with("pf_") || graph.starts_with("pm_") || graph.starts_with("sat_") || graph.starts_with("tp_") || graph.starts_with("gb_") || graph.starts_with("mv_") || graph.starts_with("ilp_") || graph.starts_with("km_") || graph.starts_with("tm_") || graph.starts_with("geo_") || graph.starts_with("kd_") || graph.starts_with("fft2_") || graph.starts_with("sig_") || graph.starts_with("bvh_") || graph.starts_with("gx_") || graph.starts_with("vx_") => self.eval_ordinary_graph(name, args, theory, line),
             file if file.starts_with("file_") || file.starts_with("proc_") || file.starts_with("net_") || file.starts_with("win_") => self.eval_ordinary_file(name, args, theory, line),
             other => Err(runtime_error(line, format!("unknown ordinary builtin '{other}'"))),
         }
@@ -751,6 +765,13 @@ impl Runtime {
             "la_identity" => of(la::identity(n(0)?)),
             "la_trace" => fo(la::trace(&fv(0)?, n(1)?)),
             "la_csr_matvec" => of(la::csr_matvec(&nv(0)?, &nv(1)?, &fv(2)?, &fv(3)?)),
+            "la_csr_matvec_bounded" => math_bounded(crate::math_compute::csr_bounded(
+                &nv(0)?, &nv(1)?, &fv(2)?, &fv(3)?, fl(4)?,
+            )),
+            "la_solve_certified" => {
+                let result = crate::math_compute::solve_certified(&fv(0)?, &fv(1)?, n(2)?, fl(3)?);
+                RuntimeValue::OptionValue(result.map(|v| Box::new(math_checked(v.values, v.error, v.cholesky))))
+            }
             "gb_basis" => ov(crate::groebner::gb_basis(&nv(0)?, &nv(1)?, n(2)?, n(3)?, n(4)?)),
             "gb_reduce" => ov(crate::groebner::gb_reduce(&nv(0)?, &nv(1)?, &nv(2)?, n(3)?, n(4)?, n(5)?)),
             "mv_add" => ov(crate::groebner::mv_binary(&nv(0)?, &nv(1)?, n(2)?, n(3)?, 0)),
@@ -912,7 +933,18 @@ impl Runtime {
             "fft_forward" => of(crate::spectral::fft(&fv(0)?, false)),
             "fft_inverse" => of(crate::spectral::fft(&fv(0)?, true)),
             "fft_convolve" => of(crate::spectral::convolve(&fv(0)?, &fv(1)?)),
+            "fft_bounded" => math_bounded(crate::math_compute::fft_bounded(
+                &fv(0)?, expect_bool(name, values[1].clone(), line)?, fl(2)?,
+            )),
+            "fft_convolve_bounded" => math_bounded(crate::math_compute::convolve_bounded(&fv(0)?, &fv(1)?, fl(2)?)),
+            "fft_convolve_integer" => of(crate::math_compute::convolve_integer(&fv(0)?, &fv(1)?)),
             "ntt_convolve" => ov(crate::spectral::ntt_convolve(&nv(0)?, &nv(1)?)),
+            "ntt_convolve_accel" => {
+                let result = crate::math_compute::ntt_accel(&nv(0)?, &nv(1)?);
+                RuntimeValue::OptionValue(result.map(|(v, gpu)| Box::new(RuntimeValue::Pair(
+                    Box::new(RuntimeValue::NatVec(v)), Box::new(RuntimeValue::Bool(gpu)),
+                ))))
+            }
             "lp_solve" => {
                 let (s, x) = crate::spectral::simplex(&fv(0)?, &fv(1)?, &fv(2)?, n(3)?, n(4)?);
                 of((s == 0).then_some(x))
@@ -1055,6 +1087,9 @@ impl Runtime {
                 ov(Some(a))
             }
             "fv_matmul" => ov(fl::matmul(&v(0)?, &v(1)?, n(2)?, n(3)?, n(4)?)),
+            "fv_matmul_bounded" => math_bounded(crate::math_compute::matmul_bounded(
+                &v(0)?, &v(1)?, n(2)?, n(3)?, n(4)?, f(5)?,
+            )),
             "fv_transpose" => ov(fl::transpose(&v(0)?, n(1)?, n(2)?)),
             "fv_solve" => ov(fl::solve(&v(0)?, &v(1)?, n(2)?)),
             _ => return Err(runtime_error(line, format!("unknown ordinary builtin '{name}'"))),
