@@ -15,7 +15,9 @@ class ReviewedSourceTests(unittest.TestCase):
             result = compatibility.check(ROOT, snapshot)
             self.assertEqual(result['status'], 'passed', result['failures'])
             protected = json.loads(snapshot.read_text())['protected_files']
-            reviewed_paths = set(compatibility.REVIEWED_SOURCE_UPDATES) | set(compatibility.REVIEWED_NATIVE_S2_UPDATES)
+            reviewed_paths = (set(compatibility.REVIEWED_SOURCE_UPDATES)
+                              | set(compatibility.REVIEWED_NATIVE_S2_UPDATES)
+                              | set(compatibility.REVIEWED_MATH_UPDATES))
             expected = set(protected) & reviewed_paths
             self.assertEqual({entry['path'] for entry in result['reviewed_source_updates']}, expected)
 
@@ -29,6 +31,11 @@ class ReviewedSourceTests(unittest.TestCase):
             for old in baselines:
                 with self.subTest(path=relative, baseline=old):
                     self.check_reviewed_source(relative, old, new)
+
+    def test_math_review_rejects_mutations_and_unknown_baselines(self):
+        for relative, (old, new) in compatibility.REVIEWED_MATH_UPDATES.items():
+            with self.subTest(path=relative):
+                self.check_reviewed_source(relative, old, new)
 
     def check_reviewed_source(self, reviewed_path, old, new):
         original = (ROOT / reviewed_path).read_bytes()

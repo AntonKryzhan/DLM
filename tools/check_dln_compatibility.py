@@ -12,12 +12,12 @@ from pathlib import Path
 import re
 import sys
 
-# Keep historical snapshots intact; admit only reviewed Windows revisions.
+# Keep historical snapshots intact; admit only reviewed source revisions.
 REVIEWED_SOURCE_UPDATES = {
     "crates/dlm_core/src/backend_c_runtime.c": (
         "3016d7a83573a04c009ddd4a9b6f5a1b8a7079b18276f58f0fe74b8ab1e6f50e",
-        "e905d6e42c9a1a4fefdfd15202ed4fc3d579a0310386106981b9f5421a3b1ba5",
-        "Windows append position/resize ownership, filesystem/process and TCP error compatibility fixes",
+        "5dd11a83d68fd38bda34dde0f12a86c13f47b2f82dc4be8f8f6b44c0ca4537dd",
+        "Windows compatibility fixes and v0.151.0 math compute runtime integration",
     ),
     "crates/dlm_core/src/native/network.c": (
         "39834f4c0ff5a87dfba895c96595ffcfd503991deea91b5caa096b0ca897c129",
@@ -31,8 +31,8 @@ REVIEWED_SOURCE_UPDATES = {
     ),
     "crates/dlm_core/src/runtime/ordinary_surface.rs": (
         "f5e1741e2070194d7c3d3b7635d410cf3cae3bbcc37f7fae10c59f744f4a5bad",
-        "5741421408c70832a99908040ac3f7636549ebf88041f139a4890fcfd54d03b7",
-        "Windows interpreter append resize ownership and filesystem error normalization",
+        "cf77e2008fc20c35df6b39110fd50873e34891889c2bf31a6a5cea7816e8228f",
+        "Windows interpreter compatibility and v0.151.0 math dispatch integration",
     ),
 }
 
@@ -74,8 +74,97 @@ REVIEWED_NATIVE_S2_UPDATES = {
     ),
     "crates/dlm_core/src/runtime.rs": (
         ("ce2b1acb4ca6224db4f7681f83753acc58b0157ff2715576101ce7f4fb391f47",),
-        "a3886ab10002f2fafa9e14edf614950abdd8a84a22067fe812c1d0cd32b2f911",
-        "v0.150.0 native concurrency runtime integration",
+        "efe9b6eff6f9548735fca761c11a6cd97359acab3e8dda2ad66668a8cb5bef5c",
+        "v0.150.0 native concurrency and v0.151.0 math runtime integration",
+    ),
+}
+
+# The final v0.151.0 math patchset changes these protected compiler sources.
+# Keep every historical baseline digest and the network C ABI snapshots intact.
+REVIEWED_MATH_UPDATES = {
+    "crates/dlm_core/src/ast.rs": (
+        "652e50a82efe9a9cc2be6806082c1bb2de32bbd8023cbabb8b65f2ef099a1f3c",
+        "584a9009150642d9e925d30168d55d9876359872e58955c91df8d3cc38a0988f",
+    ),
+    "crates/dlm_core/src/audit.rs": (
+        "9f50f66052b0d444800631bc012b02f83771eb3f3444ff4c95bfdbe5ffa3808f",
+        "e2456d7e6a05e1e9cbab1f6cb2c59846e4e0ebae50d90bdcf5930468e7e071a2",
+    ),
+    "crates/dlm_core/src/backend_c.rs": (
+        "de59203e7209d5904b41680ca121dccad4b45260ea8701c544674f09ed608e45",
+        "9ba3e0791def6333d757aa054b500e0f368f15f1af02cc08b1cf65508155660c",
+    ),
+    "crates/dlm_core/src/certificate.rs": (
+        "af1ab9fb74f92d5ef5f8b7970a7e993173dd580686833402fe5bad30fcc96d58",
+        "bf9ef870169a0f21f41ab1836f0c04c5b1b865b681f99c549a1f8a15f535fbbe",
+    ),
+    "crates/dlm_core/src/certificate_audit.rs": (
+        "263f4bbe9eada4f4cf382bf80ba84ea04bbf25a91b813efe919dc7b62db243bb",
+        "dce9848a3aebd71ba21ecabc3a0180c8d91cc63c139d9873db15db339c6081d9",
+    ),
+    "crates/dlm_core/src/checker.rs": (
+        "bcc417b252db57fbbf3f8d0b2a775132f31ce3a1ba6c8d05f7e83a74dbd85d3b",
+        "72723700c38f487fef1f3674daa0592678ed4253a8dbc05a2082203c18808280",
+    ),
+    "crates/dlm_core/src/checker/modules.rs": (
+        "9cd017ff6e6c79add47df950efc53798974818ab4164da6d1a5657a1c5029420",
+        "c9196c49d0d3d81e50f474203d326e58bcaa0e9e2c1982416ac44a51a9d03806",
+    ),
+    "crates/dlm_core/src/checker/ordinary_surface.rs": (
+        "88ace1a86883f7652f50424812e8ef2c23e2efc99198cdb560e025ebc2e21c83",
+        "5f30e481fb250fb839e7db865db9a21064309942579ea175d1dde7b6f60bf2ec",
+    ),
+    "crates/dlm_core/src/checker/statements.rs": (
+        "dae7d5f3b51d6ac2966ea38760e085bb2cfb9487ba565315d141332c6ff24d31",
+        "3573b367b3f857644d9a520aed972c426a18afc791209de09671f836d6655325",
+    ),
+    "crates/dlm_core/src/compile.rs": (
+        "804a48db6971ff861e426a0cf930d85a412d1f875e3b1f0737efec0af4d7fe2e",
+        "1aa3d0bb062005e430bcdfbf8dafae033f518dd7975035a3a19577bec2c7f8fc",
+    ),
+    "crates/dlm_core/src/float.rs": (
+        "089ff48d17c448031fe5a31f27c801ac55faebed747d586bbdde1f34b209bbe3",
+        "91b815e3c186a493702cbe792c6bf767234b8c932d472fa88b8c4d31cd065381",
+    ),
+    "crates/dlm_core/src/generics.rs": (
+        "67858020c6a8f2fd3f77119a966958f91e25a6cda724fd1f14b8fce73ff5fbe0",
+        "aec24490f779eb487528e71612353f2d30b6790a318c64145fae9a65d0c3e94c",
+    ),
+    "crates/dlm_core/src/ir_verify/builtins.rs": (
+        "3e3babd0fe59adf4770fc94e0632ed5ee78c58ea754377f344dfbe481dca5f9d",
+        "da44ddb08dc0fe8256e51e3583645fbd222337e6e726ca06775b447eacbc0238",
+    ),
+    "crates/dlm_core/src/lib.rs": (
+        "4e75a842b05d350d88173451c2ce29678fc3eb327d39184557b818349add6c84",
+        "97891f65299a6834630fd3079ebbbceeb8141c2af79af7c079810eb1f4279dbd",
+    ),
+    "crates/dlm_core/src/linalg.rs": (
+        "0b759ce0cfa1534836f4ac73747ed2366e11b522dcb341d8ab9098c3f944aac2",
+        "5c97ce993c16152b4e651d6e941aaeb9f64352bf3de2f3eedd6f71cc4bbac247",
+    ),
+    "crates/dlm_core/src/math/mod.rs": (
+        "47147433a38e294c0537806cf83dc32dadc9ccae7948ddd17d33bdf04ae81014",
+        "fa2644b83479cff1ee567b7fe94176a4488170bf90eb6369522fe5b12a45c6de",
+    ),
+    "crates/dlm_core/src/native/build.rs": (
+        "96d491892c36bd52f0127432b69ab6df0578e9604fa3f797474364bf958262bd",
+        "b0930362751e4efdfb40e08ddec3532f466414795d6d232222a351052b0217ad",
+    ),
+    "crates/dlm_core/src/parser.rs": (
+        "b1649d39bddd72912d24ad63ef63cb2752218a0ff90360150156b0481bd0db8c",
+        "a6b0f1c921bc4df0e2b0029efcc30e9f69beb6cc674e001481659f1402b419c7",
+    ),
+    "crates/dlm_core/src/resolve.rs": (
+        "d9ddb7129d9feb0fa78b379fe63910ba903fec816b04205e982e7e17e8bb2544",
+        "58d0fa757da702735fab71aed2a9c8903dbc215bb62281ddc3e03d667faccc3c",
+    ),
+    "crates/dlm_core/src/spectral.rs": (
+        "7e0b9ca688f0059dd1176a3926ae118ca061b6e1ecda7c1c591b147ecafff1ce",
+        "7aa45f6122944769671e760df29dedfc505afedaefa5aa750a485c6ae55fc374",
+    ),
+    "crates/dlm_core/src/typed_core.rs": (
+        "49cc3ed3734fecd7f413ba2de3985d604dff4b2e3cb6045fed7928f14c33822f",
+        "66c0f908127a31410f276b0003986eff4bb9bf19382d181c7b76d2733e31bb3d",
     ),
 }
 
@@ -155,6 +244,11 @@ def check(root, snapshot):
             update = REVIEWED_NATIVE_S2_UPDATES.get(relative)
             if update and expected in update[0] and current_digest == update[1]:
                 reviewed.append({"path": relative, "baseline_sha256": expected, "current_sha256": update[1], "reason": update[2]})
+                continue
+            update = REVIEWED_MATH_UPDATES.get(relative)
+            if update and expected == update[0] and current_digest == update[1]:
+                reviewed.append({"path": relative, "baseline_sha256": expected, "current_sha256": update[1],
+                                 "reason": "v0.151.0 Riemann theorem binding, math dispatch and math compute integration"})
                 continue
             normalized = path.read_bytes()
             if relative == "crates/dlm_core/src/native/emit.rs":
