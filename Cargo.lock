@@ -4,11 +4,11 @@ version = 4
 
 [[package]]
 name = "dlm_channel_lab"
-version = "0.150.0"
+version = "0.151.0"
 
 [[package]]
 name = "dlm_cli"
-version = "0.150.0"
+version = "0.151.0"
 dependencies = [
  "dlm_core",
  "dlm_network_proof",
@@ -16,22 +16,22 @@ dependencies = [
 
 [[package]]
 name = "dlm_core"
-version = "0.150.0"
+version = "0.151.0"
 
 [[package]]
 name = "dlm_gateway"
-version = "0.150.0"
+version = "0.151.0"
 dependencies = [
  "dlm_network_proof",
 ]
 
 [[package]]
 name = "dlm_network_proof"
-version = "0.150.0"
+version = "0.151.0"
 
 [[package]]
 name = "dlm_transport_proof"
-version = "0.150.0"
+version = "0.151.0"
 dependencies = [
  "dlm_network_proof",
 ]
