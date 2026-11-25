@@ -1,0 +1,11 @@
+pub const MATMUL_BLOCK_WORK: usize = 32768;
+pub const MATMUL_AVX2_WORK: usize = 4096;
+pub const MATMUL_MIN_COLUMNS: usize = 8;
+pub const MATMUL_MIN_INNER: usize = 4;
+pub const MATMUL_BLOCK_COLUMNS: usize = 64;
+pub const FFT_TWIDDLE_BLOCK: usize = 32;
+pub const DFT_MAX: usize = 1 << 13;
+pub const NTT_MODULUS: usize = 998_244_353;
+pub const NTT_ROOT: usize = 3;
+pub const NTT_MAX: usize = 1 << 23;
+pub const NTT_DIRECT_FACTOR: usize = 5;

@@ -208,6 +208,7 @@ pub const COMPILED_BUILTINS: &[(&str, Option<usize>)] = &[
     ("fft_forward", Some(1)),
     ("fft_inverse", Some(1)),
     ("fft_convolve", Some(2)),
+    ("ntt_convolve", Some(2)),
     ("lp_solve", Some(5)),
     ("lp_status", Some(5)),
     ("nt_gcd", Some(2)),

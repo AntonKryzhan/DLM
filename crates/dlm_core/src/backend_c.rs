@@ -18,7 +18,7 @@ use crate::compile::{IrExpr, IrInit, IrOp, IrProgram};
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 
 /// The embedded C runtime.
-pub const C_RUNTIME: &str = concat!(include_str!("backend_c_runtime.c"), "\n", include_str!("backend_c_embedding.c"));
+pub const C_RUNTIME: &str = concat!(include_str!(concat!(env!("OUT_DIR"), "/math_dispatch.h")), include_str!("backend_c_runtime.c"), "\n", include_str!("backend_c_embedding.c"));
 
 /// C string literal for arbitrary bytes (octal escapes for everything that is
 /// not plain printable ASCII, so no trigraph or escape can be formed).

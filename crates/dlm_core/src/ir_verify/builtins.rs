@@ -7,6 +7,9 @@ use crate::ordinary::OrdinaryType;
 
 /// Monomorphic builtin signatures. Polymorphic operations are checked below.
 fn signature(name: &str) -> Option<(Vec<OrdinaryType>, OrdinaryType)> {
+    if let Some(signature) = crate::math_dispatch::builtin_signature(name) {
+        return Some(signature);
+    }
     use OrdinaryType::*;
     Some(match name {
         "not" => (vec![Bool], Bool),
@@ -104,7 +107,6 @@ fn signature(name: &str) -> Option<(Vec<OrdinaryType>, OrdinaryType)> {
         "fv_min" => (vec![FloatVec], Option(Box::new(Float))),
         "fv_slice" => (vec![FloatVec, Nat, Nat], Option(Box::new(FloatVec))),
         "fv_concat" => (vec![FloatVec, FloatVec], Option(Box::new(FloatVec))),
-        "fv_matmul" => (vec![FloatVec, FloatVec, Nat, Nat, Nat], Option(Box::new(FloatVec))),
         "fv_transpose" => (vec![FloatVec, Nat, Nat], Option(Box::new(FloatVec))),
         "fv_empty" => (vec![], FloatVec),
         "fv_solve" => (vec![FloatVec, FloatVec, Nat], Option(Box::new(FloatVec))),
@@ -153,9 +155,6 @@ fn signature(name: &str) -> Option<(Vec<OrdinaryType>, OrdinaryType)> {
         "la_trace" => (vec![FloatVec, Nat], Option(Box::new(Float))),
         "la_csr_matvec" => (vec![NatVec, NatVec, FloatVec, FloatVec], Option(Box::new(FloatVec))),
         "la_cg" => (vec![NatVec, NatVec, FloatVec, FloatVec, Float, Nat], Option(Box::new(FloatVec))),
-        "fft_forward" => (vec![FloatVec], Option(Box::new(FloatVec))),
-        "fft_inverse" => (vec![FloatVec], Option(Box::new(FloatVec))),
-        "fft_convolve" => (vec![FloatVec, FloatVec], Option(Box::new(FloatVec))),
         "lp_solve" => (vec![FloatVec, FloatVec, FloatVec, Nat, Nat], Option(Box::new(FloatVec))),
         "lp_status" => (vec![FloatVec, FloatVec, FloatVec, Nat, Nat], Nat),
         "nt_gcd" => (vec![Nat, Nat], Nat),
@@ -241,8 +240,6 @@ fn signature(name: &str) -> Option<(Vec<OrdinaryType>, OrdinaryType)> {
         "geo_delaunay" => (vec![FloatVec], Option(Box::new(NatVec))),
         "kd_knn" => (vec![FloatVec, FloatVec, Nat, Nat], Option(Box::new(NatVec))),
         "kd_radius" => (vec![FloatVec, Nat, FloatVec, Float], Option(Box::new(NatVec))),
-        "fft2_forward" => (vec![FloatVec, Nat, Nat], Option(Box::new(FloatVec))),
-        "fft2_inverse" => (vec![FloatVec, Nat, Nat], Option(Box::new(FloatVec))),
         "sig_stft" => (vec![FloatVec, FloatVec, Nat], Option(Box::new(FloatVec))),
         "sig_dwt" => (vec![FloatVec, Nat, Nat], Option(Box::new(FloatVec))),
         "sig_idwt" => (vec![FloatVec, Nat, Nat], Option(Box::new(FloatVec))),

@@ -289,7 +289,7 @@ impl Runtime {
             buf if buf.starts_with("buf_") || buf.starts_with("tbuf_") => self.eval_ordinary_buffer(name, args, theory, line),
             dense if dense.starts_with("bn_") => self.eval_ordinary_dense(name, args, theory, line),
             float if float.starts_with("fl_") || float.starts_with("fv_") => self.eval_ordinary_float(name, args, theory, line),
-            graph if graph.starts_with("nv_") || graph.starts_with("gr_") || graph.starts_with("la_") || graph.starts_with("fft_") || graph.starts_with("lp_") || graph.starts_with("nt_") || graph.starts_with("pf_") || graph.starts_with("pm_") || graph.starts_with("sat_") || graph.starts_with("tp_") || graph.starts_with("gb_") || graph.starts_with("mv_") || graph.starts_with("ilp_") || graph.starts_with("km_") || graph.starts_with("tm_") || graph.starts_with("geo_") || graph.starts_with("kd_") || graph.starts_with("fft2_") || graph.starts_with("sig_") || graph.starts_with("bvh_") || graph.starts_with("gx_") || graph.starts_with("vx_") => self.eval_ordinary_graph(name, args, theory, line),
+            graph if graph.starts_with("nv_") || graph.starts_with("gr_") || graph.starts_with("la_") || graph.starts_with("fft_") || graph == "ntt_convolve" || graph.starts_with("lp_") || graph.starts_with("nt_") || graph.starts_with("pf_") || graph.starts_with("pm_") || graph.starts_with("sat_") || graph.starts_with("tp_") || graph.starts_with("gb_") || graph.starts_with("mv_") || graph.starts_with("ilp_") || graph.starts_with("km_") || graph.starts_with("tm_") || graph.starts_with("geo_") || graph.starts_with("kd_") || graph.starts_with("fft2_") || graph.starts_with("sig_") || graph.starts_with("bvh_") || graph.starts_with("gx_") || graph.starts_with("vx_") => self.eval_ordinary_graph(name, args, theory, line),
             file if file.starts_with("file_") || file.starts_with("proc_") || file.starts_with("net_") || file.starts_with("win_") => self.eval_ordinary_file(name, args, theory, line),
             other => Err(runtime_error(line, format!("unknown ordinary builtin '{other}'"))),
         }
@@ -912,6 +912,7 @@ impl Runtime {
             "fft_forward" => of(crate::spectral::fft(&fv(0)?, false)),
             "fft_inverse" => of(crate::spectral::fft(&fv(0)?, true)),
             "fft_convolve" => of(crate::spectral::convolve(&fv(0)?, &fv(1)?)),
+            "ntt_convolve" => ov(crate::spectral::ntt_convolve(&nv(0)?, &nv(1)?)),
             "lp_solve" => {
                 let (s, x) = crate::spectral::simplex(&fv(0)?, &fv(1)?, &fv(2)?, n(3)?, n(4)?);
                 of((s == 0).then_some(x))

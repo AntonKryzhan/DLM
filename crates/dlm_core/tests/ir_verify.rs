@@ -239,6 +239,7 @@ fn samples() -> Vec<(&'static str, &'static str, &'static str)> {
         ("fft_forward", "fft_forward(unwrap_or(fv_new(4, fl_of_nat(1)), fv_empty()))", "Option<FloatVec>"),
         ("fft_inverse", "fft_inverse(unwrap_or(fv_new(4, fl_of_nat(1)), fv_empty()))", "Option<FloatVec>"),
         ("fft_convolve", "fft_convolve(unwrap_or(fv_new(4, fl_of_nat(1)), fv_empty()), unwrap_or(fv_new(2, fl_of_nat(1)), fv_empty()))", "Option<FloatVec>"),
+        ("ntt_convolve", "ntt_convolve(unwrap_or(nv_new(4, 1), nv_empty()), unwrap_or(nv_new(2, 1), nv_empty()))", "Option<NatVec>"),
         ("lp_solve", "lp_solve(unwrap_or(fv_new(2, fl_of_nat(1)), fv_empty()), unwrap_or(fv_new(4, fl_of_nat(1)), fv_empty()), unwrap_or(fv_new(2, fl_of_nat(1)), fv_empty()), 2, 2)", "Option<FloatVec>"),
         ("lp_status", "lp_status(unwrap_or(fv_new(2, fl_of_nat(1)), fv_empty()), unwrap_or(fv_new(4, fl_of_nat(1)), fv_empty()), unwrap_or(fv_new(2, fl_of_nat(1)), fv_empty()), 2, 2)", "Nat"),
         ("nt_gcd", "nt_gcd(12, 7)", "Nat"),

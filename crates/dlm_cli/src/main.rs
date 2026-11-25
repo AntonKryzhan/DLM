@@ -1,4 +1,5 @@
 mod math_commands;
+mod math_plan_command;
 mod rational_commands;
 mod q_witness_commands;
 mod network_codegen;
@@ -53,6 +54,7 @@ fn main() {
         }
         "proof-check" if args.get(2).map(|p|network_protocol::is_certificate(p)).unwrap_or(false) => network_protocol::run_audit(&args[2..]),
         "proof-check" if args.len() == 3 => run_proof_check(&args[2]),
+        "math-plan" => math_plan_command::run(&args[2..]),
         "homology" if args.len() == 5 && args[2] == "--prime" => math_commands::homology_prime(&args[3], &args[4]),
         "homology" if args.len() == 3 => run_homology(&args[2]),
         "homology-export" if args.len() == 4 => math_commands::export(&args[2], &args[3]),
@@ -538,7 +540,14 @@ fn run_build(args: &[String]) {
         std::path::Path::new(&path).with_extension("").to_string_lossy().into_owned()
     });
     let c_path = format!("{output}.c");
-    let c_source = dlm_core::emit_c(&ir);
+    let mut c_source = dlm_core::emit_c(&ir);
+    let profile = dlm_core::native::build::cpu_profile(&native_options.cpu).unwrap_or_else(|diagnostic| {
+        eprint!("{diagnostic}");
+        process::exit(2);
+    });
+    if profile != 0 {
+        c_source.insert_str(0, &format!("#define DN_CPU_PROFILE {profile}\n"));
+    }
     if c_only {
         if let Err(err) = fs::write(&c_path, c_source) {
             eprintln!("error: cannot write {c_path}: {err}");
@@ -695,6 +704,7 @@ fn print_usage_and_exit(code: i32) -> ! {
     eprintln!("  dlm matrix-q-export <input.qmat> <out.qproof>");
     eprintln!("  dlm matrix-q-check <proof.qproof> [expected.qmat]");
     eprintln!("  dlm matrix-q [--bits N] [--work N] [--inverse] [--solve rhs.qmat] <matrix.qmat>");
+    eprintln!("  dlm math-plan [list|matmul ROWS INNER COLS|fft POINTS|convolve LEFT RIGHT|ntt LEFT RIGHT|vulkan]");
     eprintln!("  dlm homology --prime <p> <complex.simp>  # oriented Fp runtime computation");
     eprintln!("  dlm homology <complex.simp>  # exact F2 runtime computation");
     eprintln!("  dlm homology-export <complex.simp> <out.f2proof>");

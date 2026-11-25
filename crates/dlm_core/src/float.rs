@@ -174,6 +174,23 @@ pub fn matmul(a: &[f64], b: &[f64], n: u128, m: u128, k: u128) -> Option<Vec<f64
     }
     let (n, m, k) = (n as usize, m as usize, k as usize);
     let mut c = vec![0.0; n * k];
+    if m == 0 {
+        return Some(c);
+    }
+
+    use crate::math_dispatch::{host_avx2, plan_matmul, Algorithm};
+    let plan = plan_matmul(n, m, k, host_avx2());
+    if plan.algorithm != Algorithm::ScalarMatmul && a.iter().chain(b).all(|x| x.is_finite()) {
+        match plan.algorithm {
+            #[cfg(target_arch = "x86_64")]
+            // SAFETY: the CPU check established AVX2 and the lengths were verified above.
+            Algorithm::Avx2Matmul => unsafe { matmul_avx2(a, b, &mut c, m, k) },
+            _ => matmul_blocked(a, b, &mut c, m, k),
+        }
+        if c.iter().all(|x| x.is_finite()) {
+            return Some(c);
+        }
+    }
     for i in 0..n {
         for j in 0..k {
             let mut s = 0.0;
@@ -184,6 +201,69 @@ pub fn matmul(a: &[f64], b: &[f64], n: u128, m: u128, k: u128) -> Option<Vec<f64
         }
     }
     Some(c)
+}
+
+#[inline]
+fn matmul_cell(row: &[f64], b: &[f64], columns: usize, column: usize) -> f64 {
+    let mut sum = 0.0;
+    for (l, left) in row.iter().enumerate() {
+        sum += left * b[l * columns + column];
+    }
+    sum
+}
+
+fn matmul_blocked(a: &[f64], b: &[f64], c: &mut [f64], inner: usize, columns: usize) {
+    use crate::math_dispatch::config::MATMUL_BLOCK_COLUMNS as BLOCK;
+    for (row, out) in a.chunks_exact(inner).zip(c.chunks_exact_mut(columns)) {
+        for (block, out) in out.chunks_mut(BLOCK).enumerate() {
+            let start = block * BLOCK;
+            let end = start + out.len();
+            for (left, right) in row.iter().zip(b.chunks_exact(columns)) {
+                for (value, rhs) in out.iter_mut().zip(&right[start..end]) {
+                    *value += left * rhs;
+                }
+            }
+        }
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+unsafe fn matmul_avx2(a: &[f64], b: &[f64], c: &mut [f64], inner: usize, columns: usize) {
+    use std::arch::x86_64::*;
+    for (row, out) in a.chunks_exact(inner).zip(c.chunks_exact_mut(columns)) {
+        let mut j = 0;
+        // Each SIMD lane is one output column and visits the inner axis in scalar order.
+        // SAFETY: each load and store lies in the validated matrix row.
+        unsafe {
+            while j + 16 <= columns {
+                let mut sums = [_mm256_setzero_pd(); 4];
+                for (l, left) in row.iter().enumerate() {
+                    let left = _mm256_set1_pd(*left);
+                    let right = b.as_ptr().add(l * columns + j);
+                    for (g, sum) in sums.iter_mut().enumerate() {
+                        *sum = _mm256_add_pd(*sum, _mm256_mul_pd(left, _mm256_loadu_pd(right.add(4 * g))));
+                    }
+                }
+                for (g, sum) in sums.into_iter().enumerate() {
+                    _mm256_storeu_pd(out.as_mut_ptr().add(j + 4 * g), sum);
+                }
+                j += 16;
+            }
+            while j + 4 <= columns {
+                let mut sum = _mm256_setzero_pd();
+                for (l, left) in row.iter().enumerate() {
+                    let right = _mm256_loadu_pd(b.as_ptr().add(l * columns + j));
+                    sum = _mm256_add_pd(sum, _mm256_mul_pd(_mm256_set1_pd(*left), right));
+                }
+                _mm256_storeu_pd(out.as_mut_ptr().add(j), sum);
+                j += 4;
+            }
+        }
+        for (column, value) in out.iter_mut().enumerate().skip(j) {
+            *value = matmul_cell(row, b, columns, column);
+        }
+    }
 }
 
 pub fn transpose(a: &[f64], rows: u128, cols: u128) -> Option<Vec<f64>> {
