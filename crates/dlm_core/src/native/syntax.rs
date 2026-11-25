@@ -467,6 +467,7 @@ impl Parser {
         if self.eat("ordinary") {
             ordinary = Some(self.string()?);
         }
+        let async_ = self.eat("async");
         self.need("fn")?;
         let name = self.ident()?;
         if export.as_ref().is_some_and(String::is_empty) {
@@ -519,6 +520,7 @@ impl Parser {
             Some(self.block()?)
         };
         Ok(Function {
+            async_,
             name,
             params,
             ret,
@@ -557,6 +559,8 @@ impl Parser {
             "Unit" => return Ok(Ty::Unit),
             "Utf8" => return Ok(Ty::Str),
             "Window" => return Ok(Ty::Window),
+            "Executor" => return Ok(Ty::Executor),
+            "DbPool" => return Ok(Ty::DbPool),
             "OpaqueHandle" => return Ok(Ty::Handle),
             "AtomicBool" => return Ok(Ty::Atomic(Box::new(Ty::Bool))),
             "AtomicU32" => return Ok(Ty::Atomic(Box::new(Ty::Scalar(Scalar::U32)))),
@@ -589,6 +593,12 @@ impl Parser {
                     .ok_or_else(|| error(line, "SIMD requires a machine scalar"))?;
                 Ty::Simd(s, self.uint()?)
             }
+            "Task" | "JoinHandle" => Ty::Task(Box::new(t)),
+            "Future" => Ty::Future(Box::new(t)),
+            "Mutex" => Ty::Mutex(Box::new(t)),
+            "RwLock" => Ty::RwLock(Box::new(t)),
+            "Sender" | "Channel" => Ty::Sender(Box::new(t)),
+            "Receiver" => Ty::Receiver(Box::new(t)),
             "ThreadBound" => Ty::ThreadBound(Box::new(t)),
             "Resource" => {
                 self.need(",")?;
@@ -752,6 +762,8 @@ impl Parser {
         let mut a = if self.eat("&") {
             let m = self.eat("mut");
             Expr::new(Op::Borrow(Box::new(self.expr(22)?), m), l)
+        } else if self.eat("await") {
+            Expr::new(Op::Await(Box::new(self.expr(22)?)), l)
         } else if self.eat("move") {
             Expr::new(Op::Move(Box::new(self.expr(22)?)), l)
         } else if matches!(self.peek(), "-" | "!" | "~" | "*") {
@@ -783,7 +795,7 @@ impl Parser {
         loop {
             if self.eat(".") {
                 let n = self.ident()?;
-                a = Expr::new(Op::Field(Box::new(a), n), l);
+                a = if n == "await" {Expr::new(Op::Await(Box::new(a)),l)} else {Expr::new(Op::Field(Box::new(a), n), l)};
                 continue;
             }
             if self.eat("[") {

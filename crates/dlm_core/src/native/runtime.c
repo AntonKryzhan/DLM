@@ -85,6 +85,36 @@ static uint32_t dn_f32_bits(float x){uint32_t b;memcpy(&b,&x,4);return b;}
 static uint64_t dn_f64_bits(double x){uint64_t b;memcpy(&b,&x,8);return b;}
 static float dn_f32_from_bits(uint32_t b){float x;memcpy(&x,&b,4);return x;}
 static double dn_f64_from_bits(uint64_t b){double x;memcpy(&x,&b,8);return x;}
+static double dn_parse_decimal_f64(const uint8_t *bytes,size_t len) {
+    if (!len || len>16777216) return NAN;
+    for (size_t i=0;i<len;i++) {
+        uint8_t c=bytes[i];
+        if ((c<'0'||c>'9') && c!='+' && c!='-' && c!='.' && c!='e' && c!='E') return NAN;
+    }
+    char *text=malloc(len+1);
+    if (!text) return NAN;
+    memcpy(text,bytes,len);
+    text[len]=0;
+    char *end=text;
+    double value=NAN;
+#ifdef _WIN32
+    _locale_t locale=_create_locale(LC_NUMERIC,"C");
+    if (locale) { value=_strtod_l(text,&end,locale); _free_locale(locale); }
+#else
+    locale_t locale=newlocale(LC_NUMERIC_MASK,"C",(locale_t)0);
+    if (locale) {
+        locale_t previous=uselocale(locale);
+        if (previous) {
+            value=strtod(text,&end);
+            uselocale(previous);
+        }
+        freelocale(locale);
+    }
+#endif
+    if (end!=text+len) value=NAN;
+    free(text);
+    return value;
+}
 static uint64_t dn_binary_read(const uint8_t *p,size_t len,size_t off,size_t size,int big){dn_range(off,size,len);uint64_t n=0;for(size_t i=0;i<size;i++)n|=(uint64_t)p[off+i]<<(8*(big?size-1-i:i));return n;}
 static void dn_binary_write(uint8_t *p,size_t len,size_t off,size_t size,uint64_t n,int big){dn_range(off,size,len);for(size_t i=0;i<size;i++)p[off+i]=(uint8_t)(n>>(8*(big?size-1-i:i)));}
 static void dn_assert(bool c){if(!c)dn_fail("assertion failed");}

@@ -109,13 +109,57 @@ fn child_parents(q: &Loan, parent: &str) -> BTreeSet<String> {
 fn root(p: &str) -> &str {
     p.split(['.', '[']).next().unwrap_or(p)
 }
+pub(super) fn sendable(t: &Ty, records: &[Record]) -> bool {
+    fn visit(t: &Ty, records: &[Record], seen: &mut BTreeSet<String>) -> bool {
+        match t {
+            Ty::Scalar(_) | Ty::Bool | Ty::Unit | Ty::Simd(..) | Ty::DbPool => true,
+            Ty::Future(t) | Ty::Mutex(t) | Ty::RwLock(t) => visit(t, records, seen),
+            Ty::Array(t, _) | Ty::Buffer(t) | Ty::Boxed(t) | Ty::Sender(t) | Ty::Receiver(t) => visit(t, records, seen),
+            Ty::Record(n) => !seen.insert(n.clone()) || records.iter().find(|r| r.name == *n)
+                .is_some_and(|r| !r.union && r.fields.iter().all(|(_, t)| visit(t, records, seen))),
+            _ => false,
+        }
+    }
+    visit(t, records, &mut BTreeSet::new())
+}
+pub(super) fn sync_readable(t: &Ty, records: &[Record]) -> bool {
+    fn visit(t: &Ty, records: &[Record], seen: &mut BTreeSet<String>) -> bool {
+        match t {
+            Ty::Scalar(_) | Ty::Bool | Ty::Unit | Ty::Simd(..) | Ty::Atomic(_) | Ty::DbPool => true,
+            Ty::Array(t, _) | Ty::Buffer(t) | Ty::Boxed(t) => visit(t, records, seen),
+            Ty::Mutex(t) | Ty::RwLock(t) | Ty::Sender(t) | Ty::Receiver(t) => sendable(t, records),
+            Ty::Record(n) => !seen.insert(n.clone()) || records.iter().find(|r| r.name == *n)
+                .is_some_and(|r| !r.union && !r.packed && r.fields.iter().all(|(_, t)| visit(t, records, seen))),
+            _ => false,
+        }
+    }
+    visit(t, records, &mut BTreeSet::new())
+}
+
+pub(super) fn parallel_callback(f: &Function, records: &[Record]) -> bool {
+    f.body.is_some()
+        && !f.async_
+        && !f.unsafe_
+        && f.guarantees.contains("ThreadSafe")
+        && f.params.first().is_some_and(|(_, t)| *t == Ty::Scalar(Scalar::USize))
+        && f.params.iter().skip(1).all(|(_, t)| match t {
+            Ty::Ref(inner, false) => sync_readable(inner, records),
+            _ => sendable(t, records) && !affine(t, records),
+        })
+        && sendable(&f.ret, records)
+}
+
+pub(super) fn async_storable(t: &Ty, records:&[Record]) -> bool {
+    match t {Ty::Future(t)|Ty::Task(t)=>sendable(t,records),_=>sendable(t,records)}
+}
 fn compatible(got: &Ty, want: &Ty) -> bool {
     got == want || matches!((got,want),(Ty::Ref(a,true),Ty::Ref(b,false)) if a==b)
 }
 pub fn owned(t: &Ty, records: &[Record]) -> bool {
     fn go(t: &Ty, r: &[Record], seen: &mut BTreeSet<String>) -> bool {
         match t {
-            Ty::Window | Ty::ThreadBound(_) | Ty::Resource(..) | Ty::Buffer(_) | Ty::Boxed(_) => {
+            Ty::Executor | Ty::DbPool | Ty::Task(_) | Ty::Future(_) | Ty::Mutex(_) | Ty::RwLock(_) | Ty::Sender(_) | Ty::Receiver(_)
+            | Ty::Window | Ty::ThreadBound(_) | Ty::Resource(..) | Ty::Buffer(_) | Ty::Boxed(_) => {
                 true
             }
             Ty::Array(t, _) => go(t, r, seen),
@@ -147,7 +191,15 @@ pub fn affine(t: &Ty, r: &[Record]) -> bool {
 
 pub fn zeroable(t: &Ty, records: &[Record]) -> bool {
     match t {
-        Ty::NonNull(_)
+        Ty::Executor
+        | Ty::DbPool
+        | Ty::Task(_)
+        | Ty::Future(_)
+        | Ty::Mutex(_)
+        | Ty::RwLock(_)
+        | Ty::Sender(_)
+        | Ty::Receiver(_)
+        | Ty::NonNull(_)
         | Ty::FnPtr(..)
         | Ty::Ref(..)
         | Ty::BorrowedPtr(_)
@@ -164,7 +216,7 @@ pub fn zeroable(t: &Ty, records: &[Record]) -> bool {
 pub(super) fn has_affinity(t: &Ty, records: &[Record]) -> bool {
     fn visit(t: &Ty, records: &[Record], seen: &mut BTreeSet<String>) -> bool {
         match t {
-            Ty::Window | Ty::ThreadBound(_) => true,
+            Ty::Executor | Ty::Window | Ty::ThreadBound(_) => true,
             Ty::Resource(t, _) | Ty::Buffer(t) | Ty::Boxed(t) | Ty::Array(t, _) => {
                 visit(t, records, seen)
             }
@@ -235,7 +287,15 @@ pub(super) fn layout_ty(
         Ty::Split(_) => (32, 8),
         Ty::Str | Ty::Slice(..) | Ty::ForeignBuffer(_) => (16, 8),
         Ty::Buffer(_) => (24, 8),
-        Ty::Window
+        Ty::Executor
+        | Ty::DbPool
+        | Ty::Task(_)
+        | Ty::Future(_)
+        | Ty::Mutex(_)
+        | Ty::RwLock(_)
+        | Ty::Sender(_)
+        | Ty::Receiver(_)
+        | Ty::Window
         | Ty::Resource(..)
         | Ty::Boxed(_)
         | Ty::Ptr(_)
@@ -317,7 +377,7 @@ pub(super) fn layout_ty(
         }
     })
 }
-fn validate_ty(t: &Ty, records: &[Record], line: usize) -> Result<(), Diagnostic> {
+pub(super) fn validate_ty(t: &Ty, records: &[Record], line: usize) -> Result<(), Diagnostic> {
     match t {
         Ty::Record(n) => {
             if !records.iter().any(|r| r.name == *n) {
@@ -329,6 +389,12 @@ fn validate_ty(t: &Ty, records: &[Record], line: usize) -> Result<(), Diagnostic
                 return Err(error(line, "array length must be in 1..2^28"));
             }
             validate_ty(t, records, line)?;
+        }
+        Ty::Task(t) | Ty::Future(t) | Ty::Mutex(t) | Ty::RwLock(t) | Ty::Sender(t) | Ty::Receiver(t) => {
+            validate_ty(t, records, line)?;
+            if !sendable(t, records) {
+                return Err(error(line, "task/channel values must own Send-safe data; borrowed, raw, thread-bound and unverified resources cannot cross threads"));
+            }
         }
         Ty::Atomic(t) => {
             if !matches!(
@@ -371,7 +437,7 @@ fn validate_ty(t: &Ty, records: &[Record], line: usize) -> Result<(), Diagnostic
     }
     Ok(())
 }
-fn abi(t: &Ty, records: &[Record]) -> bool {
+pub(super) fn abi(t: &Ty, records: &[Record]) -> bool {
     match t {
         Ty::Scalar(_)
         | Ty::Bool
@@ -397,6 +463,7 @@ fn symbol(n: &str) -> bool {
             .all(|(i, b)| b.is_ascii_alphabetic() || b == b'_' || (i > 0 && b.is_ascii_digit()))
 }
 pub fn check(mut unit: Unit) -> Result<Mir, Vec<Diagnostic>> {
+    for f in &mut unit.functions {if f.async_ {f.guarantees.insert("ThreadSafe".into());}}
     let mut errors = Vec::new();
     let mut names = BTreeSet::new();
     let mut exports = BTreeSet::new();
@@ -410,6 +477,7 @@ pub fn check(mut unit: Unit) -> Result<Mir, Vec<Diagnostic>> {
                 "Unit",
                 "Utf8",
                 "Window",
+                "DbPool",
                 "ThreadBound",
                 "Resource",
                 "OpaqueHandle",
@@ -491,7 +559,7 @@ pub fn check(mut unit: Unit) -> Result<Mir, Vec<Diagnostic>> {
             ));
         }
 
-        if !fnames.insert(f.name.clone()) || names.contains(&f.name) || builtin_name(&f.name) {
+        if !fnames.insert(f.name.clone()) || names.contains(&f.name) || (builtin_name(&f.name) && !contextual_builtin(&f.name)) {
             errors.push(error(
                 f.line,
                 format!("duplicate or reserved function {}", f.name),
@@ -594,6 +662,10 @@ pub fn check(mut unit: Unit) -> Result<Mir, Vec<Diagnostic>> {
     let mut effects = BTreeMap::new();
     for f in &mut unit.functions {
         let diagnostic_start = errors.len();
+        if f.async_ && (f.body.is_none() || f.unsafe_ || f.export.is_some() || f.library.is_some() || f.ordinary.is_some() || !f.params.iter().all(|(_,t)|sendable(t,&records)) || !sendable(&f.ret,&records)) {
+            errors.push(error(f.line,"async fn requires owned Send-safe parameters/results and a checked native body without export/extern/ordinary ABI"));
+            continue;
+        }
         if f.ordinary.is_some() {
             debug_assert!(ordinary_ir.is_some());
             effects.insert(
@@ -604,7 +676,8 @@ pub fn check(mut unit: Unit) -> Result<Mir, Vec<Diagnostic>> {
                     io: false,
                     fail: true,
                     unbounded: true,
-                    unsafe_memory: false,
+                    // The ordinary C bridge still uses a process-wide region allocator.
+                    unsafe_memory: true,
                     affine: false,
                     calls: BTreeSet::new(),
                 },
@@ -631,6 +704,7 @@ pub fn check(mut unit: Unit) -> Result<Mir, Vec<Diagnostic>> {
             records: &records,
             functions: &signatures,
             ret: f.ret.clone(),
+            async_: f.async_,
             borrow_result: f.borrow_result.clone(),
             effect: Effects::default(),
         };
@@ -716,7 +790,7 @@ pub fn check(mut unit: Unit) -> Result<Mir, Vec<Diagnostic>> {
             continue;
         }
         let diagnostic_start = errors.len();
-        let e = &effects[&f.name];
+        let Some(e) = effects.get(&f.name) else {continue;};
         for (g, bad) in [
             ("NoAlloc", e.alloc),
             ("NoBlocking", e.blocking),
@@ -804,6 +878,7 @@ struct Check<'a> {
     records: &'a [Record],
     functions: &'a [Function],
     ret: Ty,
+    async_: bool,
     borrow_result: Option<String>,
     effect: Effects,
 }
@@ -940,6 +1015,17 @@ impl Check<'_> {
                     }
                 }
                 t
+            }
+            Op::Await(a) => {
+                if !self.async_ {return Err(error(l,"await is only valid inside async fn"));}
+                let t=self.expr(a,None,env)?;
+                let inner=match t {Ty::Future(t)|Ty::Task(t)=>t,_=>return Err(error(l,"await requires Future<T> or Task<T>"))};
+                self.move_value(a,env)?;
+                if env.pending.iter().any(|loan| loan.holder!="$index_base") || env.vars.iter().any(|(name,v)| !env.moved.contains(name) && !async_storable(&v.ty,self.records)) {
+                    return Err(error(l,"borrowed, raw or thread-bound values cannot remain live across await"));
+                }
+                self.effect.fail=true;
+                *inner
             }
             Op::Bool(_) => Ty::Bool,
             Op::Text(_) => Ty::Str,
@@ -1443,6 +1529,7 @@ impl Check<'_> {
                     env.pending.push(q);
                 }
             }
+            if f.async_ {self.effect.alloc=true;self.effect.fail=true;return Ok(Ty::Future(Box::new(f.ret.clone())));}
             return Ok(f.ret.clone());
         }
         if let Some(r) = self.records.iter().find(|r| r.name == n) {
@@ -1486,6 +1573,207 @@ impl Check<'_> {
             }
         };
         match n {
+            "mutex" | "rwlock" => {
+                arity(1)?;let t=type_arg()?;validate_ty(&Ty::Mutex(Box::new(t.clone())),self.records,l)?;
+                self.expect(&mut args[0],&t,env)?;self.move_value(&args[0],env)?;self.effect.alloc=true;self.effect.fail=true;
+                Ok(if n=="mutex" {Ty::Mutex(Box::new(t))}else{Ty::RwLock(Box::new(t))})
+            }
+            "mutex_clone" | "rwlock_clone" | "lock_poisoned" | "lock_clear_poison" => {
+                arity(1)?;let ty=self.expr(&mut args[0],None,env)?;let Ty::Ref(t,_) = ty else{return Err(error(l,"lock operation expects a borrowed Mutex or RwLock"));};
+                if !matches!(&*t,Ty::Mutex(_)|Ty::RwLock(_)) || (n=="mutex_clone"&&!matches!(&*t,Ty::Mutex(_))) || (n=="rwlock_clone"&&!matches!(&*t,Ty::RwLock(_))) {return Err(error(l,"wrong shared lock type"));}
+                self.effect.blocking=true;self.effect.fail=true;
+                if n=="lock_poisoned" {Ok(Ty::Bool)}else if n=="lock_clear_poison"{Ok(Ty::Unit)}else{self.effect.alloc=true;Ok(*t)}
+            }
+            "mutex_with" | "rw_read" | "rw_write" => {
+                if args.len()<2||!types.is_empty(){return Err(error(l,"lock callback expects a lock, a ThreadSafe function and its arguments"));}
+                let lock=self.expr(&mut args[0],None,env)?;let Ty::Ref(lock,_) = lock else{return Err(error(l,"lock callback expects a borrowed lock"));};
+                let t=match (&*lock,n){(Ty::Mutex(t),"mutex_with")|(Ty::RwLock(t),"rw_read"|"rw_write")=>t.clone(),_=>return Err(error(l,"wrong shared lock type"))};
+                let Op::Name(name)=&args[1].op else{return Err(error(l,"lock callback requires a function declaration"));};
+                let f=self.functions.iter().find(|f|f.name==*name).cloned().ok_or_else(||error(l,"unknown lock callback"))?;
+                let expected=Ty::Ref(t,n!="rw_read");
+                if f.async_||f.unsafe_||f.body.is_none()||!f.guarantees.contains("ThreadSafe")||f.params.first().map(|(_,t)|t)!=Some(&expected)||!sendable(&f.ret,self.records){return Err(error(l,"lock callback must be a ThreadSafe native function with the matching borrowed value and a Send-safe result"));}
+                args[1].ty=Some(Ty::Unit);self.args(&mut args[2..],&f.params.iter().skip(1).map(|(_,t)|t.clone()).collect::<Vec<_>>(),env,l)?;
+                self.effect.calls.insert(f.name);self.effect.blocking=true;self.effect.fail=true;Ok(f.ret)
+            }
+            "sleep" => {arity(1)?;self.expect(&mut args[0],&Ty::Scalar(Scalar::U32),env)?;self.effect.alloc=true;self.effect.fail=true;Ok(Ty::Future(Box::new(Ty::Unit)))}
+            "yield_now" => {arity(0)?;self.effect.alloc=true;self.effect.fail=true;Ok(Ty::Future(Box::new(Ty::Unit)))}
+            "select" => {
+                arity(2)?;let first=self.expr(&mut args[0],None,env)?;
+                let Ty::Future(_) = &first else{return Err(error(l,"select expects two owned futures with the same result type"));};
+                self.move_value(&args[0],env)?;self.expect(&mut args[1],&first,env)?;self.move_value(&args[1],env)?;
+                self.effect.alloc=true;self.effect.fail=true;Ok(first)
+            }
+            "block_on" => {
+                arity(1)?;let Ty::Future(t)=self.expr(&mut args[0],None,env)? else{return Err(error(l,"block_on expects an owned Future<T>"));};
+                if self.async_ {return Err(error(l,"use await inside async fn instead of block_on"));}
+                self.move_value(&args[0],env)?;self.effect.alloc=true;self.effect.blocking=true;self.effect.fail=true;Ok(*t)
+            }
+            "parallel_for" | "parallel_map" => {
+                if args.len() < 5 || !types.is_empty() {
+                    return Err(error(l, "parallel loop expects &Executor, start, end, grain, a ThreadSafe function and captures"));
+                }
+                let Op::Name(name) = &args[4].op else {
+                    return Err(error(l, "parallel loop requires a function declaration"));
+                };
+                let f = self.functions.iter().find(|f| f.name == *name)
+                    .cloned().ok_or_else(|| error(l, "unknown parallel callback"))?;
+                if !parallel_callback(&f, self.records) || (n == "parallel_for" && f.ret != Ty::Unit) {
+                    return Err(error(l, "parallel callback must be a checked ThreadSafe function taking USize and copyable data or shared Sync references; parallel_for requires Unit"));
+                }
+                let index = Ty::Scalar(Scalar::USize);
+                let before = env.pending.len();
+                self.args(&mut args[..4], &[Ty::Ref(Box::new(Ty::Executor), false),
+                    index.clone(), index.clone(), index], env, l)?;
+                args[4].ty = Some(Ty::Unit);
+                self.args(&mut args[5..], &f.params.iter().skip(1).map(|(_, t)| t.clone())
+                    .collect::<Vec<_>>(), env, l)?;
+                env.pending.truncate(before);
+                self.effect.calls.insert(f.name);
+                self.effect.alloc = true;
+                self.effect.blocking = true;
+                self.effect.fail = true;
+                self.effect.unbounded = true;
+                Ok(if n == "parallel_for" { Ty::Unit } else { Ty::Buffer(Box::new(f.ret)) })
+            }
+            "spawn_blocking" => {
+                if !self.async_ || args.is_empty() {return Err(error(l,"spawn_blocking requires an async scope and a ThreadSafe native function"));}
+                let Op::Name(name)=&args[0].op else{return Err(error(l,"spawn_blocking requires a function declaration"));};
+                let f=self.functions.iter().find(|f|f.name==*name).cloned().ok_or_else(||error(l,"unknown blocking task function"))?;
+                if f.async_||f.unsafe_||f.body.is_none()||!f.guarantees.contains("ThreadSafe")||!f.params.iter().all(|(_,t)|sendable(t,self.records))||!sendable(&f.ret,self.records){return Err(error(l,"blocking task requires a checked ThreadSafe function and owned Send-safe values"));}
+                args[0].ty=Some(Ty::Unit);self.args(&mut args[1..],&f.params.iter().map(|(_,t)|t.clone()).collect::<Vec<_>>(),env,l)?;
+                self.effect.calls.insert(f.name);self.effect.alloc=true;self.effect.fail=true;Ok(Ty::Task(Box::new(f.ret)))
+            }
+            "spawn_child" => {
+                arity(1)?;if !self.async_ {return Err(error(l,"spawn_child requires an async execution scope"));}
+                let Ty::Future(t)=self.expr(&mut args[0],None,env)? else{return Err(error(l,"spawn_child expects an owned Future<T>"));};
+                self.move_value(&args[0],env)?;self.effect.alloc=true;self.effect.fail=true;Ok(Ty::Task(t))
+            }
+            "send_async" | "receive_async" => {
+                arity(if n=="send_async" {2}else{1})?;
+                let t=self.expr(&mut args[0],None,env)?;
+                let (inner,result)=match (&t,n){(Ty::Sender(t),"send_async")=>(t.clone(),Ty::Bool),(Ty::Receiver(t),"receive_async")=>(t.clone(),(**t).clone()),_=>return Err(error(l,"async channel operation requires an owned endpoint"))};
+                self.move_value(&args[0],env)?;
+                if n=="send_async"{self.expect(&mut args[1],&inner,env)?;self.move_value(&args[1],env)?;}
+                self.effect.alloc=true;self.effect.fail=true;Ok(Ty::Future(Box::new(result)))
+            }
+            "db_native_pool" => {
+                arity(4)?;
+                if env.unsafe_ == 0 { return Err(error(l, "db_native_pool requires the SQL provider boundary")); }
+                let size = Ty::Scalar(Scalar::USize);
+                self.args(args, &[Ty::Scalar(Scalar::U32), Ty::Slice(Box::new(Ty::Scalar(Scalar::U8)), false), size.clone(), size], env, l)?;
+                self.effect.alloc = true;
+                self.effect.blocking = true;
+                self.effect.io = true;
+                self.effect.fail = true;
+                Ok(Ty::DbPool)
+            }
+            "db_native_pool_clone" | "db_native_pool_handle" => {
+                arity(1)?;
+                self.expect(&mut args[0], &Ty::Ref(Box::new(Ty::DbPool), false), env)?;
+                if n == "db_native_pool_handle" {
+                    if env.unsafe_ == 0 { return Err(error(l, "database pool handle requires an unsafe provider boundary")); }
+                    Ok(Ty::Handle)
+                } else {
+                    self.effect.alloc = true;
+                    self.effect.fail = true;
+                    Ok(Ty::DbPool)
+                }
+            }
+            "executor" => {
+                arity(2)?;
+                self.args(args, &[Ty::Scalar(Scalar::USize), Ty::Scalar(Scalar::USize)], env, l)?;
+                self.effect.alloc = true; self.effect.blocking = true; self.effect.fail = true;
+                Ok(Ty::Executor)
+            }
+            "spawn" => {
+                if args.len() < 2 || !types.is_empty() { return Err(error(l, "spawn expects &Executor, a ThreadSafe function declaration and its arguments")); }
+                if args.len()==2 {
+                    let before=env.clone();
+                    if let Ok(Ty::Future(t))=self.expr(&mut args[1],None,env) {
+                        self.move_value(&args[1],env)?;self.expect(&mut args[0],&Ty::Ref(Box::new(Ty::Executor),false),env)?;
+                        self.effect.alloc=true;self.effect.blocking=true;self.effect.fail=true;return Ok(Ty::Task(t));
+                    }
+                    *env=before;
+                }
+                let Op::Name(name) = &args[1].op else { return Err(error(l, "spawn requires a function declaration")); };
+                let f = self.functions.iter().find(|f| f.name == *name).cloned().ok_or_else(|| error(l, "unknown task function"))?;
+                if f.async_ || f.body.is_none() || f.unsafe_ || !f.guarantees.contains("ThreadSafe") {
+                    return Err(error(l, "spawn requires a checked native function with guarantees(ThreadSafe)"));
+                }
+                if !f.params.iter().all(|(_,t)| sendable(t,self.records)) || !sendable(&f.ret,self.records) {
+                    return Err(error(l, "spawn parameters and results must own Send-safe data"));
+                }
+                self.expect(&mut args[0], &Ty::Ref(Box::new(Ty::Executor),false), env)?;
+                args[1].ty=Some(Ty::Unit);
+                self.args(&mut args[2..], &f.params.iter().map(|(_,t)|t.clone()).collect::<Vec<_>>(), env,l)?;
+                self.effect.calls.insert(f.name);
+                self.effect.alloc=true; self.effect.blocking=true; self.effect.fail=true;
+                Ok(Ty::Task(Box::new(f.ret)))
+            }
+            "join" => {
+                arity(1)?;
+                let Ty::Task(t)=self.expr(&mut args[0],None,env)? else {return Err(error(l,"join expects an owned Task"));};
+                self.move_value(&args[0],env)?;
+                self.effect.blocking=true; self.effect.fail=true;
+                Ok(*t)
+            }
+            "task_status" | "task_cancel" | "task_wait" => {
+                arity(if n=="task_wait" {2} else {1})?;
+                let t=self.expr(&mut args[0],None,env)?;
+                if !matches!(t,Ty::Ref(ref t,_) if matches!(&**t,Ty::Task(_))) {return Err(error(l,"task operation expects &Task<T>"));}
+                if n=="task_wait" { self.expect(&mut args[1],&Ty::Scalar(Scalar::U32),env)?; }
+                self.effect.blocking=true;
+                Ok(if n=="task_cancel" {Ty::Bool} else {Ty::Scalar(Scalar::U32)})
+            }
+            "task_cancelled" => { arity(0)?; Ok(Ty::Bool) }
+            "task_sleep" => { arity(1)?; self.expect(&mut args[0],&Ty::Scalar(Scalar::U32),env)?;self.effect.blocking=true;Ok(Ty::Bool) }
+            "sender_connected" => {
+                arity(1)?;let ty=self.expr(&mut args[0],None,env)?;
+                if !matches!(ty,Ty::Ref(ref t,_) if matches!(&**t,Ty::Sender(_))){return Err(error(l,"sender_connected expects &Sender<T>"));}
+                self.effect.blocking=true;Ok(Ty::Bool)
+            }
+            "sender_ready" | "receiver_connected" => {
+                arity(1)?;
+                let ty = self.expr(&mut args[0], None, env)?;
+                if !matches!(ty, Ty::Ref(ref t, _) if matches!((&**t,n), (Ty::Sender(_),"sender_ready") | (Ty::Receiver(_),"receiver_connected"))) {
+                    return Err(error(l,"channel readiness expects a borrowed endpoint of the matching kind"));
+                }
+                self.effect.blocking = true;
+                Ok(Ty::Bool)
+            }
+            "channel" => {
+                arity(1)?; let t=type_arg()?;
+                validate_ty(&Ty::Sender(Box::new(t.clone())),self.records,l)?;
+                self.expect(&mut args[0],&Ty::Scalar(Scalar::USize),env)?;
+                self.effect.alloc=true;self.effect.fail=true;
+                Ok(Ty::Sender(Box::new(t)))
+            }
+            "channel_receiver" | "sender_clone" | "receiver_clone" => {
+                arity(1)?;
+                let t=self.expr(&mut args[0],None,env)?;
+                let Ty::Ref(t,_) = t else {return Err(error(l,"channel clone expects a borrowed endpoint"));};
+                let v=match (&*t,n) {
+                    (Ty::Sender(v),"channel_receiver" | "sender_clone") => v.clone(),
+                    (Ty::Receiver(v),"receiver_clone") => v.clone(),
+                    _=>return Err(error(l,"wrong channel endpoint kind")),
+                };
+                self.effect.alloc=true; self.effect.blocking=true; self.effect.fail=true;
+                Ok(if n=="sender_clone" {Ty::Sender(v)} else {Ty::Receiver(v)})
+            }
+            "send" | "send_timeout" | "try_send" | "receive" | "try_receive" => {
+                arity(if n=="send_timeout" {3} else {2})?;
+                let e=self.expr(&mut args[0],None,env)?;
+                let Ty::Ref(e,_) = e else {return Err(error(l,"channel operation expects a borrowed endpoint"));};
+                let t=match (&*e,n) {
+                    (Ty::Sender(t),"send" | "send_timeout" | "try_send") | (Ty::Receiver(t),"receive" | "try_receive") => t.clone(),
+                    _=>return Err(error(l,"wrong channel endpoint kind")),
+                };
+                if matches!(n,"send" | "send_timeout" | "try_send") {self.expect(&mut args[1],&t,env)?;self.move_value(&args[1],env)?;}
+                else { self.expect(&mut args[1],&Ty::Ref(t,true),env)?; }
+                if n=="send_timeout" { self.expect(&mut args[2],&Ty::Scalar(Scalar::U32),env)?; }
+                self.effect.blocking=true;
+                Ok(Ty::Bool)
+            }
             "call_trusted" => {
                 if env.unsafe_ == 0 {
                     return Err(error(
@@ -1545,7 +1833,7 @@ impl Check<'_> {
                 )?;
                 Ok(contract.ret)
             }
-            "size_of" | "align_of" | "abi_version" => {
+            "size_of" | "align_of" | "abi_version" | "abi_fingerprint" => {
                 arity(0)?;
                 if types.len() != 1 {
                     return Err(error(l, "layout query requires exactly one type"));
@@ -1561,7 +1849,7 @@ impl Check<'_> {
                 if n == "abi_version" && !matches!(types[0], Ty::Record(_)) {
                     return Err(error(l, "ABI version query requires a record type"));
                 }
-                Ok(Ty::Scalar(Scalar::USize))
+                Ok(if n == "abi_fingerprint" { Ty::Str } else { Ty::Scalar(Scalar::USize) })
             }
             "resource" => {
                 arity(1)?;
@@ -1637,7 +1925,7 @@ impl Check<'_> {
                     Ok((**value).clone())
                 }
             }
-            "cast" => {
+            "cast" | "cast_exact" => {
                 arity(1)?;
                 let t = types
                     .first()
@@ -1650,7 +1938,7 @@ impl Check<'_> {
                     return Err(error(l, "cast source must be a machine scalar"));
                 }
                 self.effect.fail |=
-                    !t.scalar().unwrap().float() || src.scalar().is_some_and(|s| s.float());
+                    n == "cast_exact" || !t.scalar().unwrap().float() || src.scalar().is_some_and(|s| s.float());
                 Ok(t.clone())
             }
             "thread_bind" => {
@@ -2073,7 +2361,7 @@ impl Check<'_> {
                     .iter()
                     .find(|f| f.name == *name)
                     .ok_or_else(|| error(l, "unknown callback function"))?;
-                if !f.params.iter().all(|(_, t)| abi(t, self.records)) || !abi(&f.ret, self.records)
+                if f.async_ || !f.params.iter().all(|(_, t)| abi(t, self.records)) || !abi(&f.ret, self.records)
                 {
                     return Err(error(l, "callback requires a fixed C signature"));
                 }
@@ -2346,6 +2634,12 @@ impl Check<'_> {
                 arity(1)?;
                 self.expect(&mut args[0], &Ty::Str, env)?;
                 Ok(Ty::Slice(Box::new(Ty::Scalar(Scalar::U8)), false))
+            }
+            "parse_decimal_f64" => {
+                arity(1)?;
+                self.expect(&mut args[0], &Ty::Slice(Box::new(Ty::Scalar(Scalar::U8)), false), env)?;
+                self.effect.alloc = true;
+                Ok(Ty::Scalar(Scalar::F64))
             }
             n if n.starts_with("wrapping_") || n.starts_with("saturating_") => {
                 arity(2)?;
@@ -2651,12 +2945,25 @@ impl Check<'_> {
         Ok(returns)
     }
 }
+pub(super) fn contextual_builtin(n: &str) -> bool {
+    matches!(n,
+        "abi_fingerprint" | "cast_exact" | "parallel_for" | "parallel_map"
+        | "mutex" | "rwlock" | "mutex_clone" | "rwlock_clone" | "mutex_with" | "rw_read" | "rw_write"
+        | "lock_poisoned" | "lock_clear_poison" | "sleep" | "yield_now" | "select" | "block_on"
+        | "spawn_child" | "spawn_blocking" | "send_async" | "receive_async" | "executor" | "spawn"
+        | "join" | "task_status" | "task_cancel" | "task_wait" | "task_cancelled" | "task_sleep"
+        | "sender_connected" | "sender_ready" | "receiver_connected" | "channel" | "channel_receiver" | "sender_clone" | "receiver_clone"
+        | "send" | "send_timeout" | "try_send" | "receive" | "try_receive")
+}
 pub fn builtin_name(n: &str) -> bool {
-    Scalar::parse(n).is_some()
+    contextual_builtin(n) || Scalar::parse(n).is_some()
         || [
             "size_of",
             "align_of",
             "abi_version",
+            "db_native_pool",
+            "db_native_pool_clone",
+            "db_native_pool_handle",
             "resource",
             "resource_get",
             "resource_get_mut",
@@ -2741,6 +3048,7 @@ pub fn builtin_name(n: &str) -> bool {
             "assert",
             "print",
             "utf8_bytes",
+            "parse_decimal_f64",
         ]
         .contains(&n)
         || n.starts_with("wrapping_")

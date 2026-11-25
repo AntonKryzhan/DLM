@@ -8,6 +8,12 @@ pub fn c_type(t: &Ty) -> String {
         Ty::Unit => "uint8_t".into(),
         Ty::Str => "dn_utf8".into(),
         Ty::Window => "dn_window *".into(),
+        Ty::Executor => "dn_executor *".into(),
+        Ty::DbPool => "dn_db_handle *".into(),
+        Ty::Task(_) => "dn_task *".into(),
+        Ty::Future(_) => "dn_future *".into(),
+        Ty::Mutex(_) | Ty::RwLock(_) => "dn_shared_handle *".into(),
+        Ty::Sender(_) | Ty::Receiver(_) => "dn_endpoint *".into(),
         Ty::Resource(..) => format!("dn_t_{} *", key(t)),
         Ty::Handle => "void *".into(),
         Ty::Record(n) => format!("dn_r_{n}"),
@@ -44,6 +50,14 @@ fn key(t: &Ty) -> String {
         Ty::Str => "str".into(),
         Ty::Split(t) => format!("split_{}", key(t)),
         Ty::Window => "window".into(),
+        Ty::Executor => "executor".into(),
+        Ty::DbPool => "db_pool".into(),
+        Ty::Task(t) => format!("task_{}",key(t)),
+        Ty::Future(t) => format!("future_{}",key(t)),
+        Ty::Mutex(t) => format!("mutex_{}",key(t)),
+        Ty::RwLock(t) => format!("rwlock_{}",key(t)),
+        Ty::Sender(t) => format!("sender_{}",key(t)),
+        Ty::Receiver(t) => format!("receiver_{}",key(t)),
         Ty::ThreadBound(t) => format!("thread_{}", key(t)),
         Ty::Resource(t, f) => format!("resource_{}_{}", key(t), f),
         Ty::Buffer(t) => format!("buf_{}", key(t)),
@@ -63,6 +77,49 @@ fn key(t: &Ty) -> String {
             key(r)
         ),
     }
+}
+fn concurrency_helpers(m: &Mir) -> String {
+    let mut out=String::new();
+    let all=all_types(m);
+    let mut messages=BTreeSet::new();
+    for t in &all { if let Ty::Sender(t)|Ty::Receiver(t)=t {messages.insert((**t).clone());} }
+    for t in messages {
+        let body=if check::owned(&t,&m.unit.records) {format!("{}(({}*)raw);",drop_name(&t),c_type(&t))}else{"(void)raw;".into()};
+        writeln!(out,"static void dn_message_drop_{}(void*raw){{{body}}}",key(&t)).unwrap();
+    }
+    for t in &all {
+        let Ty::Task(t)=t else {continue};
+        let c=c_type(t);
+        let adopt=if check::owned(t,&m.unit.records) {format!("{}(&value);",adopt_name(t))}else{String::new()};
+        writeln!(out,"static {c} dn_join_{}(dn_task*t){{unsigned status=dn_task_wait(t,UINT32_MAX);if(status!=2){{dn_drop_task_{}(&t);dn_fail(status==3?\"task cancelled\":status==5?\"executor queue full or closed\":\"task failed\");}}{c} value=*({c}*)t->result;memset(t->result,0,sizeof value);{adopt}dn_drop_task_{}(&t);return value;}}",key(t),key(t),key(t)).unwrap();
+    }
+    for f in &m.unit.functions {
+        if f.async_||f.body.is_none()||f.unsafe_||!f.guarantees.contains("ThreadSafe")||!f.params.iter().all(|(_,t)|check::sendable(t,&m.unit.records))||!check::sendable(&f.ret,&m.unit.records){continue;}
+        let name=&f.name;
+        let mut fields=String::new();let mut dispose=String::new();let mut unpack=String::new();let mut params=String::new();let mut pack=String::new();let mut arguments=Vec::new();
+        for (i,(_,t)) in f.params.iter().enumerate(){
+            let c=c_type(t);
+            write!(fields,"{c} a{i};").unwrap();
+            write!(unpack,"{c} a{i}=p->a{i};p->a{i}=({c}){{0}};").unwrap();
+            write!(params,",{c} a{i}").unwrap();
+            write!(pack,"p->a{i}=a{i};").unwrap();
+            arguments.push(format!("a{i}"));
+            if check::owned(t,&m.unit.records){
+                write!(dispose,"{}(&p->a{i});",drop_name(t)).unwrap();
+                write!(unpack,"{}(&a{i});",adopt_name(t)).unwrap();
+                write!(pack,"{}(&p->a{i});",retain_name(t)).unwrap();
+            }
+        }
+        let result=c_type(&f.ret);
+        write!(fields,"{result} result;").unwrap();
+        if check::owned(&f.ret,&m.unit.records){write!(dispose,"{}(&p->result);",drop_name(&f.ret)).unwrap();}
+        let retain=if check::owned(&f.ret,&m.unit.records){format!("{}(&p->result);",retain_name(&f.ret))}else{String::new()};
+        writeln!(out,"typedef struct dn_job_{name}{{{fields}}}dn_job_{name};\nstatic void dn_job_drop_{name}(void*raw){{dn_job_{name}*p=raw;{dispose}}}\nstatic void dn_job_run_{name}(void*raw){{dn_job_{name}*p=raw;{unpack}p->result={}({});{retain}}}\nstatic dn_task*dn_pack_{name}(dn_pool*pool{params}){{dn_task*t=dn_pool_prepare(pool,dn_job_run_{name},dn_job_drop_{name},sizeof(dn_job_{name}),_Alignof(dn_job_{name}));dn_job_{name}*p=t->data;t->result=&p->result;{pack}dn_task_submit(t);return t;}}",cname(name),arguments.join(",")).unwrap();
+        let parameters=f.params.iter().enumerate().map(|(i,(_,t))|format!("{} a{i}",c_type(t))).collect::<Vec<_>>().join(",");
+        let suffix=if arguments.is_empty(){String::new()}else{format!(",{}",arguments.join(","))};
+        writeln!(out,"static dn_task*dn_spawn_{name}(dn_executor*const*pool{params}){{return dn_pack_{name}(dn_executor_pool(*pool){suffix});}}\nstatic dn_task*dn_spawn_blocking_{name}({parameters}){{return dn_pack_{name}(dn_blocking_executor()->pool{suffix});}}").unwrap();
+    }
+    out
 }
 fn cname(n: &str) -> String {
     format!("dn_f_{n}")
@@ -156,11 +213,23 @@ fn collect_ty(t: &Ty, all: &mut BTreeSet<Ty>) {
     if !all.insert(t.clone()) {
         return;
     }
+    if let Ty::Future(t)=t {collect_ty(&Ty::Task(t.clone()),all);collect_ty(&Ty::Executor,all);}
+    match t {
+        Ty::Sender(value) => collect_ty(&Ty::Receiver(value.clone()), all),
+        Ty::Receiver(value) => collect_ty(&Ty::Sender(value.clone()), all),
+        _ => {}
+    }
     if let Ty::Split(t) = t {
         collect_ty(&Ty::Slice(t.clone(), true), all);
     }
     match t {
-        Ty::Resource(t, _)
+        Ty::Task(t)
+        | Ty::Future(t)
+        | Ty::Mutex(t)
+        | Ty::RwLock(t)
+        | Ty::Sender(t)
+        | Ty::Receiver(t)
+        | Ty::Resource(t, _)
         | Ty::ThreadBound(t)
         | Ty::Split(t)
         | Ty::Array(t, _)
@@ -185,7 +254,7 @@ fn collect_ty(t: &Ty, all: &mut BTreeSet<Ty>) {
 fn expr_types(e: &Expr, all: &mut BTreeSet<Ty>) {
     collect_ty(e.ty(), all);
     match &e.op {
-        Op::Unary(_, a) | Op::Move(a) | Op::Borrow(a, _) | Op::Field(a, _) => expr_types(a, all),
+        Op::Unary(_, a) | Op::Move(a) | Op::Borrow(a, _) | Op::Await(a) | Op::Field(a, _) => expr_types(a, all),
         Op::Index(a, b) | Op::IndexProven(a, b) | Op::Binary(_, a, b) => {
             expr_types(a, all);
             expr_types(b, all);
@@ -248,6 +317,7 @@ pub(super) fn all_types(m: &Mir) -> BTreeSet<Ty> {
     }
     for f in &m.unit.functions {
         collect_ty(&f.ret, &mut all);
+        if f.async_ {collect_ty(&Ty::Future(Box::new(f.ret.clone())),&mut all);}
         for (_, t) in &f.params {
             collect_ty(t, &mut all);
         }
@@ -432,6 +502,10 @@ fn helpers(t: &Ty, records: &[Record]) -> String {
         .unwrap();
     }
     match t {
+        Ty::Executor | Ty::DbPool | Ty::Task(_) | Ty::Future(_) | Ty::Mutex(_) | Ty::RwLock(_) | Ty::Sender(_) | Ty::Receiver(_) => {
+            let finalize=match t {Ty::Executor=>"dn_executor_finalize",Ty::DbPool=>"dn_db_finalize",Ty::Task(_)=>"dn_task_finalize",Ty::Future(_)=>"dn_future_finalize",Ty::Mutex(_)|Ty::RwLock(_)=>"dn_shared_finalize",_=>"dn_endpoint_finalize"};
+            writeln!(o,"static void {}({c} volatile*x){{if(*x){{{c} p=*x;*x=NULL;((dn_mem*)p-1)->finalize=NULL;{finalize}(p);dn_deallocate(p);}}}}\nstatic void {}({c} volatile*x){{if(*x)dn_detach(*x);}}",drop_name(t),retain_name(t)).unwrap();
+        }
         Ty::Resource(v, finalizer) => {
             let base = format!("dn_t_{k}");
             let vc = c_type(v);
@@ -585,7 +659,7 @@ fn adopt_helper(t: &Ty, records: &[Record]) -> String {
                 String::new()
             }
         ),
-        Ty::Window | Ty::Resource(..) => "dn_adopt(*x);".into(),
+        Ty::Executor | Ty::DbPool | Ty::Task(_) | Ty::Future(_) | Ty::Mutex(_) | Ty::RwLock(_) | Ty::Sender(_) | Ty::Receiver(_) | Ty::Window | Ty::Resource(..) => "dn_adopt(*x);".into(),
         Ty::ThreadBound(v) => {
             if check::owned(v, records) {
                 format!("{}(&x->value);", adopt_name(v))
@@ -682,9 +756,11 @@ struct Emitter<'a> {
     guards: Vec<Option<String>>,
     owned_params: BTreeSet<String>,
     loops: Vec<usize>,
+    frame: bool,
 }
 impl Emitter<'_> {
     fn local(&self, n: &str) -> String {
+        if self.frame {return format!("frame->{n}");}
         if self.owned_params.contains(n) {
             format!("dn_param_{n}")
         } else {
@@ -788,6 +864,7 @@ impl Emitter<'_> {
     fn expr(&mut self, e: &Expr) -> String {
         let c = c_type(e.ty());
         match &e.op {
+            Op::Await(_) => unreachable!("await is lowered to a suspension graph"),
             Op::Number(n) => {
                 let v = n.replace('_', "");
                 if e.ty().scalar().unwrap().float() {
@@ -904,14 +981,25 @@ impl Emitter<'_> {
             }
         }
     }
-    fn conversion(&mut self, src: &Expr, to: &Ty) -> String {
+    fn conversion(&mut self, src: &Expr, to: &Ty, exact: bool) -> String {
         let (p, a) = self.seq(std::slice::from_ref(src));
         let a = &a[0];
         let c = c_type(to);
         let s = to.scalar().unwrap();
         let from = src.ty().scalar().unwrap();
         if s.float() {
-            return format!("({{ {p}({c}){a}; }})");
+            if !exact || from == s { return format!("({{ {p}({c}){a}; }})"); }
+            let converted = self.tmp();
+            let src_c = from.c();
+            let loss = if from.float() {
+                let bits = if from == Scalar::F32 { "dn_f32_bits" } else { "dn_f64_bits" };
+                format!("{bits}(({src_c}){converted})!={bits}({a})")
+            } else {
+                let bits = from.bits() - u32::from(from.signed());
+                let lower = if from.signed() { format!("-ldexpl(1.0L,{bits})") } else { "0.0L".into() };
+                format!("(long double){converted}<{lower} || (long double){converted}>=ldexpl(1.0L,{bits}) || ({src_c}){converted}!={a}")
+            };
+            return format!("({{ {p}{c} {converted}=({c}){a};if({loss})dn_fail(\"numeric conversion loses precision\");{converted}; }})");
         }
         let bits = s.bits();
         let min = if s.signed() {
@@ -942,10 +1030,36 @@ impl Emitter<'_> {
             };
             format!("if((unsigned __int128){a}>{max})dn_fail(\"numeric conversion out of range\");")
         };
-        format!("({{ {p}{check}({c}){a}; }})")
+        let signed_zero = if exact && from.float() {
+            format!("if({a}==0 && signbit({a}))dn_fail(\"numeric conversion loses precision\");")
+        } else { String::new() };
+        format!("({{ {p}{check}{signed_zero}({c}){a}; }})")
     }
     fn call(&mut self, n: &str, types: &[Ty], args: &[Expr], ret: &Ty) -> String {
         let c = c_type(ret);
+        let declared = self.mir.unit.shadows_intrinsic(n);
+        if !declared && matches!(n,"mutex_with"|"rw_read"|"rw_write") {
+            let Op::Name(name)=&args[1].op else{unreachable!()};let(mut prefix,mut values)=self.seq(&args[..1]);let(more,rest)=self.seq(&args[2..]);prefix.push_str(&more);values.extend(rest);
+            return format!("({{ {prefix}dn_shared_call_{name}({}); }})",values.join(","));
+        }
+        if !declared && matches!(n, "parallel_for" | "parallel_map") {
+            let Op::Name(name) = &args[4].op else { unreachable!() };
+            let (mut prefix, mut values) = self.seq(&args[..4]);
+            let (more, captures) = self.seq(&args[5..]);
+            prefix.push_str(&more);
+            values.extend(captures);
+            return format!("({{ {prefix}dn_{n}_{name}({}); }})", values.join(","));
+        }
+        if !declared && n=="spawn_blocking" {let Op::Name(name)=&args[0].op else{unreachable!()};let(prefix,values)=self.seq(&args[1..]);return format!("({{ {prefix}dn_spawn_blocking_{name}({}); }})",values.join(","));}
+        if !declared && n == "spawn" && matches!(args[1].ty(),Ty::Future(_)) {
+            let (prefix, values)=self.seq(args);return format!("({{ {prefix}dn_spawn_future(*{},{}); }})",values[0],values[1]);
+        }
+        if !declared && n == "spawn" {
+            let Op::Name(name)=&args[1].op else {unreachable!()};
+            let (mut prefix, mut values)=self.seq(&args[..1]);
+            let (more, rest)=self.seq(&args[2..]);prefix.push_str(&more);values.extend(rest);
+            return format!("({{ {prefix}dn_spawn_{name}({}); }})",values.join(","));
+        }
         if n == "call_trusted" {
             let (prefix, values) = self.seq(&args[1..]);
             let call = format!("({})({})", values[0], values[1..].join(","));
@@ -964,8 +1078,8 @@ impl Emitter<'_> {
                 key(ret)
             );
         }
-        if n == "cast" || Scalar::parse(n).is_some() {
-            return self.conversion(&args[0], ret);
+        if (!declared && matches!(n, "cast" | "cast_exact")) || Scalar::parse(n).is_some() {
+            return self.conversion(&args[0], ret, n == "cast_exact");
         }
         if n == "fn_ptr" {
             let Op::Name(name) = &args[0].op else {
@@ -1027,8 +1141,39 @@ impl Emitter<'_> {
             match n{
             "size_of"=>format!("((size_t)sizeof({}))",c_type(&types[0])),
             "align_of"=>format!("((size_t)_Alignof({}))",c_type(&types[0])),
+            "abi_fingerprint" => {
+                let fp = self.mir.layout_contract(&types[0]).expect("checked native layout").fingerprint;
+                format!("(dn_utf8){{(const uint8_t*)\"{fp}\",64}}")
+            }
             "abi_version"=>{let Ty::Record(name)=&types[0] else{unreachable!()};self.mir.layouts[name].version.to_string()},
             "resource_get"|"resource_get_mut"=>format!("(&((*{})->value))",a(0)),
+            "mutex"|"rwlock"=>{let t=ret.element().unwrap();format!("dn_shared_new_{}({}, {})",key(t),a(0),if n=="rwlock"{1}else{0})},
+            "mutex_clone"|"rwlock_clone"=>format!("dn_shared_clone(*{})",a(0)),
+            "lock_poisoned"=>format!("dn_shared_poisoned(*{})",a(0)),
+            "lock_clear_poison"=>format!("dn_shared_clear_poison(*{})",a(0)),
+            "sleep"=>format!("dn_sleep_future({},false)",a(0)),
+            "yield_now"=>"dn_sleep_future(0,true)".into(),
+            "select"=>format!("dn_select_future({},{})",a(0),a(1)),
+            "block_on"=>format!("dn_block_on_{}({})",key(ret),a(0)),
+            "spawn_child"=>format!("dn_spawn_child({})",a(0)),
+            "send_async"=>{let t=args[1].ty();format!("dn_send_future_{}({},{})",key(t),a(0),a(1))},
+            "receive_async"=>{let Ty::Receiver(t)=args[0].ty() else{unreachable!()};format!("dn_receive_future_{}({})",key(t),a(0))},
+            "db_native_pool" => format!("dn_db_open({},{}.data,{}.len,{},{})",a(0),a(1),a(1),a(2),a(3)),
+            "db_native_pool_clone" => format!("dn_db_clone(*{})",a(0)),
+            "db_native_pool_handle" => format!("(void*)((dn_db_handle*)dn_nonnull(*{}))->pool",a(0)),
+            "executor"=>format!("dn_executor_open({},{})",a(0),a(1)),
+            "join"=>format!("dn_join_{}({})",key(ret),a(0)),
+            "task_status"=>format!("dn_task_status(*{})",a(0)),
+            "task_cancel"=>format!("dn_task_cancel(*{})",a(0)),
+            "task_wait"=>format!("dn_task_wait(*{},{})",a(0),a(1)),
+            "task_cancelled"=>"dn_task_cancelled()".into(),
+            "task_sleep"=>format!("dn_task_sleep({})",a(0)),
+            "sender_ready"|"receiver_connected"=>format!("dn_{n}(*{})",a(0)),
+            "sender_connected"=>format!("dn_sender_connected(*{})",a(0)),
+            "channel"=>{let Ty::Sender(t)=ret else{unreachable!()};format!("dn_channel_open({},sizeof({}),_Alignof({}),dn_message_drop_{})",a(0),c_type(t),c_type(t),key(t))},
+            "channel_receiver"|"sender_clone"|"receiver_clone"=>format!("dn_endpoint_clone(*{}, {})",a(0),if n=="sender_clone" {1}else{0}),
+            "send"|"send_timeout"|"try_send"=>{let t=args[1].ty();let detach=if check::owned(t,&self.mir.unit.records){format!("{}(&{});",retain_name(t),a(1))}else{String::new()};let timeout=match n{"send"=>"UINT32_MAX".into(),"send_timeout"=>a(2),_=>"0".into()};format!("({{ {detach}dn_channel_send(*{},&{},{timeout}); }})",a(0),a(1))},
+            "receive"|"try_receive"=>{let Ty::Ref(t,_)=args[1].ty() else{unreachable!()};let drop=if check::owned(t,&self.mir.unit.records){format!("{}({});",drop_name(t),a(1))}else{String::new()};let adopt=if check::owned(t,&self.mir.unit.records){format!("{}(&dn_message);",adopt_name(t))}else{String::new()};format!("({{ {} dn_message={{0}};bool dn_received=dn_channel_receive(*{},&dn_message,{});if(dn_received){{{drop}{adopt}*{}=dn_message;}}dn_received; }})",c_type(t),a(0),if n=="receive" {1}else{0},a(1))},
             "resource_close"=>format!("({{ {}(&{});0; }})",drop_name(args[0].ty()),a(0)),
             "resource_into_inner"=>format!("dn_take_{}({})",key(args[0].ty()),a(0)),
             "thread_bind"=>format!("(({c}){{{},dn_thread_id()}})",a(0)),
@@ -1075,6 +1220,7 @@ impl Emitter<'_> {
             "assert"=>format!("(dn_assert({}),0)",a(0)),
             "print"=>match args[0].ty(){Ty::Str=>format!("(fwrite({}.data,1,{}.len,stdout),fputc('\\n',stdout),0)",a(0),a(0)),Ty::Bool=>format!("(puts({}?\"true\":\"false\"),0)",a(0)),Ty::Scalar(s) if s.float()=>format!("dn_print_f64((double){})",a(0)),Ty::Scalar(s) if s.signed()=>format!("(printf(\"%\" PRId64 \"\\n\",(int64_t){}),0)",a(0)),_=>format!("(printf(\"%\" PRIu64 \"\\n\",(uint64_t){}),0)",a(0))},
             "utf8_bytes"=>format!("(({c}){{{}.data,{}.len}})",a(0),a(0)),
+            "parse_decimal_f64"=>{let(data,len)=storage(0);format!("dn_parse_decimal_f64({data},{len})")},
             n if n.starts_with("wrapping_")||n.starts_with("saturating_")=>{let mode=if n.starts_with("wrapping_"){"wrap"}else{"sat"};format!("dn_{}_{}_{}({},{})",ret.scalar().unwrap().name(),mode,n.split('_').nth(1).unwrap(),a(0),a(1))},
             _=>unreachable!("verified native operation {n}")
         }
@@ -1241,7 +1387,7 @@ impl Emitter<'_> {
 fn signature(f: &Function, name: &str) -> String {
     format!(
         "{} {name}({})",
-        c_type(&f.ret),
+        c_type(&if f.async_ {Ty::Future(Box::new(f.ret.clone()))} else {f.ret.clone()}),
         if f.params.is_empty() {
             "void".into()
         } else {
@@ -1264,6 +1410,8 @@ fn abi_signature(f: &Function, name: &str) -> String {
 /// adapter reuses the existing GUI runtime; instances own their application data.
 pub fn emit(m: &Mir, executable: bool) -> String {
     let gui = all_types(m).contains(&Ty::Window);
+    let http = m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.http.v1"));
+    let network = http || m.unit.functions.iter().any(|f| matches!(f.library.as_deref(), Some("dlm.net.v1" | "dlm.nodes.v1")));
     let ordinary = super::bridge::lower(&m.unit).expect("verified ordinary bridge");
     let legacy_needed = gui || ordinary.is_some();
     let mut out = String::new();
@@ -1296,20 +1444,29 @@ pub fn emit(m: &Mir, executable: bool) -> String {
         );
     }
     out.push_str(RUNTIME);
+    out.push_str(include_str!("concurrent.c"));
+    out.push_str(include_str!("parallel.c"));
+    if all_types(m).contains(&Ty::DbPool) || m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.db.v1")) {
+        out.push_str(include_str!("database.c"));
+    }
     if m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.edge.v1")) {
         out.push_str(include_str!("edge_headers.h"));
     }
-    if m.unit.functions.iter().any(|f| matches!(f.library.as_deref(),Some("dlm.net.v1" | "dlm.nodes.v1"))) {
+    if network {
         out.push_str(include_str!("network.c"));
     }
     if m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.nodes.v1")) {
         out.push_str(include_str!("nodes.c"));
     }
     if m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.edge.v1")) {
-        if !m.unit.functions.iter().any(|f| matches!(f.library.as_deref(),Some("dlm.net.v1" | "dlm.nodes.v1"))) { out.push_str(include_str!("network.c")); }
+        if !network { out.push_str(include_str!("network.c")); }
         if !m.unit.functions.iter().any(|f| f.library.as_deref() == Some("dlm.nodes.v1")) { out.push_str(include_str!("nodes.c")); }
         out.push_str(include_str!("adaptive.c"));
         out.push_str(include_str!("tun.c"));
+    }
+    if http {
+        out.push_str(include_str!("http_server.c"));
+        out.push_str(include_str!("http_websocket.c"));
     }
     if legacy_needed {
         out.push_str(include_str!("window.c"));
@@ -1375,7 +1532,7 @@ pub fn emit(m: &Mir, executable: bool) -> String {
             )
             .unwrap();
         }
-        if f.body.is_some() || f.ordinary.is_some() {
+        if !f.async_ && (f.body.is_some() || f.ordinary.is_some()) {
             writeln!(
                 out,
                 "static {};",
@@ -1387,11 +1544,15 @@ pub fn emit(m: &Mir, executable: bool) -> String {
             writeln!(out, "DN_EXPORT {};", abi_signature(f, s)).unwrap();
         }
     }
+    out.push_str(&concurrency_helpers(m));
+    out.push_str(&parallel_helpers(m, &all));
+    out.push_str(&shared_helpers(m));
+    out.push_str(&async_functions(m));
     for f in m
         .unit
         .functions
         .iter()
-        .filter(|f| f.body.is_some() || f.ordinary.is_some())
+        .filter(|f| !f.async_ && (f.body.is_some() || f.ordinary.is_some()))
     {
         let owned_params = f
             .params
@@ -1406,6 +1567,7 @@ pub fn emit(m: &Mir, executable: bool) -> String {
             guards: vec![None],
             owned_params,
             loops: vec![],
+            frame: false,
         };
         let mut preamble = String::new();
         for (n, t) in &f.params {
@@ -1482,6 +1644,7 @@ pub fn emit(m: &Mir, executable: bool) -> String {
             .unwrap();
         }
     }
+    super::abi::c_exports(m, &mut out);
     if executable {
         if let Some(f) = m
             .unit
@@ -1489,8 +1652,8 @@ pub fn emit(m: &Mir, executable: bool) -> String {
             .iter()
             .find(|f| f.name == "main" && f.body.is_some())
         {
-            let call = cname(&f.name);
-            out.push_str(&format!("int main(void){{(void)dlm_native_thread_init();dn_boundary b={{0}};jmp_buf dn_jump;b.jump=&dn_jump;b.foreign_marker=dn_foreign_context;dn_current=&b;dn_fp_begin(&b);if(setjmp(dn_jump)){{dn_boundary_end(&b,1);fprintf(stderr,\"DLM native error: %s\\n\",dn_error);return 1;}}(void){call}();dn_boundary_end(&b,0);(void)dlm_native_runtime_shutdown();return 0;}}\n"));
+            let call = if f.async_ {format!("dn_block_on_{}({}())",key(&f.ret),cname(&f.name))} else {format!("{}()",cname(&f.name))};
+            out.push_str(&format!("int main(void){{(void)dlm_native_thread_init();dn_boundary b={{0}};jmp_buf dn_jump;b.jump=&dn_jump;b.foreign_marker=dn_foreign_context;dn_current=&b;dn_fp_begin(&b);if(setjmp(dn_jump)){{dn_boundary_end(&b,1);fprintf(stderr,\"DLM native error: %s\\n\",dn_error);return 1;}}(void){call};dn_boundary_end(&b,0);(void)dlm_native_runtime_shutdown();return 0;}}\n"));
         } else {
             out.push_str("int main(void){return 0;}\n");
         }
@@ -1561,6 +1724,7 @@ pub fn header(m: &Mir) -> String {
         typedef(t, &all, &m.unit.records, &mut done, &mut out);
     }
     out.push_str("#ifdef __cplusplus\nextern \"C\" {\n#endif\nconst char *dlm_native_last_error(void);\nvoid dlm_native_clear_error(void);\nuint32_t dlm_native_abi_version(void);\nuint64_t dlm_native_thread_init(void);\nuint64_t dlm_native_allocations(void);\nuint64_t dlm_native_frees(void);\nint dlm_native_cpu_profile(void);\nuint64_t dlm_native_live_allocations(void);\nbool dlm_native_runtime_init(void);\nbool dlm_native_runtime_shutdown(void);\n");
+    out.push_str(super::abi::HEADER);
     for f in &m.unit.functions {
         if let Some(s) = &f.export {
             writeln!(out, "{};", abi_signature(f, s)).unwrap();
@@ -1580,3 +1744,9 @@ pub fn header(m: &Mir) -> String {
         "#define DN_HEADER_ATOMIC(T) _Atomic(T)",
     )
 }
+
+include!("async_emit.rs");
+
+include!("shared_emit.rs");
+
+include!("parallel_emit.rs");
