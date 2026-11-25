@@ -3,7 +3,7 @@
 use super::*;
 use std::cell::RefCell;
 use std::rc::Rc;
-type Cell = Rc<RefCell<Value>>;
+pub(super) type Cell = Rc<RefCell<Value>>;
 pub struct WindowObject {
     table: Rc<RefCell<crate::window::WindowTable>>,
     id: u128,
@@ -46,7 +46,7 @@ impl Drop for ResourceObject {
         }
     }
 }
-fn dispose_cell(p: &Cell, t: &Ty, m: &Mir) {
+pub(super) fn dispose_cell(p: &Cell, t: &Ty, m: &Mir) {
     if !check::owned(t, &m.unit.records) {
         return;
     }
@@ -89,7 +89,12 @@ pub enum Value {
     Window(Rc<WindowObject>),
     Bound(Cell, std::thread::ThreadId),
     Resource(Rc<ResourceObject>),
-    Atomic(Cell),
+    Atomic(super::atomic_vm::AtomicValue),
+    Executor(std::sync::Arc<super::concurrent::Executor>),
+    Task(std::sync::Arc<super::concurrent::Task>),
+    Future(std::sync::Arc<super::async_vm::Future>),
+    Shared(std::sync::Arc<super::concurrent::Shared>),
+    Endpoint(std::sync::Arc<super::concurrent::Endpoint>),
 }
 fn cell(v: Value) -> Cell {
     Rc::new(RefCell::new(v))
@@ -142,10 +147,14 @@ pub struct Vm<'a> {
     owned_mir: Option<Rc<Mir>>,
     cleanup_errors: Rc<RefCell<Vec<String>>>,
     pub output: Vec<String>,
-    steps: u64,
-    limit: u64,
+    pub(super) steps: u64,
+    pub(super) limit: u64,
     depth: usize,
     windows: Rc<RefCell<crate::window::WindowTable>>,
+    pub(super) task_output: Option<std::sync::Arc<std::sync::Mutex<Vec<String>>>>,
+    pub(super) deterministic: bool,
+    pub(super) task_pool: Option<std::sync::Arc<super::concurrent::Pool>>,
+    pub(super) cancellation: Option<std::sync::Arc<super::concurrent::Cancellation>>,
 }
 impl<'a> Vm<'a> {
     pub fn new(mir: &'a Mir) -> Self {
@@ -157,14 +166,23 @@ impl<'a> Vm<'a> {
             steps: 0,
             limit: 100_000_000,
             depth: 0,
+            cancellation: None,
+            task_pool: None,
+            deterministic: false,
+            task_output: Default::default(),
             windows: Rc::new(RefCell::new(Default::default())),
         }
     }
+    pub fn with_deterministic_scheduler(mut self) -> Self {self.deterministic=true;self}
     pub fn with_step_limit(mut self, n: u64) -> Self {
         self.limit = n;
         self
     }
-    fn step(&mut self) -> Result<(), String> {
+    pub(super) fn flush_tasks(&mut self) {
+        if self.cancellation.is_none() {if let Some(output)=&self.task_output {self.output.extend(std::mem::take(&mut *output.lock().unwrap()));}}
+    }
+    pub(super) fn step(&mut self) -> Result<(), String> {
+        self.flush_tasks();
         if let Some(error) = self.cleanup_errors.borrow_mut().pop() {
             return Err(error);
         }
@@ -214,7 +232,7 @@ impl<'a> Vm<'a> {
             Ty::Simd(s, n) => Value::Seq(Rc::new(RefCell::new(
                 (0..*n).map(|_| cell(self.zero(&Ty::Scalar(*s)))).collect(),
             ))),
-            Ty::Atomic(t) => Value::Atomic(cell(self.zero(t))),
+            Ty::Atomic(t) => Value::Atomic(super::atomic_vm::AtomicValue::new(&self.zero(t)).expect("checked atomic type")),
             Ty::ThreadBound(t) => Value::Bound(cell(self.zero(t)), std::thread::current().id()),
             _ => Value::Null,
         }
@@ -235,6 +253,7 @@ impl<'a> Vm<'a> {
         if f.params.len() != args.len() {
             return Err("native argument arity mismatch".into());
         }
+        if f.async_ {return Ok(Value::Future(super::async_vm::Future::function(self.mir.clone(),&f,args)?));}
         if f.ordinary.is_some() {
             return super::bridge::call(self, &f, args);
         }
@@ -255,6 +274,7 @@ impl<'a> Vm<'a> {
             }
         }
         self.depth -= 1;
+        self.flush_tasks();
         if result.is_ok() {
             if let Some(error) = self.cleanup_errors.borrow_mut().pop() {
                 return Err(error);
@@ -268,11 +288,12 @@ impl<'a> Vm<'a> {
     }
     pub fn run(&mut self) -> Result<(), String> {
         if self.mir.unit.functions.iter().any(|f| f.name == "main") {
-            self.call("main", vec![])?;
+            let value=self.call("main", vec![])?;
+            if let Value::Future(future)=value {super::concurrent::block_on(self,future)?;}
         }
         Ok(())
     }
-    fn copy_value(&self, v: &Value, t: &Ty) -> Value {
+    pub(super) fn copy_value(&self, v: &Value, t: &Ty) -> Value {
         match (v, t) {
             (Value::Record(fields), Ty::Record(n)) => {
                 let r = self.mir.unit.records.iter().find(|r| r.name == *n).unwrap();
@@ -300,7 +321,7 @@ impl<'a> Vm<'a> {
             _ => v.clone(),
         }
     }
-    fn place(&mut self, e: &Expr, env: &mut BTreeMap<String, Cell>) -> Result<Cell, String> {
+    pub(super) fn place(&mut self, e: &Expr, env: &mut BTreeMap<String, Cell>) -> Result<Cell, String> {
         match &e.op {
             Op::Name(n) => env
                 .get(n)
@@ -363,9 +384,10 @@ impl<'a> Vm<'a> {
             _ => Err("not dense storage".into()),
         }
     }
-    fn expr(&mut self, e: &Expr, env: &mut BTreeMap<String, Cell>) -> Result<Value, String> {
+    pub(super) fn expr(&mut self, e: &Expr, env: &mut BTreeMap<String, Cell>) -> Result<Value, String> {
         self.step()?;
         match &e.op {
+            Op::Await(_) => unreachable!("await is lowered to a suspension graph"),
             Op::Number(n) => {
                 let n = n.replace('_', "");
                 let s = e.ty().scalar().unwrap();
@@ -388,8 +410,8 @@ impl<'a> Vm<'a> {
             Op::Bool(b) => Ok(Value::Bool(*b)),
             Op::Text(s) => Ok(Value::Text(s.clone())),
             Op::Name(n) => {
-                if ["Relaxed", "Acquire", "Release", "AcqRel", "SeqCst"].contains(&n.as_str()) {
-                    return Ok(Value::U(0));
+                if let Some(order) = super::atomic_vm::AtomicValue::ordering_literal(n) {
+                    return Ok(Value::U(order));
                 }
                 Ok(self.copy_value(&env.get(n).ok_or("unknown local")?.borrow(), e.ty()))
             }
@@ -455,6 +477,7 @@ impl<'a> Vm<'a> {
                 binary(op, av, bv, a.ty().scalar(), "checked")
             }
             Op::Call(n, types, args) => {
+                let declared = self.mir.unit.shadows_intrinsic(n);
                 if n == "call_trusted" {
                     let target = self.expr(&args[1], env)?;
                     let Value::Function(name) = target else {
@@ -465,6 +488,41 @@ impl<'a> Vm<'a> {
                         values.push(self.expr(a, env)?);
                     }
                     return self.call(&name, values);
+                }
+                if !declared && matches!(n.as_str(),"mutex_with"|"rw_read"|"rw_write") {
+                    let Value::Ref(handle)=self.expr(&args[0],env)? else {unreachable!()};let Value::Shared(shared)=handle.borrow().clone() else{unreachable!()};
+                    let Op::Name(name)=&args[1].op else{unreachable!()};let mut values=Vec::new();for arg in &args[2..]{values.push(self.expr(arg,env)?);}
+                    return shared.call(self,name,values,n!="rw_read");
+                }
+                if !declared && matches!(n.as_str(), "parallel_for" | "parallel_map") {
+                    let Value::Ref(pool) = self.expr(&args[0], env)? else { unreachable!() };
+                    let Value::Executor(pool) = pool.borrow().clone() else { return Err("closed executor".into()) };
+                    let mut bounds = [0; 3];
+                    for (dst, arg) in bounds.iter_mut().zip(&args[1..4]) {
+                        *dst = usize::try_from(self.expr(arg, env)?.unsigned()?)
+                            .map_err(|_| "parallel range exceeds host address width")?;
+                    }
+                    let Op::Name(name) = &args[4].op else { unreachable!() };
+                    let mut captures = Vec::new();
+                    for arg in &args[5..] { captures.push(self.expr(arg, env)?); }
+                    return super::concurrent::parallel(self, &pool, name, bounds, captures, n == "parallel_map");
+                }
+                if !declared && n=="spawn_blocking" {
+                    let Op::Name(name)=&args[0].op else{unreachable!()};let mut values=Vec::new();for arg in &args[1..]{values.push(super::concurrent::Wire::take(self.expr(arg,env)?)?);}
+                    let pool=self.task_pool.as_ref().ok_or("blocking task requires an async scope")?.clone();
+                    return Ok(Value::Task(pool.spawn_blocking(self.mir.clone(),name.clone(),values,self.limit,self.task_output.get_or_insert_with(Default::default).clone())?));
+                }
+                if !declared && n == "spawn" {
+                    let Value::Ref(pool)=self.expr(&args[0],env)? else {unreachable!()};
+                    let Value::Executor(pool)=pool.borrow().clone() else {return Err("closed executor".into())};
+                    if matches!(args[1].ty(),Ty::Future(_)) {
+                        let Value::Future(future)=self.expr(&args[1],env)? else {unreachable!()};
+                        return Ok(Value::Task(pool.pool.spawn_future(future,self.limit,self.task_output.get_or_insert_with(Default::default).clone())));
+                    }
+                    let Op::Name(name)=&args[1].op else {unreachable!()};
+                    let mut values=Vec::new();
+                    for arg in &args[2..] { values.push(super::concurrent::Wire::take(self.expr(arg,env)?)?); }
+                    return Ok(Value::Task(pool.spawn(self.mir.clone(),name.clone(),values,self.limit,self.task_output.get_or_insert_with(Default::default).clone())));
                 }
                 if n == "fn_ptr" {
                     let Op::Name(n) = &args[0].op else {
@@ -510,10 +568,15 @@ impl<'a> Vm<'a> {
                     .collect(),
             ));
         }
+        if n == "cast_exact" {
+            return cast_exact(&v[0], args[0].ty().scalar().unwrap(), ret.scalar().unwrap());
+        }
         if n == "cast" || Scalar::parse(n).is_some() {
             return cast(&v[0], ret.scalar().unwrap());
         }
+        if let Some(result)=super::concurrent::intrinsic(self,n,&v,ret) { return result; }
         match n {
+            "db_native_pool" | "db_native_pool_clone" | "db_native_pool_handle" => Err("SQL provider requires native execution; use dlm build".into()),
             "size_of" | "align_of" => {
                 let (size, align) = check::layout_ty(
                     &types[0],
@@ -523,6 +586,7 @@ impl<'a> Vm<'a> {
                 )?;
                 Ok(Value::U(if n == "size_of" { size } else { align } as u64))
             }
+            "abi_fingerprint" => Ok(Value::Text(self.mir.layout_contract(&types[0])?.fingerprint.to_string())),
             "abi_version" => {
                 let Ty::Record(name) = &types[0] else {
                     unreachable!()
@@ -781,40 +845,11 @@ impl<'a> Vm<'a> {
             "address" | "ptr_offset" | "foreign" => {
                 Err("foreign addresses require a native host; use dlm build".into())
             }
-            "atomic" => Ok(Value::Atomic(cell(v[0].clone()))),
-            "atomic_load"
-            | "atomic_store"
-            | "atomic_exchange"
-            | "atomic_compare_exchange"
-            | "atomic_is_lock_free" => {
-                let Value::Ref(a) = &v[0] else { unreachable!() };
-                let Value::Atomic(a) = a.borrow().clone() else {
-                    unreachable!()
-                };
-                let old = a.borrow().clone();
-                match n {
-                    "atomic_load" => Ok(old),
-                    "atomic_store" => {
-                        *a.borrow_mut() = v[1].clone();
-                        Ok(Value::Unit)
-                    }
-                    "atomic_exchange" => {
-                        *a.borrow_mut() = v[1].clone();
-                        Ok(old)
-                    }
-                    "atomic_compare_exchange" => {
-                        let eq = if matches!(old, Value::F(_) | Value::F32(_)) {
-                            bits(&old)? == bits(&v[1])?
-                        } else {
-                            binary("==", old, v[1].clone(), None, "checked")?.bool()?
-                        };
-                        if eq {
-                            *a.borrow_mut() = v[2].clone();
-                        }
-                        Ok(Value::Bool(eq))
-                    }
-                    _ => Ok(Value::Bool(true)),
-                }
+            "atomic" => Ok(Value::Atomic(super::atomic_vm::AtomicValue::new(&v[0])?)),
+            "atomic_load" | "atomic_store" | "atomic_exchange" | "atomic_compare_exchange" | "atomic_is_lock_free" => {
+                let Value::Ref(cell) = &v[0] else { unreachable!() };
+                let Value::Atomic(atomic) = cell.borrow().clone() else { unreachable!() };
+                atomic.call(n, &v[1..])
             }
             "simd_splat" => {
                 let Ty::Simd(_, n) = ret else { unreachable!() };
@@ -993,6 +1028,22 @@ impl<'a> Vm<'a> {
                     0,
                     n,
                 ))
+            }
+            "parse_decimal_f64" => {
+                let (data, start, len) = self.storage(v[0].clone())?;
+                if len == 0 || len > 16 * 1024 * 1024 {
+                    return Ok(Value::F(f64::NAN));
+                }
+                let mut bytes = Vec::with_capacity(len);
+                for c in &data.borrow()[start..start + len] {
+                    let b = c.borrow().unsigned()? as u8;
+                    if !matches!(b, b'0'..=b'9' | b'+' | b'-' | b'.' | b'e' | b'E') {
+                        return Ok(Value::F(f64::NAN));
+                    }
+                    bytes.push(b);
+                }
+                let value = std::str::from_utf8(&bytes).ok().and_then(|s| s.parse::<f64>().ok());
+                Ok(Value::F(value.unwrap_or(f64::NAN)))
             }
             n if n.starts_with("wrapping_") || n.starts_with("saturating_") => binary(
                 match n.split('_').nth(1).unwrap() {
@@ -1182,6 +1233,20 @@ fn cast(v: &Value, s: Scalar) -> Result<Value, String> {
             .map_err(|_| "numeric conversion out of range".into()),
         _ => Err("numeric conversion requires a scalar".into()),
     }
+}
+fn cast_exact(v: &Value, source: Scalar, target: Scalar) -> Result<Value, String> {
+    let result = cast(v, target)?;
+    if source == target || (!source.float() && !target.float()) { return Ok(result); }
+    let loss = || "numeric conversion loses precision".to_string();
+    let back = cast(&result, source).map_err(|_| loss())?;
+    let exact = match (v, back) {
+        (Value::F(a), Value::F(b)) => a.to_bits() == b.to_bits(),
+        (Value::F32(a), Value::F32(b)) => *a == b,
+        (Value::U(a), Value::U(b)) => *a == b,
+        (Value::I(a), Value::I(b)) => *a == b,
+        _ => false,
+    };
+    if exact { Ok(result) } else { Err(loss()) }
 }
 fn binary(op: &str, a: Value, b: Value, s: Option<Scalar>, mode: &str) -> Result<Value, String> {
     if let (Value::Bool(a), Value::Bool(b)) = (&a, &b) {

@@ -194,6 +194,7 @@ pub struct Runtime {
     /// v0.125: `dlm run --interactive`: stdin is read on demand and output
     /// lines are written as they are produced (long-running loops).
     interactive: bool,
+    deterministic_scheduler: bool,
     /// v0.126: TCP listeners and connections (`net_*`).
     net: crate::os::NetTable,
     /// v0.126: background child processes (`proc_spawn` ...).
@@ -220,6 +221,11 @@ impl Runtime {
     /// v0.125: read stdin on demand and stream output (`dlm run --interactive`).
     pub fn interactive(mut self) -> Self {
         self.interactive = true;
+        self
+    }
+
+    pub fn with_deterministic_scheduler(mut self) -> Self {
+        self.deterministic_scheduler = true;
         self
     }
 
@@ -280,6 +286,7 @@ impl Runtime {
         on_runtime_thread(move||{let mut runtime=Runtime::new();for dependency in program.dependencies(){for item in &dependency.items{if let ModuleItem::Theory(t)=item{runtime.declare_theory(t);}}}runtime.execute_module(program.root())?;runtime.apply_native_bridge(&theory,&name,values,line)})
     }
     pub fn run_program(mut self, program: &crate::program::Program) -> Result<RunReport, Diagnostic> {
+        let deterministic = self.deterministic_scheduler;
         on_runtime_thread(move || {
             for dependency in program.dependencies() {
                 for item in &dependency.items {
@@ -291,6 +298,7 @@ impl Runtime {
             let native = crate::native::check_program(program).map_err(|d| d.into_iter().next().unwrap())?;
             let mut report = if native.unit.ordinary_program.is_some(){RunReport{module_name:program.root().name.clone(),theory_count:0,values_evaluated:0,output:vec![],main:None}}else{self.run_module_on_current_thread(program.root())?};
             let mut vm = crate::native::vm::Vm::new(&native);
+            if deterministic { vm = vm.with_deterministic_scheduler(); }
             vm.run().map_err(|e| crate::native::error(1,e))?;
             report.output.extend(vm.output);
             Ok(report)
@@ -481,6 +489,7 @@ impl Runtime {
             let result = checked.and_then(|native| {
                 let mut report=if native.unit.ordinary_program.is_some(){RunReport{module_name:program.root().name.clone(),theory_count:0,values_evaluated:0,output:vec![],main:None}}else{self.execute_module(program.root())?};
                 let mut vm = crate::native::vm::Vm::new(&native);
+                if self.deterministic_scheduler { vm = vm.with_deterministic_scheduler(); }
                 let result = vm.run();
                 report.output.extend(vm.output);
                 match result { Ok(()) => Ok(report), Err(e) => { self.output = report.output; Err(crate::native::error(1,e)) } }

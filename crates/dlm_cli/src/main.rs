@@ -29,8 +29,8 @@ fn main() {
             run_check(&path, policy);
         }
         "run" => {
-            let (policy, path, stdin) = parse_run_args(&args[2..]);
-            run_program(&path, stdin, policy);
+            let (policy, path, stdin, deterministic) = parse_run_args(&args[2..]);
+            run_program(&path, stdin, policy, deterministic);
         }
         "explain" => {
             let (policy, path) = parse_check_args(&args[2..]);
@@ -134,10 +134,11 @@ fn parse_check_args(args: &[String]) -> (CheckPolicy, String) {
 
 static INTERACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-fn parse_run_args(args: &[String]) -> (CheckPolicy, String, String) {
+fn parse_run_args(args: &[String]) -> (CheckPolicy, String, String, bool) {
     let mut policy = CheckPolicy::research();
     let mut path: Option<String> = None;
     let mut stdin = String::new();
+    let mut deterministic = false;
 
     let mut i = 0usize;
     while i < args.len() {
@@ -155,6 +156,7 @@ fn parse_run_args(args: &[String]) -> (CheckPolicy, String, String) {
             }
             // v0.125: live stdin and streamed output for long-running loops
             "--interactive" => INTERACTIVE.store(true, std::sync::atomic::Ordering::Relaxed),
+            "--deterministic-scheduler" => deterministic = true,
             "--stdin" => {
                 i += 1;
                 if i >= args.len() {
@@ -200,7 +202,7 @@ fn parse_run_args(args: &[String]) -> (CheckPolicy, String, String) {
         eprintln!("error: dlm run expects one .dlm file path");
         print_usage_and_exit(2);
     };
-    (policy, path, stdin)
+    (policy, path, stdin, deterministic)
 }
 
 /// v0.80: the module at `path` and the modules it imports.
@@ -597,7 +599,7 @@ fn run_project(args: &[String]) {
     }
 }
 
-fn run_program(path: &str, stdin: String, policy: CheckPolicy) {
+fn run_program(path: &str, stdin: String, policy: CheckPolicy, deterministic: bool) {
     let program = load_program(path);
 
     let check_report = Checker::with_policy(policy).check_program(&program);
@@ -612,6 +614,7 @@ fn run_program(path: &str, stdin: String, policy: CheckPolicy) {
     let program_args = PROGRAM_ARGS.lock().expect("program args").clone();
     let interactive = INTERACTIVE.load(std::sync::atomic::Ordering::Relaxed);
     let runtime = Runtime::with_stdin(stdin).with_args(program_args);
+    let runtime = if deterministic { runtime.with_deterministic_scheduler() } else { runtime };
     let runtime = if interactive { runtime.interactive() } else { runtime };
     match runtime.run_program_partial(&program) {
         Ok(report) if interactive => {
@@ -670,7 +673,7 @@ fn print_usage_and_exit(code: i32) -> ! {
     eprintln!("usage:");
     eprintln!("  dlm check [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm>");
     eprintln!(
-        "  dlm run [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm> [--stdin <text>|--stdin-file <path>|--interactive] [-- args...]"
+        "  dlm run [--trusted-only|--allow-axioms|--allow-unsafe] [--deterministic-scheduler] <file.dlm> [--stdin <text>|--stdin-file <path>|--interactive] [-- args...]"
     );
     eprintln!("  dlm explain [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm>");
     eprintln!("  dlm certify [--trusted-only|--allow-axioms|--allow-unsafe] <file.dlm>");

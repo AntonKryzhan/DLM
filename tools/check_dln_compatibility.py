@@ -36,6 +36,49 @@ REVIEWED_SOURCE_UPDATES = {
     ),
 }
 
+# Admit only the reviewed cumulative v0.150.0 native extensions, without
+# rewriting any historical DLN baseline or weakening the old network C ABI gate.
+REVIEWED_NATIVE_S2_UPDATES = {
+    "crates/dlm_core/src/native/check.rs": (
+        ("d524a11875ddc1d881b6316073a28926d75772ec21ffdc6cd151e02c8a2dc99c",),
+        "2c12f89e4441d275ae4c64c4be1d305dc18fe5e0144ec37afa04caca230b8a4e",
+        "v0.150.0 checked parallel, async, ownership, ABI, SQL and HTTP intrinsics",
+    ),
+    "crates/dlm_core/src/native/emit.rs": (
+        (
+            "ff5bf192c9ffdf52a3cd1a8282ff73c5c7ca085ec6426a31d069a8223906aed5",
+            "4ab50592188ff2bdd88fda1f0418a08a48713a21c13a40359c2e2d2aba8b323e",
+        ),
+        "25dfc80490556ec152c8b48e8d1465e121d7ce572d92dc6c5c33e3f456d4d008",
+        "v0.150.0 parallel, async, SQL and HTTP native emission",
+    ),
+    "crates/dlm_core/src/native/mod.rs": (
+        ("2e9c9ad203bd2ef252fd9d0f076e1bdea8a4df548826a84422fd2098dc46d9ed",),
+        "bba097c9064260010720f70005fb7e42a663e8fda7116ee8e4429ab0be26f388",
+        "v0.150.0 native concurrency and database type declarations",
+    ),
+    "crates/dlm_core/src/native/runtime.c": (
+        ("1b8621c82b50a824cb5fab5bfac89689a5fe7ce9e0339a8c3eb1b52946c43265",),
+        "4bed4ed58c12c4540d35de239cbf95f2883d1b10d5a53cfa5d1bad9468e3bf4a",
+        "v0.150.0 locale-independent decimal parsing for JSON",
+    ),
+    "crates/dlm_core/src/native/syntax.rs": (
+        ("5757b4aa201ce0754f8202e22d818ddc18bad905897bd40078ccfd5f58496e16",),
+        "b456964e5ef2f0c51e856e99f43117ed3cc38752f3bb494a4e53e6d3e0d03900",
+        "v0.150.0 concurrency and DbPool native type syntax",
+    ),
+    "crates/dlm_core/src/native/vm.rs": (
+        ("bf1ad257925ec86e6cf590cd4417f14447adbe6d0452d49d161cbc7de4f15250",),
+        "5d567045aa413d6905ec7e4bfbd95734e7fef90ebcfc5a8bb9167cd6de22ece9",
+        "v0.150.0 parallel, async and JSON native VM integration",
+    ),
+    "crates/dlm_core/src/runtime.rs": (
+        ("ce2b1acb4ca6224db4f7681f83753acc58b0157ff2715576101ce7f4fb391f47",),
+        "a3886ab10002f2fafa9e14edf614950abdd8a84a22067fe812c1d0cd32b2f911",
+        "v0.150.0 native concurrency runtime integration",
+    ),
+}
+
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -104,9 +147,14 @@ def check(root, snapshot):
         if not path.is_file():
             failures.append("missing protected file: " + relative)
         elif digest(path.read_bytes()) != expected:
+            current_digest = digest(path.read_bytes())
             update = REVIEWED_SOURCE_UPDATES.get(relative)
-            if update and expected == update[0] and digest(path.read_bytes()) == update[1]:
+            if update and expected == update[0] and current_digest == update[1]:
                 reviewed.append({"path": relative, "baseline_sha256": update[0], "current_sha256": update[1], "reason": update[2]})
+                continue
+            update = REVIEWED_NATIVE_S2_UPDATES.get(relative)
+            if update and expected in update[0] and current_digest == update[1]:
+                reviewed.append({"path": relative, "baseline_sha256": expected, "current_sha256": update[1], "reason": update[2]})
                 continue
             normalized = path.read_bytes()
             if relative == "crates/dlm_core/src/native/emit.rs":

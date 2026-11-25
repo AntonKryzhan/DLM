@@ -1,8 +1,13 @@
 //! Native application execution domain. Source, checked core and representation
 //! remain separate from the mathematical (passport-carrying) value domain.
+pub mod abi;
 pub mod bridge;
 pub mod build;
 pub mod check;
+mod atomic_vm;
+mod concurrent;
+mod async_core;
+mod async_vm;
 pub mod emit;
 pub mod syntax;
 pub mod vm;
@@ -126,6 +131,14 @@ pub enum Ty {
     Unit,
     Str,
     Window,
+    Executor,
+    DbPool,
+    Task(Box<Ty>),
+    Future(Box<Ty>),
+    Mutex(Box<Ty>),
+    RwLock(Box<Ty>),
+    Sender(Box<Ty>),
+    Receiver(Box<Ty>),
     ThreadBound(Box<Ty>),
     Resource(Box<Ty>, String),
     Record(String),
@@ -154,7 +167,13 @@ impl Ty {
     }
     pub fn element(&self) -> Option<&Ty> {
         match self {
-            Self::ThreadBound(t)
+            Self::Task(t)
+            | Self::Future(t)
+            | Self::Mutex(t)
+            | Self::RwLock(t)
+            | Self::Sender(t)
+            | Self::Receiver(t)
+            | Self::ThreadBound(t)
             | Self::Resource(t, _)
             | Self::Array(t, _)
             | Self::Buffer(t)
@@ -186,6 +205,8 @@ impl Ty {
             Self::Unit => "Unit".into(),
             Self::Str => "Utf8".into(),
             Self::Window => "Window".into(),
+            Self::Executor => "Executor".into(),
+            Self::DbPool => "DbPool".into(),
             Self::Record(s) => s.clone(),
             Self::Handle => "OpaqueHandle".into(),
             Self::Resource(t, finalizer) => format!("Resource<{},{}>", t.name(), finalizer),
@@ -201,6 +222,12 @@ impl Ty {
             ),
             _ => {
                 let (n, t) = match self {
+                    Self::Mutex(t) => ("Mutex", t),
+                    Self::RwLock(t) => ("RwLock", t),
+                    Self::Future(t) => ("Future", t),
+                    Self::Task(t) => ("Task", t),
+                    Self::Sender(t) => ("Sender", t),
+                    Self::Receiver(t) => ("Receiver", t),
                     Self::ThreadBound(t) => ("ThreadBound", t),
                     Self::Split(t) => ("Split", t),
                     Self::Buffer(t) => ("Buffer", t),
@@ -232,6 +259,10 @@ impl Unit {
     pub fn is_empty(&self) -> bool {
         self.records.is_empty() && self.functions.is_empty()
     }
+    pub(super) fn shadows_intrinsic(&self, name: &str) -> bool {
+        check::contextual_builtin(name) && (self.functions.iter().any(|f| f.name == name)
+            || self.records.iter().any(|r| r.name == name))
+    }
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Record {
@@ -246,6 +277,7 @@ pub struct Record {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Function {
+    pub async_: bool,
     pub name: String,
     pub params: Vec<(String, Ty)>,
     pub ret: Ty,
@@ -288,6 +320,7 @@ pub enum Op {
     IndexProven(Box<Expr>, Box<Expr>),
     Borrow(Box<Expr>, bool),
     Move(Box<Expr>),
+    Await(Box<Expr>),
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Stmt {
