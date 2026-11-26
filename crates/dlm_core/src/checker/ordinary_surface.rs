@@ -93,7 +93,8 @@ pub const ORDINARY_BUILTINS: &[&str] = &[
     "fl_of_nat", "fl_of_int", "fl_lit", "fl_parse", "fl_add", "fl_sub", "fl_mul", "fl_div", "fl_neg", "fl_abs", "fl_min", "fl_max", "fl_sqrt", "fl_exp", "fl_log", "fl_sin", "fl_cos", "fl_tan", "fl_atan", "fl_atan2", "fl_pow", "fl_floor", "fl_ceil", "fl_round", "fl_trunc", "fl_lt", "fl_le", "fl_eq", "fl_is_nan", "fl_is_finite", "fl_to_text", "fl_to_int", "fl_bits", "fl_from_bits", "fv_new", "fv_from_list", "fv_to_list", "fv_len", "fv_get", "fv_set", "fv_add", "fv_sub", "fv_mul", "fv_scale", "fv_axpy", "fv_dot", "fv_sum", "fv_norm", "fv_max", "fv_min", "fv_slice", "fv_concat", "fv_matmul", "fv_transpose", "fv_empty", "fv_solve",
     "nv_empty", "nv_new", "nv_from_list", "nv_to_list", "nv_len", "nv_get", "nv_set", "nv_push", "nv_slice", "nv_concat", "nv_range", "nv_sum", "nv_max", "nv_min", "nv_sort", "nv_reverse", "nv_find", "nv_to_fv", "gr_bfs", "gr_dfs", "gr_toposort", "gr_components", "gr_scc", "gr_bipartite", "gr_dijkstra", "gr_bellman_ford", "gr_floyd", "gr_mst", "gr_maxflow",
     "la_lu", "la_lu_perm", "la_det", "la_inverse", "la_cholesky", "la_qr_q", "la_qr_r", "la_lstsq", "la_eigh_values", "la_eigh_vectors", "la_svd_values", "la_rank", "la_identity", "la_trace", "la_csr_matvec", "la_cg",
-    "fft_forward", "fft_inverse", "fft_convolve", "lp_solve", "lp_status",
+    "fft_forward", "fft_inverse", "fft_convolve", "ntt_convolve", "lp_solve", "lp_status",
+    "fv_matmul_bounded", "la_csr_matvec_bounded", "la_solve_certified", "fft_bounded", "fft_convolve_bounded", "fft_convolve_integer", "ntt_convolve_accel",
     "nt_gcd", "nt_lcm", "nt_mod_mul", "nt_mod_pow", "nt_mod_inv", "nt_is_prime", "nt_next_prime", "nt_factor", "nt_totient", "nt_divisors", "nt_primes", "nt_crt", "nt_sqrt_mod", "nt_isqrt", "pf_add", "pf_sub", "pf_mul", "pf_div", "pf_rem", "pf_gcd", "pf_powmod", "pf_eval", "pf_irreducible", "pm_compose", "pm_inverse", "pm_power", "pm_order", "pm_sign", "pm_cycle_type", "pm_orbit", "pm_group_order",
     "sat_solve", "sat_status", "tp_homology", "tp_rips",
     "gb_basis", "gb_reduce", "mv_add", "mv_sub", "mv_mul", "mv_normalize",
@@ -246,6 +247,7 @@ pub const FLOAT_BUILTINS: &[(&str, &[&str], &str)] = &[
     ("fv_slice", &["FloatVec", "Nat", "Nat"], "Option<FloatVec>"),
     ("fv_concat", &["FloatVec", "FloatVec"], "Option<FloatVec>"),
     ("fv_matmul", &["FloatVec", "FloatVec", "Nat", "Nat", "Nat"], "Option<FloatVec>"),
+    ("fv_matmul_bounded", &["FloatVec", "FloatVec", "Nat", "Nat", "Nat", "Float"], "Option<Pair<FloatVec,Pair<Float,Bool>>>"),
     ("fv_transpose", &["FloatVec", "Nat", "Nat"], "Option<FloatVec>"),
     ("fv_empty", &[], "FloatVec"),
     ("fv_solve", &["FloatVec", "FloatVec", "Nat"], "Option<FloatVec>"),
@@ -302,11 +304,18 @@ pub const LINALG_BUILTINS: &[(&str, &[&str], &str)] = &[
     ("la_identity", &["Nat"], "Option<FloatVec>"),
     ("la_trace", &["FloatVec", "Nat"], "Option<Float>"),
     ("la_csr_matvec", &["NatVec", "NatVec", "FloatVec", "FloatVec"], "Option<FloatVec>"),
+    ("la_csr_matvec_bounded", &["NatVec", "NatVec", "FloatVec", "FloatVec", "Float"], "Option<Pair<FloatVec,Pair<Float,Bool>>>"),
+    ("la_solve_certified", &["FloatVec", "FloatVec", "Nat", "Float"], "Option<Pair<FloatVec,Pair<Float,Bool>>>"),
     ("la_cg", &["NatVec", "NatVec", "FloatVec", "FloatVec", "Float", "Nat"], "Option<FloatVec>"),
     // v0.117: Fourier transforms and linear programming (docs/ANALYSIS.md)
     ("fft_forward", &["FloatVec"], "Option<FloatVec>"),
     ("fft_inverse", &["FloatVec"], "Option<FloatVec>"),
     ("fft_convolve", &["FloatVec", "FloatVec"], "Option<FloatVec>"),
+    ("fft_bounded", &["FloatVec", "Bool", "Float"], "Option<Pair<FloatVec,Pair<Float,Bool>>>"),
+    ("fft_convolve_bounded", &["FloatVec", "FloatVec", "Float"], "Option<Pair<FloatVec,Pair<Float,Bool>>>"),
+    ("fft_convolve_integer", &["FloatVec", "FloatVec"], "Option<FloatVec>"),
+    ("ntt_convolve", &["NatVec", "NatVec"], "Option<NatVec>"),
+    ("ntt_convolve_accel", &["NatVec", "NatVec"], "Option<Pair<NatVec,Bool>>"),
     ("lp_solve", &["FloatVec", "FloatVec", "FloatVec", "Nat", "Nat"], "Option<FloatVec>"),
     ("lp_status", &["FloatVec", "FloatVec", "FloatVec", "Nat", "Nat"], "Nat"),
     // v0.118: number theory, polynomials over F_p, permutation groups (docs/ALGEBRA.md)
@@ -580,7 +589,9 @@ pub(crate) fn builtin_effect(name: &str) -> Option<(FunctionEffectKind, &'static
         f if f.starts_with("win_") && FILE_BUILTINS.iter().any(|(n, _, _)| *n == f) => Some((FunctionEffectKind::Io, "window", false)),
         "tbuf_new" | "tbuf_len" | "tbuf_finish" => Some((FunctionEffectKind::Runtime, "text_buffer", false)),
         "copy_to_gpu" | "gpu_upload" | "upload_to_gpu" | "copy_from_gpu" | "gpu_download" | "download_from_gpu"
-        | "launch_kernel" | "gpu_launch" | "run_kernel" => Some((FunctionEffectKind::GpuExecution, "gpu", false)),
+        | "launch_kernel" | "gpu_launch" | "run_kernel" | "fv_matmul_bounded" | "fft_bounded"
+        | "fft_convolve_bounded" | "la_csr_matvec_bounded" | "ntt_convolve_accel" =>
+            Some((FunctionEffectKind::GpuExecution, "gpu", false)),
         "deploy_portable" | "deploy_on" | "schedule" | "migrate" | "live_migrate" | "materialize_remote"
         | "checkpoint_remote" | "restore_remote" => Some((FunctionEffectKind::RemoteExecution, "remote", false)),
         _ => None,
@@ -1676,7 +1687,7 @@ impl Checker {
                 let ty = if name == "buf_append" { "ByteBuf" } else { "Bool" };
                 Ok(typed_value(theory, ty, &[&a, &b], format!("prelude:buf.{}", &name[4..])))
             }
-            float if float.starts_with("fl_") || float.starts_with("fv_") || float.starts_with("nv_") || float.starts_with("gr_") || float.starts_with("la_") || float.starts_with("fft_") || float.starts_with("lp_") || float.starts_with("nt_") || float.starts_with("pf_") || float.starts_with("pm_") || float.starts_with("sat_") || float.starts_with("tp_") || float.starts_with("gb_") || float.starts_with("mv_") || float.starts_with("ilp_") || float.starts_with("km_") || float.starts_with("tm_") || float.starts_with("geo_") || float.starts_with("kd_") || float.starts_with("fft2_") || float.starts_with("sig_") || float.starts_with("bvh_") || float.starts_with("gx_") || float.starts_with("vx_") => {
+            float if float.starts_with("fl_") || float.starts_with("fv_") || float.starts_with("nv_") || float.starts_with("gr_") || float.starts_with("la_") || float.starts_with("fft_") || float.starts_with("ntt_") || float.starts_with("lp_") || float.starts_with("nt_") || float.starts_with("pf_") || float.starts_with("pm_") || float.starts_with("sat_") || float.starts_with("tp_") || float.starts_with("gb_") || float.starts_with("mv_") || float.starts_with("ilp_") || float.starts_with("km_") || float.starts_with("tm_") || float.starts_with("geo_") || float.starts_with("kd_") || float.starts_with("fft2_") || float.starts_with("sig_") || float.starts_with("bvh_") || float.starts_with("gx_") || float.starts_with("vx_") => {
                 let (_, params, ret) = FLOAT_BUILTINS.iter().chain(GRAPH_BUILTINS.iter()).chain(LINALG_BUILTINS.iter()).find(|(n, _, _)| *n == float).expect("float builtin");
                 arity(name, args, params.len(), line)?;
                 let mut inputs = Vec::new();
@@ -1685,7 +1696,8 @@ impl Checker {
                     inputs.push(self.expect_type(arg, theory, name, ty, kind)?);
                 }
                 let refs: Vec<&Passport> = inputs.iter().collect();
-                let mut result = typed_value(theory, ret, &refs, format!("prelude:{}.{}", if name.starts_with("gb_") || name.starts_with("mv_") { "groebner" } else if name.starts_with("sat_") || name.starts_with("tp_") { "combinatorics" } else if name.starts_with("ilp_") { "linalg" } else if name.starts_with("km_") || name.starts_with("tm_") { "maps" } else if name.starts_with("geo_") || name.starts_with("kd_") || name.starts_with("bvh_") { "geometry" } else if name.starts_with("gx_") || name.starts_with("vx_") { "gfx" } else if name.starts_with("fft2_") || name.starts_with("sig_") { "signal" } else if name.starts_with("nt_") || name.starts_with("pf_") || name.starts_with("pm_") { "number" } else if name.starts_with("la_") || name.starts_with("fft_") || name.starts_with("lp_") { "linalg" } else if name.starts_with("nv_") || name.starts_with("gr_") { "graph" } else { "float" }, &name[3..]));
+                let operation = if name.starts_with("ntt_") { name } else { &name[3..] };
+                let mut result = typed_value(theory, ret, &refs, format!("prelude:{}.{}", if name.starts_with("gb_") || name.starts_with("mv_") { "groebner" } else if name.starts_with("sat_") || name.starts_with("tp_") { "combinatorics" } else if name.starts_with("ilp_") { "linalg" } else if name.starts_with("km_") || name.starts_with("tm_") { "maps" } else if name.starts_with("geo_") || name.starts_with("kd_") || name.starts_with("bvh_") { "geometry" } else if name.starts_with("gx_") || name.starts_with("vx_") { "gfx" } else if name.starts_with("fft2_") || name.starts_with("sig_") || name.starts_with("ntt_") { "signal" } else if name.starts_with("nt_") || name.starts_with("pf_") || name.starts_with("pm_") { "number" } else if name.starts_with("la_") || name.starts_with("fft_") || name.starts_with("lp_") { "linalg" } else if name.starts_with("nv_") || name.starts_with("gr_") { "graph" } else { "float" }, operation));
                 if *ret == "Nat" {
                     result.capabilities = nat_caps(true);
                 }

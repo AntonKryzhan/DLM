@@ -1,0 +1,115 @@
+#version 450
+#ifdef DLM_NTT
+#extension GL_ARB_gpu_shader_int64 : require
+#define Element uint
+#else
+#ifdef DLM_DOUBLE
+#extension GL_ARB_gpu_shader_fp64 : require
+#define Element double
+#define Complex dvec2
+#else
+#define Element float
+#define Complex vec2
+#endif
+#endif
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) buffer Left { Element a[]; };
+layout(std430, binding = 1) buffer Right { Element b[]; };
+layout(std430, binding = 2) buffer FactorsOrOutput { Element c[]; };
+layout(std430, binding = 3) readonly buffer Indices { uint index_data[]; };
+layout(push_constant) uniform Job { uint op, n, inner, columns, step, offset, paired, bits; } job;
+
+#ifdef DLM_NTT
+const uint P = 998244353u;
+uint multiply(uint x, uint y) { return uint(uint64_t(x) * uint64_t(y) % uint64_t(P)); }
+uint load_value(uint i, bool second) { return second ? b[i] : a[i]; }
+void put(uint i, uint value, bool second) {
+    if (second) b[i] = value;
+    else a[i] = value;
+}
+#else
+Complex multiply(Complex x, Complex y) {
+    precise Element real_part = x.x * y.x - x.y * y.y;
+    precise Element imag_part = x.x * y.y + x.y * y.x;
+    return Complex(real_part, imag_part);
+}
+Complex load_value(uint i, bool second) {
+    return second ? Complex(b[2 * i], b[2 * i + 1]) : Complex(a[2 * i], a[2 * i + 1]);
+}
+void put(uint i, Complex value, bool second) {
+    if (second) { b[2 * i] = value.x; b[2 * i + 1] = value.y; }
+    else { a[2 * i] = value.x; a[2 * i + 1] = value.y; }
+}
+#endif
+
+void reorder(uint i, bool second) {
+    uint j = bitfieldReverse(i) >> (32u - job.bits);
+    if (j > i) {
+#ifdef DLM_NTT
+        uint v = load_value(j, second);
+#else
+        Complex v = load_value(j, second);
+#endif
+        put(j, load_value(i, second), second);
+        put(i, v, second);
+    }
+}
+
+void butterfly(uint i, bool second) {
+    uint half_step = job.step / 2;
+    uint j = i % half_step;
+    uint left = (i / half_step) * job.step + j;
+    uint right = left + half_step;
+#ifdef DLM_NTT
+    uint u = load_value(left, second);
+    uint v = multiply(load_value(right, second), c[job.offset + j]);
+    uint sum = u + v;
+    put(left, sum >= P ? sum - P : sum, second);
+    put(right, u >= v ? u - v : u + P - v, second);
+#else
+    uint factor = job.offset + 2 * j;
+    Complex u = load_value(left, second);
+    Complex v = multiply(load_value(right, second), Complex(c[factor], c[factor + 1]));
+    precise Complex sum = u + v;
+    precise Complex difference = u - v;
+    put(left, sum, second);
+    put(right, difference, second);
+#endif
+}
+
+void main() {
+    uint i = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * (64 * gl_NumWorkGroups.x);
+#ifndef DLM_NTT
+    if (job.op == 0) {
+        if (i >= job.n) return;
+        precise Element sum = Element(0);
+        for (uint j = index_data[i]; j < index_data[i + 1]; j++) {
+            precise Element product = a[j] * b[index_data[job.n + 1 + j]];
+            sum = sum + product;
+        }
+        c[i] = sum;
+        return;
+    }
+#endif
+    if (job.op == 2) {
+        if (i >= job.n / 2) return;
+        butterfly(i, false);
+        if (job.paired != 0) butterfly(i, true);
+        return;
+    }
+    if (i >= job.n) return;
+    if (job.op == 1) {
+        reorder(i, false);
+        if (job.paired != 0) reorder(i, true);
+    } else if (job.op == 3) {
+        put(i, multiply(load_value(i, false), load_value(i, true)), false);
+    } else {
+#ifdef DLM_NTT
+        put(i, multiply(load_value(i, false), c[job.offset]), false);
+#else
+        precise Complex v = load_value(i, false) * c[job.offset];
+        put(i, v, false);
+#endif
+    }
+}

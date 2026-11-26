@@ -1,5 +1,5 @@
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
-use crate::passport::{Passport, Provenance, TrustLevel, TypeKind};
+use crate::passport::{Capability, Passport, Provenance, TrustLevel, TypeKind, ValidationState};
 use crate::proof_context::{ProofClosure, ProofClosureStatus, TacticStep};
 use crate::tactic::TacticScriptReport;
 use crate::proof_kernel::{check_kernel_proof, KernelBudget, KernelContext, KernelProof};
@@ -8,11 +8,12 @@ use crate::proof_kernel::{check_kernel_proof, KernelBudget, KernelContext, Kerne
 pub enum ProofCertificateStatus {
     Checked,
     AxiomAdmitted,
+    ExternallyVerified,
 }
 
 impl ProofCertificateStatus {
     pub fn is_axiom_tainted(self) -> bool {
-        matches!(self, ProofCertificateStatus::AxiomAdmitted)
+        matches!(self, Self::AxiomAdmitted | Self::ExternallyVerified)
     }
 }
 
@@ -71,7 +72,7 @@ impl ProofCertificate {
         if let Some(proof) = &self.kernel {
             let fail = |message: String| Diagnostic::error(DiagnosticKind::ProofCertificateError, Some(line), message);
             if self.status != ProofCertificateStatus::Checked {
-                return Err(fail("admitted certificate cannot claim independently checked evidence".to_string()));
+                return Err(fail("only Checked certificates can carry DLM kernel evidence".to_string()));
             }
             let budget = KernelBudget::default();
             // A certificate cannot declare its own trusted assumptions.
@@ -81,6 +82,22 @@ impl ProofCertificate {
             }
         }
         Ok(())
+    }
+
+    pub(crate) fn verify_evidence(&self, line: usize) -> Result<(), Diagnostic> {
+        use crate::math::riemann;
+
+        if self.status == ProofCertificateStatus::ExternallyVerified {
+            return riemann::verify_binding(self, line);
+        }
+        if self.trace.iter().any(|step| step.starts_with(riemann::BINDING_EVENT)) {
+            return Err(Diagnostic::error(
+                DiagnosticKind::ProofCertificateError,
+                Some(line),
+                "external proof evidence requires an ExternallyVerified certificate",
+            ));
+        }
+        self.verify_kernel_evidence(line)
     }
 }
 
@@ -184,6 +201,26 @@ pub fn verify_certificate_against_theorem(
         ));
     }
 
+    let external = certificate.status == ProofCertificateStatus::ExternallyVerified;
+    if crate::math::riemann::has_binding(theorem, &theorem_name) != external {
+        return Err(Diagnostic::error(
+            DiagnosticKind::ProofCertificateError,
+            Some(line),
+            "certificate evidence kind differs from the theorem passport",
+        ));
+    }
+
+    if external && (theorem.validation != ValidationState::ConstraintChecked
+        || theorem.capabilities.contains(Capability::CanProofKernelCheck)
+        || !certificate.trace.iter().all(|step| theorem.history.events().contains(step)))
+    {
+        return Err(Diagnostic::error(
+            DiagnosticKind::ProofCertificateError,
+            Some(line),
+            "external theorem passport does not preserve the checked binding and its dependencies",
+        ));
+    }
+
     if certificate.trace_len != certificate.trace.len() {
         return Err(Diagnostic::error(
             DiagnosticKind::ProofCertificateError,
@@ -193,7 +230,7 @@ pub fn verify_certificate_against_theorem(
     }
 
     // Bound and check structured evidence before serializing it for a hash.
-    certificate.verify_kernel_evidence(line)?;
+    certificate.verify_evidence(line)?;
 
     if !certificate.fingerprint_is_stable() {
         return Err(Diagnostic::error(

@@ -496,7 +496,7 @@ pub(crate) fn spmv(rowptr: &[u128], idx: &[u128], vals: &[f64], x: &[f64], r: us
 
 pub fn csr_matvec(rowptr: &[u128], idx: &[u128], vals: &[f64], x: &[f64]) -> Option<Vec<f64>> {
     let r = csr(rowptr, idx, vals, x.len())?;
-    Some(spmv(rowptr, idx, vals, x, r))
+    Some(crate::math_compute::csr_matvec_validated(rowptr, idx, vals, x, r))
 }
 
 pub(crate) fn dot(a: &[f64], b: &[f64]) -> f64 {

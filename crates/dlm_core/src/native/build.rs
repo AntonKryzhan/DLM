@@ -59,14 +59,8 @@ fn run(cmd: &mut Command) -> Result<(), Diagnostic> {
     }
     Ok(())
 }
-pub fn build(m: &Mir, out: &Path, options: &Options, c_only: bool) -> Result<PathBuf, Diagnostic> {
-    // Verify a second time at the backend trust boundary: public Rust callers
-    // cannot forge a MIR to bypass source ownership or representation checks.
-    let verified = check::check(m.unit.clone()).map_err(|d| d.into_iter().next().unwrap())?;
-    if &verified != m {
-        return Err(error(1, "forged or inconsistent native MIR"));
-    }
-    let profile = match options.cpu.as_str() {
+pub fn cpu_profile(name: &str) -> Result<u8, Diagnostic> {
+    Ok(match name {
         "auto" => 0,
         "scalar" => 1,
         "sse2" => 2,
@@ -78,7 +72,17 @@ pub fn build(m: &Mir, out: &Path, options: &Options, c_only: bool) -> Result<Pat
                 "CPU profile must be auto, scalar, sse2, avx2 or avx512",
             ))
         }
-    };
+    })
+}
+
+pub fn build(m: &Mir, out: &Path, options: &Options, c_only: bool) -> Result<PathBuf, Diagnostic> {
+    // Verify a second time at the backend trust boundary: public Rust callers
+    // cannot forge a MIR to bypass source ownership or representation checks.
+    let verified = check::check(m.unit.clone()).map_err(|d| d.into_iter().next().unwrap())?;
+    if &verified != m {
+        return Err(error(1, "forged or inconsistent native MIR"));
+    }
+    let profile = cpu_profile(&options.cpu)?;
     if options.artifact == Artifact::Plugin && options.plugin_profile.as_deref() != Some("c-abi-v1")
     {
         return Err(error(1, "plugin target requires --plugin-profile c-abi-v1"));

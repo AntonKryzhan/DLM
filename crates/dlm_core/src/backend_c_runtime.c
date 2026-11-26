@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #endif
 #include <math.h>
+#include <stdbool.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -2956,6 +2957,78 @@ static DV *dvb_fv_concat(DV *a, DV *b) {
     if (y->u.fv.n) memcpy(d + x->u.fv.n, y->u.fv.d, sizeof(double) * y->u.fv.n);
     return dv_some(dvf_vec_take(d, n));
 }
+static double dvf_matmul_cell(const double *a, const double *b, size_t inner, size_t columns, size_t j) {
+    double sum = 0.0;
+    for (size_t l = 0; l < inner; l++) {
+        double product = a[l] * b[l * columns + j];
+        sum = sum + product;
+    }
+    return sum;
+}
+
+#ifndef DN_CPU_PROFILE
+#define DN_CPU_PROFILE 0
+#endif
+#if (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(__clang__))
+#include <immintrin.h>
+#define DVF_MATMUL_AVX2 1
+__attribute__((target("avx2"))) static void dvf_matmul_avx2(
+    const double *a, const double *b, double *out, size_t rows, size_t inner, size_t columns
+) {
+    for (size_t i = 0; i < rows; i++) {
+        const double *row = a + i * inner;
+        double *dst = out + i * columns;
+        size_t j = 0;
+        for (; j + 16 <= columns; j += 16) {
+            __m256d sums[4] = { _mm256_setzero_pd(), _mm256_setzero_pd(), _mm256_setzero_pd(), _mm256_setzero_pd() };
+            for (size_t l = 0; l < inner; l++) {
+                __m256d left = _mm256_set1_pd(row[l]);
+                const double *right = b + l * columns + j;
+                for (size_t g = 0; g < 4; g++)
+                    sums[g] = _mm256_add_pd(sums[g], _mm256_mul_pd(left, _mm256_loadu_pd(right + 4 * g)));
+            }
+            for (size_t g = 0; g < 4; g++) _mm256_storeu_pd(dst + j + 4 * g, sums[g]);
+        }
+        for (; j + 4 <= columns; j += 4) {
+            __m256d sum = _mm256_setzero_pd();
+            for (size_t l = 0; l < inner; l++) {
+                __m256d right = _mm256_loadu_pd(b + l * columns + j);
+                sum = _mm256_add_pd(sum, _mm256_mul_pd(_mm256_set1_pd(row[l]), right));
+            }
+            _mm256_storeu_pd(dst + j, sum);
+        }
+        for (; j < columns; j++) dst[j] = dvf_matmul_cell(row, b, inner, columns, j);
+    }
+}
+#else
+#define DVF_MATMUL_AVX2 0
+#endif
+
+static void dvf_matmul_blocked(
+    const double *a, const double *b, double *out, size_t rows, size_t inner, size_t columns
+) {
+    for (size_t i = 0; i < rows; i++) {
+        double *dst = out + i * columns;
+        for (size_t start = 0; start < columns; start += DLM_MATH_MATMUL_BLOCK_COLUMNS) {
+            size_t end = start + DLM_MATH_MATMUL_BLOCK_COLUMNS;
+            if (end > columns) end = columns;
+            for (size_t l = 0; l < inner; l++) {
+                const double left = a[i * inner + l];
+                const double *right = b + l * columns;
+                for (size_t j = start; j < end; j++) {
+                    double product = left * right[j];
+                    dst[j] = dst[j] + product;
+                }
+            }
+        }
+    }
+}
+
+static bool dvf_matmul_finite(const double *values, size_t len) {
+    for (size_t i = 0; i < len; i++) if (!isfinite(values[i])) return false;
+    return true;
+}
+
 static DV *dvb_fv_matmul(DV *av, DV *bv, DV *nv, DV *mv, DV *kv) {
     DV *a = dvf_vec_of(av, "fv_matmul"), *b = dvf_vec_of(bv, "fv_matmul");
     nat_t n = dv_nat_of(nv, "fv_matmul"), m = dv_nat_of(mv, "fv_matmul"), k = dv_nat_of(kv, "fv_matmul");
@@ -2964,12 +3037,29 @@ static DV *dvb_fv_matmul(DV *av, DV *bv, DV *nv, DV *mv, DV *kv) {
     if (!n || !k) return dv_some(dvf_vec(0, 0));
     size_t N = (size_t)n, M = (size_t)m, K = (size_t)k;
     double *c = dvf_scratch(N * K);
-    for (size_t i = 0; i < N; i++)
-        for (size_t j = 0; j < K; j++) {
-            double s = 0.0;
-            for (size_t l = 0; l < M; l++) { double p = a->u.fv.d[i * M + l] * b->u.fv.d[l * K + j]; s = s + p; }
-            c[i * K + j] = s;
+    const double *left = a->u.fv.d, *right = b->u.fv.d;
+    nat_t work = n * m * k;
+    bool wide_enough = K >= DLM_MATH_MATMUL_MIN_COLUMNS && M >= DLM_MATH_MATMUL_MIN_INNER;
+    bool blocked = DN_CPU_PROFILE != 1 && wide_enough && work >= DLM_MATH_MATMUL_BLOCK_WORK;
+    bool avx2 = false;
+#if DVF_MATMUL_AVX2
+    avx2 = DN_CPU_PROFILE != 1 && DN_CPU_PROFILE != 2 && wide_enough
+        && work >= DLM_MATH_MATMUL_AVX2_WORK && __builtin_cpu_supports("avx2");
+#endif
+    if ((blocked || avx2) && dvf_matmul_finite(left, a->u.fv.n) && dvf_matmul_finite(right, b->u.fv.n)) {
+#if DVF_MATMUL_AVX2
+        if (avx2) dvf_matmul_avx2(left, right, c, N, M, K);
+        else
+#endif
+        {
+            memset(c, 0, N * K * sizeof(double));
+            dvf_matmul_blocked(left, right, c, N, M, K);
         }
+        if (dvf_matmul_finite(c, N * K)) return dv_some(dvf_vec_take(c, N * K));
+    }
+    for (size_t i = 0; i < N; i++)
+        for (size_t j = 0; j < K; j++)
+            c[i * K + j] = dvf_matmul_cell(left + i * M, right, M, K, j);
     return dv_some(dvf_vec_take(c, N * K));
 }
 /* Gaussian elimination with partial pivoting (float.rs solve) */
@@ -3901,7 +3991,11 @@ static DV *dvb_la_csr_matvec(DV *rp, DV *ix, DV *vl, DV *xv) {
     size_t r;
     if (!dvl_csr(rp, ix, vl, x->u.fv.n, &r, "la_csr_matvec")) return DV_NONE;
     double *y = dvf_scratch(r);
-    dvl_spmv(rp->u.nv.d, ix->u.nv.d, vl->u.fv.d, x->u.fv.d, r, y);
+    if (r < DLM_MATH_CSR_PARALLEL_ROWS || vl->u.fv.n < DLM_MATH_CSR_PARALLEL_NNZ
+        || !dvf_matmul_finite(vl->u.fv.d, vl->u.fv.n) || !dvf_matmul_finite(x->u.fv.d, x->u.fv.n)
+        || !dlm_math_csr_parallel(rp->u.nv.d, ix->u.nv.d, vl->u.fv.d, x->u.fv.d, r, y)
+        || !dvf_matmul_finite(y, r))
+        dvl_spmv(rp->u.nv.d, ix->u.nv.d, vl->u.fv.d, x->u.fv.d, r, y);
     return dv_some(dvf_vec_take(y, r));
 }
 static double dvl_dot(const double *a, const double *b, size_t n) {
@@ -3948,17 +4042,18 @@ static DV *dvb_la_cg(DV *rp, DV *ix, DV *vl, DV *bv, DV *tv, DV *iv) {
 
 /* ---- v0.117: FFT, convolution, simplex (crate::spectral) ---- */
 #define DVA_TAU 6.283185307179586
-#define DVA_DFT_MAX ((size_t)1 << 13)
 #define DVA_LP_EPS 1e-9
 #define DVA_LP_ITERATIONS 50000
 /* interleaved complex transform of x[2n]; 0 when refused */
 static double *dva_fft(const double *x, size_t len, int inverse) {
     if (len % 2) return 0;
     size_t n = len / 2;
+    bool radix2 = n == 0 || (n & (n - 1)) == 0;
+    if (!radix2 && n > DLM_MATH_DFT_MAX) return 0;
     double sign = inverse ? 1.0 : -1.0;
     double *a = dvf_scratch(len);
-    if (n == 0 || (n & (n - 1)) == 0) {
-        memcpy(a, x, sizeof(double) * len);
+    if (radix2) {
+        if (len) memcpy(a, x, sizeof(double) * len);
         unsigned bits = 0;
         while (((size_t)1 << bits) < n) bits++;
         for (size_t i = 0; i < n; i++) {
@@ -3972,27 +4067,40 @@ static double *dva_fft(const double *x, size_t len, int inverse) {
         for (size_t step = 2; step <= n; step *= 2) {
             double ang = sign * DVA_TAU / (double)step;
             size_t half = step / 2;
-            for (size_t i = 0; i < n; i += step)
-                for (size_t j = 0; j < half; j++) {
-                    double t = ang * (double)j;
-                    double wr = cos(t), wi = sin(t);
-                    size_t p = 2 * (i + j), q = 2 * (i + j + half);
-                    double br = a[q], bi = a[q + 1];
-                    double r1 = br * wr, r2 = bi * wi, i1 = br * wi, i2 = bi * wr;
-                    double vr = r1 - r2, vi = i1 + i2;
-                    double ur = a[p], ui = a[p + 1];
-                    a[p] = ur + vr; a[p + 1] = ui + vi;
-                    a[q] = ur - vr; a[q + 1] = ui - vi;
+            double factors[DLM_MATH_FFT_TWIDDLE_BLOCK][2];
+            for (size_t start = 0; start < half; start += DLM_MATH_FFT_TWIDDLE_BLOCK) {
+                size_t count = half - start;
+                if (count > DLM_MATH_FFT_TWIDDLE_BLOCK) count = DLM_MATH_FFT_TWIDDLE_BLOCK;
+                for (size_t j = 0; j < count; j++) {
+                    double t = ang * (double)(start + j);
+                    factors[j][0] = cos(t); factors[j][1] = sin(t);
                 }
+                for (size_t i = 0; i < n; i += step)
+                    for (size_t j = 0; j < count; j++) {
+                        double wr = factors[j][0], wi = factors[j][1];
+                        size_t p = 2 * (i + start + j), q = p + step;
+                        double br = a[q], bi = a[q + 1];
+                        double r1 = br * wr, r2 = bi * wi, i1 = br * wi, i2 = bi * wr;
+                        double vr = r1 - r2, vi = i1 + i2;
+                        double ur = a[p], ui = a[p + 1];
+                        a[p] = ur + vr; a[p + 1] = ui + vi;
+                        a[q] = ur - vr; a[q + 1] = ui - vi;
+                    }
+            }
         }
     } else {
-        if (n > DVA_DFT_MAX) { free(a); return 0; }
         double ang = sign * DVA_TAU / (double)n;
+        double *twiddles = dvf_scratch(2 * n);
+        for (size_t i = 0; i < n; i++) {
+            double e = ang * (double)i;
+            twiddles[2 * i] = cos(e);
+            twiddles[2 * i + 1] = sin(e);
+        }
         for (size_t k = 0; k < n; k++) {
             double sr = 0.0, si = 0.0;
             for (size_t t = 0; t < n; t++) {
-                double e = ang * (double)((k * t) % n);
-                double c = cos(e), s = sin(e);
+                size_t w = 2 * ((k * t) % n);
+                double c = twiddles[w], s = twiddles[w + 1];
                 double xr = x[2 * t], xi = x[2 * t + 1];
                 double r1 = xr * c, r2 = xi * s, i1 = xr * s, i2 = xi * c;
                 double pr = r1 - r2, pi = i1 + i2;
@@ -4000,6 +4108,7 @@ static double *dva_fft(const double *x, size_t len, int inverse) {
             }
             a[2 * k] = sr; a[2 * k + 1] = si;
         }
+        free(twiddles);
     }
     if (inverse && n > 0) {
         double d = (double)n;
@@ -4036,6 +4145,87 @@ static DV *dvb_fft_convolve(DV *av, DV *bv) {
     for (size_t i = 0; i < len; i++) out[i] = back[2 * i];
     free(pa); free(pb); free(fa); free(fb); free(back);
     return dv_some(dvf_vec_take(out, len));
+}
+
+static uint32_t dva_ntt_mul(uint32_t a, uint32_t b) {
+    return (uint32_t)((uint64_t)a * b % DLM_MATH_NTT_MODULUS);
+}
+static uint32_t dva_ntt_pow(uint32_t base, uint32_t exponent) {
+    uint32_t out = 1;
+    while (exponent) {
+        if (exponent & 1u) out = dva_ntt_mul(out, base);
+        base = dva_ntt_mul(base, base);
+        exponent >>= 1;
+    }
+    return out;
+}
+static void dva_ntt(uint32_t *a, size_t n, bool inverse) {
+    for (size_t i = 1, j = 0; i < n; i++) {
+        size_t bit = n / 2;
+        while (j & bit) { j ^= bit; bit >>= 1; }
+        j ^= bit;
+        if (i < j) { uint32_t swap = a[i]; a[i] = a[j]; a[j] = swap; }
+    }
+    for (size_t len = 2; len <= n; len *= 2) {
+        uint32_t root = dva_ntt_pow(DLM_MATH_NTT_ROOT, (DLM_MATH_NTT_MODULUS - 1) / (uint32_t)len);
+        if (inverse) root = dva_ntt_pow(root, DLM_MATH_NTT_MODULUS - 2);
+        for (size_t start = 0; start < n; start += len) {
+            uint32_t factor = 1;
+            for (size_t i = start; i < start + len / 2; i++) {
+                size_t j = i + len / 2;
+                uint32_t u = a[i], v = dva_ntt_mul(a[j], factor);
+                uint32_t sum = u + v;
+                a[i] = sum >= DLM_MATH_NTT_MODULUS ? sum - DLM_MATH_NTT_MODULUS : sum;
+                a[j] = u >= v ? u - v : u + DLM_MATH_NTT_MODULUS - v;
+                factor = dva_ntt_mul(factor, root);
+            }
+        }
+    }
+    if (inverse) {
+        uint32_t scale = dva_ntt_pow((uint32_t)n, DLM_MATH_NTT_MODULUS - 2);
+        for (size_t i = 0; i < n; i++) a[i] = dva_ntt_mul(a[i], scale);
+    }
+}
+static DV *dvb_ntt_convolve(DV *av, DV *bv) {
+    DV *a = dvv_of(av, "ntt_convolve"), *b = dvv_of(bv, "ntt_convolve");
+    size_t left = a->u.nv.n, right = b->u.nv.n;
+    if (!left || !right) return dv_some(dvv_vec(0, 0));
+    if (left > DLM_MATH_NTT_MAX || right - 1 > DLM_MATH_NTT_MAX - left) return DV_NONE;
+    size_t len = left + right - 1;
+    size_t points = 1, stages = 0;
+    while (points < len) { points *= 2; stages++; }
+    nat_t transform_work = (nat_t)(points / 2) * stages * 3 + points;
+    if ((nat_t)left * right <= transform_work * DLM_MATH_NTT_DIRECT_FACTOR) {
+        if (right > left) {
+            DV *v = a; a = b; b = v;
+            size_t n = left; left = right; right = n;
+        }
+        nat_t *out = dvv_scratch(sizeof(nat_t) * len);
+        uint32_t *r = dvv_scratch(sizeof(uint32_t) * right);
+        memset(out, 0, sizeof(nat_t) * len);
+        for (size_t j = 0; j < right; j++) r[j] = (uint32_t)(b->u.nv.d[j] % DLM_MATH_NTT_MODULUS);
+        for (size_t i = 0; i < left; i++) {
+            uint64_t l = (uint64_t)(a->u.nv.d[i] % DLM_MATH_NTT_MODULUS);
+            for (size_t j = 0; j < right; j++)
+                out[i + j] = ((uint64_t)out[i + j] + l * r[j]) % DLM_MATH_NTT_MODULUS;
+        }
+        free(r);
+        return dvv_some(out, len);
+    }
+    uint32_t *l = dvv_scratch(sizeof(uint32_t) * points), *r = dvv_scratch(sizeof(uint32_t) * points);
+    memset(l, 0, sizeof(uint32_t) * points);
+    memset(r, 0, sizeof(uint32_t) * points);
+    for (size_t i = 0; i < left; i++) l[i] = (uint32_t)(a->u.nv.d[i] % DLM_MATH_NTT_MODULUS);
+    for (size_t j = 0; j < right; j++) r[j] = (uint32_t)(b->u.nv.d[j] % DLM_MATH_NTT_MODULUS);
+    dva_ntt(l, points, false);
+    dva_ntt(r, points, false);
+    for (size_t i = 0; i < points; i++) l[i] = dva_ntt_mul(l[i], r[i]);
+    free(r);
+    dva_ntt(l, points, true);
+    nat_t *out = dvv_scratch(sizeof(nat_t) * len);
+    for (size_t i = 0; i < len; i++) out[i] = l[i];
+    free(l);
+    return dvv_some(out, len);
 }
 typedef struct { double *t; size_t *basis; size_t m, w, obj, rhs; } dva_lp;
 static void dva_pivot(dva_lp *lp, size_t r, size_t col) {

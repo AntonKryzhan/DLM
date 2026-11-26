@@ -18,7 +18,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use dlm_core::{load_program_with_paths, parse_module, CheckPolicy, Checker, Program, Runtime};
+use dlm_core::{load_program_with_paths, parse_module, CheckPolicy, Checker, DiagnosticKind, Program, Runtime};
 
 /// Valid examples that are checker-level only. `dlm run` must reject them.
 const CHECK_ONLY_VALID: &[&str] = &[
@@ -212,6 +212,11 @@ fn every_library_module_checks() {
                     if report.ok() {
                         assert_eq!(dlm_core::audit_check_report(&report, vec![]).status, dlm_core::AuditStatus::Unsafe);
                     }
+                    report
+                } else if path.file_name().and_then(|p| p.to_str()) == Some("riemann.dlm") {
+                    assert!(!strict.ok() && strict.diagnostics.iter().all(|d| d.kind == DiagnosticKind::TrustTaintError));
+                    let report = Checker::with_policy(CheckPolicy::research()).check_program(&program);
+                    assert!(report.certificates.iter().any(|c| c.status == dlm_core::ProofCertificateStatus::ExternallyVerified));
                     report
                 } else { strict };
                 if !report.ok() {

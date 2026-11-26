@@ -157,14 +157,18 @@ fn the_repository_project_checks() {
     assert_eq!(report.status(), Some(AuditStatus::Unsafe));
     let proved: usize = report.entries.iter().filter_map(|e| e.audit.as_ref()).map(|a| a.proved()).sum();
     assert!(proved >= 50, "library and examples prove many theorems: {proved}");
-    // Pure standard modules remain closed. The explicitly admitted native
-    // network provider must expose, not erase, its foreign trust boundary.
+    // Pure standard modules remain closed. Foreign providers and imported
+    // Lean theorems expose their trust dependencies.
     for entry in report.entries.iter().filter(|e| e.path.to_string_lossy().contains("lib/std")) {
         let audit = entry.audit.as_ref().unwrap();
         if matches!(entry.path.file_name().and_then(|p| p.to_str()), Some("sql.dlm" | "http_server.dlm" | "http_tasks.dlm" | "dln_gateway.dlm" | "dln_continuity.dlm" | "dln_proxy.dlm" | "dln_experiment.dlm" | "native_net.dlm" | "net_socket.dlm" | "net_reactor.dlm" | "net_async.dlm" | "net_tasks.dlm" | "net_crypto.dlm" | "net_quic.dlm" | "net_transport.dlm" | "net_session.dlm" | "net_identity.dlm" | "net_content.dlm" | "net_discovery.dlm" | "net_adaptive.dlm" | "net_tun.dlm" | "net_session_verified.dlm")) {
             assert_eq!(audit.status, AuditStatus::Unsafe);
             let trust = match entry.path.file_name().and_then(|p| p.to_str()) { Some("dln_experiment.dlm") => "dlm.channel_lab.v1", Some("sql.dlm") => "dlm.db.v1", Some("http_server.dlm" | "http_tasks.dlm") => "dlm.http.v1", Some("dln_gateway.dlm" | "dln_continuity.dlm" | "dln_proxy.dlm") => "dlm.gateway.v1", _ => "dlm.net.v1" };
             assert!(audit.tainted_values.iter().any(|v| v.contains(trust)));
+        } else if entry.path.file_name().and_then(|p| p.to_str()) == Some("riemann.dlm") {
+            assert_eq!(audit.status, AuditStatus::AxiomDependent);
+            assert!(audit.components.contains(&TrustedComponent::ExternalLean));
+            assert_eq!(audit.axioms.len(), dlm_core::math::riemann::AXIOMS.len());
         } else {
             assert_eq!(audit.status, AuditStatus::Closed, "{}", entry.path.display());
         }

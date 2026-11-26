@@ -12,6 +12,8 @@ pub mod dense_nat;
 pub mod float;
 pub mod graph;
 pub mod linalg;
+pub mod math_compute;
+pub mod math_dispatch;
 pub mod spectral;
 pub mod number;
 pub mod combinatorics;

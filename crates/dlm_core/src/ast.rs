@@ -26,7 +26,7 @@ impl Module {
                         TheoryItem::Expr(expr) => expr.set_file_id(id),
                         TheoryItem::Fn(decl) => decl.body.set_file_id(id),
                         TheoryItem::Statement(statement) => statement.body.set_file_id(id),
-                        TheoryItem::Record(_) => {}
+                        TheoryItem::Record(_) | TheoryItem::ExternalTheorem(_) => {}
                     }
                 }
             }
@@ -66,6 +66,14 @@ pub enum TheoryItem {
     Fn(FnDecl),
     Record(RecordDecl),
     Statement(StatementItem),
+    ExternalTheorem(ExternalTheoremDecl),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExternalTheoremDecl {
+    pub name: String,
+    pub source: String,
+    pub line: usize,
 }
 
 /// v0.76: kind of a surface statement.

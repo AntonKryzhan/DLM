@@ -6,8 +6,9 @@
 //! tableau simplex with Bland's rule. The native runtime (`dva_*`) performs
 //! the same operation sequences.
 use std::f64::consts::TAU;
+use crate::math_dispatch::{self, Algorithm};
 
-pub const DFT_MAX: usize = 1 << 13;
+pub const DFT_MAX: usize = math_dispatch::config::DFT_MAX;
 pub const LP_EPS: f64 = 1e-9;
 pub const LP_ITERATIONS: usize = 50_000;
 
@@ -16,8 +17,9 @@ pub fn fft(x: &[f64], inverse: bool) -> Option<Vec<f64>> {
         return None;
     }
     let n = x.len() / 2;
+    let plan = math_dispatch::plan_fourier(n)?;
     let sign = if inverse { 1.0 } else { -1.0 };
-    let mut out = if n.is_power_of_two() || n == 0 {
+    let mut out = if plan.algorithm == Algorithm::Radix2Fft {
         let mut a = x.to_vec();
         let bits = n.trailing_zeros();
         for i in 0..n {
@@ -35,35 +37,45 @@ pub fn fft(x: &[f64], inverse: bool) -> Option<Vec<f64>> {
         while len <= n {
             let ang = sign * TAU / (len as f64);
             let half = len / 2;
-            for i in (0..n).step_by(len) {
-                for j in 0..half {
-                    let t = ang * (j as f64);
-                    let (wr, wi) = (t.cos(), t.sin());
-                    let (p, q) = (2 * (i + j), 2 * (i + j + half));
-                    let (br, bi) = (a[q], a[q + 1]);
-                    let (r1, r2, i1, i2) = (br * wr, bi * wi, br * wi, bi * wr);
-                    let (vr, vi) = (r1 - r2, i1 + i2);
-                    let (ur, ui) = (a[p], a[p + 1]);
-                    a[p] = ur + vr;
-                    a[p + 1] = ui + vi;
-                    a[q] = ur - vr;
-                    a[q + 1] = ui - vi;
+            const BLOCK: usize = math_dispatch::config::FFT_TWIDDLE_BLOCK;
+            let mut twiddles = [(0.0, 0.0); BLOCK];
+            // Butterflies within a stage are independent. Reuse each factor
+            // across blocks while keeping the arithmetic of each output.
+            for start in (0..half).step_by(BLOCK) {
+                let factors = &mut twiddles[..(half - start).min(BLOCK)];
+                for (offset, factor) in factors.iter_mut().enumerate() {
+                    let t = ang * ((start + offset) as f64);
+                    *factor = (t.cos(), t.sin());
+                }
+                for i in (0..n).step_by(len) {
+                    for (offset, &(wr, wi)) in factors.iter().enumerate() {
+                        let j = start + offset;
+                        let (p, q) = (2 * (i + j), 2 * (i + j + half));
+                        let (br, bi) = (a[q], a[q + 1]);
+                        let (r1, r2, i1, i2) = (br * wr, bi * wi, br * wi, bi * wr);
+                        let (vr, vi) = (r1 - r2, i1 + i2);
+                        let (ur, ui) = (a[p], a[p + 1]);
+                        a[p] = ur + vr;
+                        a[p + 1] = ui + vi;
+                        a[q] = ur - vr;
+                        a[q + 1] = ui - vi;
+                    }
                 }
             }
             len *= 2;
         }
         a
     } else {
-        if n > DFT_MAX {
-            return None;
-        }
         let ang = sign * TAU / (n as f64);
+        let twiddles: Vec<_> = (0..n).map(|i| {
+            let e = ang * (i as f64);
+            (e.cos(), e.sin())
+        }).collect();
         let mut a = vec![0.0; 2 * n];
         for k in 0..n {
             let (mut sr, mut si) = (0.0, 0.0);
             for t in 0..n {
-                let e = ang * (((k * t) % n) as f64);
-                let (c, s) = (e.cos(), e.sin());
+                let (c, s) = twiddles[(k * t) % n];
                 let (xr, xi) = (x[2 * t], x[2 * t + 1]);
                 let (r1, r2, i1, i2) = (xr * c, xi * s, xr * s, xi * c);
                 let (pr, pi) = (r1 - r2, i1 + i2);
@@ -89,11 +101,8 @@ pub fn convolve(a: &[f64], b: &[f64]) -> Option<Vec<f64>> {
     if a.is_empty() || b.is_empty() {
         return Some(Vec::new());
     }
-    let len = a.len() + b.len() - 1;
-    let size = len.checked_next_power_of_two()?;
-    if size > crate::float::VEC_MAX / 2 {
-        return None;
-    }
+    let len = math_dispatch::convolution_len(a.len(), b.len())?;
+    let size = math_dispatch::plan_real_convolution(a.len(), b.len())?.transform_points;
     let pad = |x: &[f64]| {
         let mut v = vec![0.0; 2 * size];
         for (i, y) in x.iter().enumerate() {
@@ -111,6 +120,105 @@ pub fn convolve(a: &[f64], b: &[f64]) -> Option<Vec<f64>> {
     }
     let back = fft(&prod, true)?;
     Some((0..len).map(|i| back[2 * i]).collect())
+}
+
+/// Exact linear convolution modulo 998244353. Nat coefficients are reduced
+/// before multiplication, and the result is in the canonical residue range.
+pub fn ntt_convolve(a: &[u128], b: &[u128]) -> Option<Vec<u128>> {
+    let len = math_dispatch::convolution_len(a.len(), b.len())?;
+    let plan = math_dispatch::plan_modular_convolution(a.len(), b.len())?;
+    if len == 0 {
+        return Some(Vec::new());
+    }
+    const P: u64 = math_dispatch::NTT_MODULUS as u64;
+    let residue = |x: &u128| (*x % u128::from(P)) as u32;
+    if plan.algorithm == Algorithm::DirectModularConvolution {
+        let (a, b) = if a.len() >= b.len() { (a, b) } else { (b, a) };
+        let right: Vec<_> = b.iter().map(residue).collect();
+        let mut out = vec![0u128; len];
+        for (i, left) in a.iter().map(residue).enumerate() {
+            for (j, &right) in right.iter().enumerate() {
+                let product = u64::from(left) * u64::from(right);
+                out[i + j] = ((out[i + j] as u64 + product) % P) as u128;
+            }
+        }
+        return Some(out);
+    }
+    let pad = |x: &[u128]| {
+        let mut out = vec![0; plan.transform_points];
+        for (slot, coefficient) in out.iter_mut().zip(x) {
+            *slot = residue(coefficient);
+        }
+        out
+    };
+    let (mut left, mut right) = (pad(a), pad(b));
+    ntt(&mut left, false);
+    ntt(&mut right, false);
+    for (x, y) in left.iter_mut().zip(right) {
+        *x = ntt_mul(*x, y);
+    }
+    ntt(&mut left, true);
+    left.truncate(len);
+    Some(left.into_iter().map(u128::from).collect())
+}
+
+fn ntt_mul(a: u32, b: u32) -> u32 {
+    (u64::from(a) * u64::from(b) % u64::from(math_dispatch::NTT_MODULUS)) as u32
+}
+
+fn ntt_pow(mut base: u32, mut exponent: u32) -> u32 {
+    let mut value = 1;
+    while exponent != 0 {
+        if exponent & 1 != 0 {
+            value = ntt_mul(value, base);
+        }
+        base = ntt_mul(base, base);
+        exponent >>= 1;
+    }
+    value
+}
+
+fn ntt(values: &mut [u32], inverse: bool) {
+    const P: u32 = math_dispatch::NTT_MODULUS;
+    let n = values.len();
+    let mut j = 0;
+    for i in 1..n {
+        let mut bit = n / 2;
+        while j & bit != 0 {
+            j ^= bit;
+            bit >>= 1;
+        }
+        j ^= bit;
+        if i < j {
+            values.swap(i, j);
+        }
+    }
+    let mut len = 2;
+    while len <= n {
+        let mut root = ntt_pow(math_dispatch::config::NTT_ROOT as u32, (P - 1) / len as u32);
+        if inverse {
+            root = ntt_pow(root, P - 2);
+        }
+        for block in values.chunks_exact_mut(len) {
+            let (left, right) = block.split_at_mut(len / 2);
+            let mut factor = 1;
+            for (x, y) in left.iter_mut().zip(right) {
+                let u = *x;
+                let v = ntt_mul(*y, factor);
+                let sum = u + v;
+                *x = if sum >= P { sum - P } else { sum };
+                *y = if u >= v { u - v } else { u + P - v };
+                factor = ntt_mul(factor, root);
+            }
+        }
+        len *= 2;
+    }
+    if inverse {
+        let scale = ntt_pow(n as u32, P - 2);
+        for value in values {
+            *value = ntt_mul(*value, scale);
+        }
+    }
 }
 
 /// `0` optimal, `1` infeasible, `2` unbounded, `3` malformed input, `4` iteration limit.
@@ -628,20 +736,13 @@ const K: [u32; 64] = [
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ];
 
-/// SHA-256 of bytes as 64 lowercase hex digits.
-pub fn sha256(data: &[u8]) -> String {
-    let mut h: [u32; 8] = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
-        0x5be0cd19,
-    ];
-    let mut msg = data.to_vec();
-    let bits = (data.len() as u64).wrapping_mul(8);
-    msg.push(0x80);
-    while msg.len() % 64 != 56 {
-        msg.push(0);
-    }
-    msg.extend_from_slice(&bits.to_be_bytes());
-    for block in msg.chunks(64) {
+const SHA256_INITIAL: [u32; 8] = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
+    0x5be0cd19,
+];
+
+fn sha256_blocks(h: &mut [u32; 8], blocks: &[[u8; 64]]) {
+    for block in blocks {
         let mut w = [0u32; 64];
         for t in 0..16 {
             w[t] = u32::from_be_bytes([
@@ -659,7 +760,7 @@ pub fn sha256(data: &[u8]) -> String {
                 .wrapping_add(w[t - 7])
                 .wrapping_add(s1);
         }
-        let mut v = h;
+        let mut v = *h;
         for t in 0..64 {
             let s1 = v[4].rotate_right(6) ^ v[4].rotate_right(11) ^ v[4].rotate_right(25);
             let ch = (v[4] & v[5]) ^ (!v[4] & v[6]);
@@ -686,5 +787,48 @@ pub fn sha256(data: &[u8]) -> String {
             h[i] = h[i].wrapping_add(v[i]);
         }
     }
+}
+
+fn sha256_finish(mut h: [u32; 8], tail: &[u8], length: u64) -> String {
+    let mut block = [0; 64];
+    block[..tail.len()].copy_from_slice(tail);
+    block[tail.len()] = 0x80;
+    if tail.len() >= 56 {
+        sha256_blocks(&mut h, &[block]);
+        block = [0; 64];
+    }
+    block[56..].copy_from_slice(&length.wrapping_mul(8).to_be_bytes());
+    sha256_blocks(&mut h, &[block]);
     h.iter().map(|x| format!("{x:08x}")).collect()
+}
+
+/// SHA-256 of bytes as 64 lowercase hex digits.
+pub fn sha256(data: &[u8]) -> String {
+    let mut h = SHA256_INITIAL;
+    let (blocks, tail) = data.as_chunks::<64>();
+    sha256_blocks(&mut h, blocks);
+    sha256_finish(h, tail, data.len() as u64)
+}
+
+/// SHA-256 of a stream using fixed-size storage, including on short reads.
+pub fn sha256_reader(mut reader: impl std::io::Read) -> std::io::Result<String> {
+    let mut h = SHA256_INITIAL;
+    let mut buffer = [0; 64 * 1024];
+    let mut pending = 0;
+    let mut length = 0u64;
+    loop {
+        let read = match reader.read(&mut buffer[pending..]) {
+            Ok(0) => break,
+            Ok(read) => read,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(error),
+        };
+        length = length.wrapping_add(read as u64);
+        let available = pending + read;
+        let (blocks, tail) = buffer[..available].as_chunks::<64>();
+        sha256_blocks(&mut h, blocks);
+        pending = tail.len();
+        buffer.copy_within(available - pending..available, 0);
+    }
+    Ok(sha256_finish(h, &buffer[..pending], length))
 }

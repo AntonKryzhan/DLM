@@ -88,6 +88,7 @@ pub enum RuntimeValue {
     SelfReferenceClaim { proposition: String },
     ProofTerm(String),
     StaticProof(String),
+    ExternalTheorem(&'static str),
     Bytes(Vec<u8>),
     /// v0.107: dense natural number, canonical 32-bit limbs (`crate::dense_nat`).
     BigNat(Vec<u32>),
@@ -283,7 +284,7 @@ impl Runtime {
     /// extend them; their values and expressions are not executed.
     pub(crate) fn call_native_ordinary(program:&crate::program::Program,theory:&str,name:&str,values:Vec<RuntimeValue>,line:usize)->Result<RuntimeValue,Diagnostic>{
         let program=program.clone();let theory=theory.to_owned();let name=name.to_owned();
-        on_runtime_thread(move||{let mut runtime=Runtime::new();for dependency in program.dependencies(){for item in &dependency.items{if let ModuleItem::Theory(t)=item{runtime.declare_theory(t);}}}runtime.execute_module(program.root())?;runtime.apply_native_bridge(&theory,&name,values,line)})
+        on_runtime_thread(move||{let mut runtime=Runtime::new();for dependency in program.dependencies(){for item in &dependency.items{if let ModuleItem::Theory(t)=item{runtime.declare_theory(t)?;}}}runtime.execute_module(program.root())?;runtime.apply_native_bridge(&theory,&name,values,line)})
     }
     pub fn run_program(mut self, program: &crate::program::Program) -> Result<RunReport, Diagnostic> {
         let deterministic = self.deterministic_scheduler;
@@ -291,7 +292,7 @@ impl Runtime {
             for dependency in program.dependencies() {
                 for item in &dependency.items {
                     if let ModuleItem::Theory(theory) = item {
-                        self.declare_theory(theory);
+                        self.declare_theory(theory)?;
                     }
                 }
             }
@@ -318,7 +319,7 @@ impl Runtime {
             .map(|scope| {
                 scope
                     .iter()
-                    .filter(|(_, v)| matches!(v, RuntimeValue::StaticProof(_) | RuntimeValue::Proposition(_)))
+                    .filter(|(_, v)| matches!(v, RuntimeValue::StaticProof(_) | RuntimeValue::Proposition(_) | RuntimeValue::ExternalTheorem(_)))
                     .map(|(n, v)| (n.clone(), v.clone()))
                     .collect()
             })
@@ -328,7 +329,7 @@ impl Runtime {
 
     /// v0.80: register the declarations of an imported theory without
     /// executing it.
-    fn declare_theory(&mut self, theory: &TheoryDecl) {
+    fn declare_theory(&mut self, theory: &TheoryDecl) -> Result<(), Diagnostic> {
         self.inherit_declarations(theory);
         self.scopes.entry(theory.name.clone()).or_default();
         for item in &theory.items {
@@ -346,8 +347,20 @@ impl Runtime {
                     self.scopes.entry(theory.name.clone()).or_default().insert(statement.name.clone(), value);
                 }
                 TheoryItem::Let(_) | TheoryItem::Expr(_) => {}
+                TheoryItem::ExternalTheorem(decl) => self.bind_external_theorem(&theory.name, decl)?,
             }
         }
+        Ok(())
+    }
+
+    fn bind_external_theorem(&mut self, theory: &str, decl: &ExternalTheoremDecl) -> Result<(), Diagnostic> {
+        use crate::math::riemann;
+
+        riemann::require_source(&decl.source, decl.line)?;
+        self.scopes.entry(theory.into()).or_default().insert(
+            decl.name.clone(), RuntimeValue::ExternalTheorem(riemann::PROPOSITION),
+        );
+        Ok(())
     }
 
     /// v0.76: evaluate a pure Bool statement for every assignment of its
@@ -481,7 +494,7 @@ impl Runtime {
             for dependency in program.dependencies() {
                 for item in &dependency.items {
                     if let ModuleItem::Theory(theory) = item {
-                        self.declare_theory(theory);
+                        self.declare_theory(theory)?;
                     }
                 }
             }
@@ -571,6 +584,7 @@ impl Runtime {
                         .or_default()
                         .insert(record.name.clone(), record.clone());
                 }
+                TheoryItem::ExternalTheorem(decl) => self.bind_external_theorem(&theory.name, decl)?,
             }
         }
 
@@ -2236,6 +2250,7 @@ impl RuntimeValue {
             RuntimeValue::SelfReferenceClaim { proposition } => format!("SelfReference<{proposition}>"),
             RuntimeValue::ProofTerm(rule) => format!("proof_term<{rule}>"),
             RuntimeValue::StaticProof(predicate) => format!("StaticProof<{predicate}>"),
+            RuntimeValue::ExternalTheorem(proposition) => format!("ExternalTheorem<{proposition}>"),
             RuntimeValue::Bytes(bytes) => format!("<{} bytes>", bytes.len()),
             RuntimeValue::File(_) => "<file>".to_string(),
             RuntimeValue::Float(bits) => crate::float::text(f64::from_bits(*bits)),

@@ -18,7 +18,15 @@ use crate::compile::{IrExpr, IrInit, IrOp, IrProgram};
 use crate::diagnostics::{Diagnostic, DiagnosticKind};
 
 /// The embedded C runtime.
-pub const C_RUNTIME: &str = concat!(include_str!("backend_c_runtime.c"), "\n", include_str!("backend_c_embedding.c"));
+pub const C_RUNTIME: &str = concat!(
+    include_str!(concat!(env!("OUT_DIR"), "/math_dispatch.h")),
+    include_str!(concat!(env!("OUT_DIR"), "/math_compute.c")),
+    include_str!("backend_c_runtime.c"),
+    "\n",
+    include_str!("math_compute/adapters.c"),
+    include_str!("math_compute/proof.c"),
+    include_str!("backend_c_embedding.c"),
+);
 
 /// C string literal for arbitrary bytes (octal escapes for everything that is
 /// not plain printable ASCII, so no trigraph or escape can be formed).
@@ -301,9 +309,10 @@ pub fn build_c_executable_with_flags(c_source: &str, c_path: &Path, output: &Pat
     let windows = target.contains("mingw") || target.contains("windows");
     let output = if windows && output.extension().is_none() { output.with_extension("exe") } else { output.to_path_buf() };
     let mut command = Command::new(compiler);
-    command.args(["-O2", "-std=gnu11", "-w", "-ffp-contract=off", "-o"]).arg(&output).arg(c_path);
+    command.args(["-O2", "-std=gnu11", "-w", "-o"]).arg(&output).arg(c_path);
     if windows { command.args(["-lshell32", "-lws2_32", "-lgdi32", "-luser32"]); } else { command.args(["-pthread", "-lm", "-ldl"]); }
     command.args(flags);
+    command.args(["-fno-fast-math", "-ffp-contract=off"]);
     let result = command.output()
         .map_err(|err| build_error(format!("cannot run C compiler '{compiler}': {err}")).with_help("install gcc or clang, or set CC"))?;
     if !result.status.success() {

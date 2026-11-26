@@ -144,6 +144,7 @@ impl Resolver {
                         TheoryItem::Fn(fn_decl) => (&fn_decl.name, fn_decl.line),
                         TheoryItem::Record(record) => (&record.name, record.line),
                         TheoryItem::Statement(statement) => (&statement.name, statement.line),
+                        TheoryItem::ExternalTheorem(decl) => (&decl.name, decl.line),
                         TheoryItem::Expr(_) => continue,
                     };
                     if symbols.value_id(theory_id, binding_name).is_some() {

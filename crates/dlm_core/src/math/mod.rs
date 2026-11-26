@@ -1,5 +1,6 @@
 //! Bounded, exact computational mathematics. Results are runtime witnesses,
 //! never `StaticProof`. No passports or proof objects occur in matrix entries.
+//! External mathematical theorems are bound separately at compile time.
 pub mod algebra;
 pub mod category;
 pub mod f2;
@@ -22,6 +23,7 @@ pub mod rational_matrix;
 pub mod rational_witness;
 pub mod prime;
 pub mod prime_topology;
+pub mod riemann;
 pub mod witness;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
